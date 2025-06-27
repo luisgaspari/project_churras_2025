@@ -25,11 +25,12 @@ import {
   Camera,
   Plus,
   Star,
+  Trash2,
 } from 'lucide-react-native';
 
 export default function ProfessionalProfileScreen() {
   const { profile, signOut, session } = useAuth();
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -43,14 +44,14 @@ export default function ProfessionalProfileScreen() {
 
     const { data, error } = await supabase
       .from('professional_photos')
-      .select('photo_url')
+      .select('id, photo_url')
       .eq('professional_id', profile.id);
 
     if (error) {
       console.error('Error fetching photos:', error);
       Alert.alert('Erro', 'Não foi possível carregar as fotos.');
     } else {
-      setPhotos(data.map((p) => p.photo_url));
+      setPhotos(data);
     }
   };
 
@@ -115,6 +116,54 @@ export default function ProfessionalProfileScreen() {
     }
 
     setUploading(false);
+  };
+
+  const handleDeletePhoto = async (photo: {
+    id: string;
+    photo_url: string;
+  }) => {
+    Alert.alert('Excluir foto', 'Tem certeza que deseja excluir esta foto?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            // 1. Delete from storage
+            const fileName = photo.photo_url.split('/').pop();
+            if (!fileName) {
+              throw new Error('Nome do arquivo inválido.');
+            }
+            const { error: storageError } = await supabase.storage
+              .from('professional_photos')
+              .remove([`${session?.user.id}/${fileName}`]);
+
+            if (storageError) {
+              throw storageError;
+            }
+
+            // 2. Delete from database
+            const { error: dbError } = await supabase
+              .from('professional_photos')
+              .delete()
+              .eq('id', photo.id);
+
+            if (dbError) {
+              throw dbError;
+            }
+
+            Alert.alert('Sucesso', 'Foto excluída.');
+            fetchPhotos(); // Refresh the list
+          } catch (error: any) {
+            console.error('Error deleting photo:', error);
+            Alert.alert(
+              'Erro',
+              error.message || 'Não foi possível excluir a foto.'
+            );
+          }
+        },
+      },
+    ]);
   };
 
   const handleSignOut = async () => {
@@ -231,9 +280,20 @@ export default function ProfessionalProfileScreen() {
                 data={photos}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item}
+                keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                  <Image source={{ uri: item }} style={styles.photo} />
+                  <View>
+                    <Image
+                      source={{ uri: item.photo_url }}
+                      style={styles.photo}
+                    />
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDeletePhoto(item)}
+                    >
+                      <Trash2 size={18} color={theme.colors.onError} />
+                    </TouchableOpacity>
+                  </View>
                 )}
                 contentContainerStyle={styles.photosGrid}
               />
@@ -481,6 +541,14 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: theme.roundness,
     backgroundColor: theme.colors.surfaceVariant,
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: spacing.xs,
+    borderRadius: 20,
   },
   emptyPhotosContainer: {
     alignItems: 'center',
