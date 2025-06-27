@@ -47,7 +47,7 @@ export default function ProfessionalProfileScreen() {
       .eq('professional_id', profile.id);
 
     if (error) {
-      console.error('Error fetching photos:', error);
+      console.error('Erro ao buscar fotos:', error);
       Alert.alert('Erro', 'Não foi possível carregar as fotos.');
     } else {
       setPhotos(data.map((p) => p.photo_url));
@@ -177,6 +177,9 @@ export default function ProfessionalProfileScreen() {
         <View style={styles.statsContainer}>
           <Card style={styles.statCard}>
             <Card.Content style={styles.statContent}>
+              <Text variant="bodySmall" style={styles.statLabel}>
+                {' '}
+              </Text>
               <Text variant="headlineMedium" style={styles.statNumber}>
                 87
               </Text>
@@ -188,8 +191,11 @@ export default function ProfessionalProfileScreen() {
 
           <Card style={styles.statCard}>
             <Card.Content style={styles.statContent}>
+              <Text variant="bodySmall" style={styles.statLabel}>
+                R$
+              </Text>
               <Text variant="headlineMedium" style={styles.statNumber}>
-                R$ 12.5k
+                12.5k
               </Text>
               <Text variant="bodySmall" style={styles.statLabel}>
                 Faturamento
@@ -199,6 +205,9 @@ export default function ProfessionalProfileScreen() {
 
           <Card style={styles.statCard}>
             <Card.Content style={styles.statContent}>
+              <Text variant="bodySmall" style={styles.statLabel}>
+                {' '}
+              </Text>
               <Text variant="headlineMedium" style={styles.statNumber}>
                 98%
               </Text>

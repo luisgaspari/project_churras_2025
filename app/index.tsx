@@ -25,7 +25,7 @@ export default function WelcomeScreen() {
   const handleUserTypeSelection = (userType: 'client' | 'professional') => {
     router.push({
       pathname: '/auth',
-      params: { userType }
+      params: { userType },
     });
   };
 
@@ -47,12 +47,16 @@ export default function WelcomeScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Image
-              source={{ uri: 'https://images.pexels.com/photos/5175533/pexels-photo-5175533.jpeg?auto=compress&cs=tinysrgb&w=400' }}
-              style={styles.heroImage}
+              // source={{
+              //   uri: 'https://images.pexels.com/photos/5175533/pexels-photo-5175533.jpeg?auto=compress&cs=tinysrgb&w=400',
+              // }}
+              // style={styles.heroImage}
+              source={require('../assets/images/logo.png')}
+              style={styles.image}
             />
-            <Text variant="headlineLarge" style={styles.title}>
+            {/* <Text variant="headlineLarge" style={styles.title}>
               ChurrasJa
-            </Text>
+            </Text> */}
             <Text variant="titleMedium" style={styles.subtitle}>
               O melhor churrasco na palma da sua mão
             </Text>
@@ -64,7 +68,10 @@ export default function WelcomeScreen() {
               Como você quer começar?
             </Text>
 
-            <Card style={styles.userTypeCard} onPress={() => handleUserTypeSelection('client')}>
+            <Card
+              style={styles.userTypeCard}
+              onPress={() => handleUserTypeSelection('client')}
+            >
               <Card.Content style={styles.cardContent}>
                 <Users size={48} color={theme.colors.primary} />
                 <Text variant="headlineSmall" style={styles.cardTitle}>
@@ -76,7 +83,10 @@ export default function WelcomeScreen() {
               </Card.Content>
             </Card>
 
-            <Card style={styles.userTypeCard} onPress={() => handleUserTypeSelection('professional')}>
+            <Card
+              style={styles.userTypeCard}
+              onPress={() => handleUserTypeSelection('professional')}
+            >
               <Card.Content style={styles.cardContent}>
                 <ChefHat size={48} color={theme.colors.primary} />
                 <Text variant="headlineSmall" style={styles.cardTitle}>
@@ -120,6 +130,11 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     marginBottom: spacing.lg,
+  },
+  image: {
+    width: 200,
+    height: 200,
+    marginBottom: 8,
   },
   title: {
     color: 'white',
