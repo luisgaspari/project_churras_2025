@@ -1,9 +1,19 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Image,
+  TouchableOpacity,
+  FlatList,
+} from 'react-native';
 import { Text, Card, Button, List, Avatar, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import {
   ChefHat,
@@ -18,7 +28,94 @@ import {
 } from 'lucide-react-native';
 
 export default function ProfessionalProfileScreen() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, session } = useAuth();
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (profile?.id) {
+      fetchPhotos();
+    }
+  }, [profile?.id]);
+
+  const fetchPhotos = async () => {
+    if (!profile?.id) return;
+
+    const { data, error } = await supabase
+      .from('professional_photos')
+      .select('photo_url')
+      .eq('professional_id', profile.id);
+
+    if (error) {
+      console.error('Error fetching photos:', error);
+      Alert.alert('Erro', 'Não foi possível carregar as fotos.');
+    } else {
+      setPhotos(data.map((p) => p.photo_url));
+    }
+  };
+
+  const handleAddPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      uploadPhoto(result.assets[0].uri);
+    }
+  };
+
+  const uploadPhoto = async (uri: string) => {
+    if (!session?.user) return;
+    setUploading(true);
+
+    const photo = {
+      uri,
+      type: 'image/jpeg',
+      name: `${session.user.id}/${new Date().getTime()}.jpg`,
+    };
+
+    const formData = new FormData();
+    formData.append('file', photo as any);
+
+    const { error: uploadError } = await supabase.storage
+      .from('professional_photos')
+      .upload(photo.name, formData);
+
+    if (uploadError) {
+      Alert.alert('Erro', 'Não foi possível enviar a foto.');
+      setUploading(false);
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('professional_photos')
+      .getPublicUrl(photo.name);
+
+    if (!publicUrlData) {
+      Alert.alert('Erro', 'Não foi possível obter a URL da foto.');
+      setUploading(false);
+      return;
+    }
+
+    const { error: dbError } = await supabase
+      .from('professional_photos')
+      .insert({
+        professional_id: session.user.id,
+        photo_url: publicUrlData.publicUrl,
+      });
+
+    if (dbError) {
+      Alert.alert('Erro', 'Não foi possível salvar a foto no perfil.');
+    } else {
+      Alert.alert('Sucesso', 'Foto adicionada!');
+      fetchPhotos();
+    }
+
+    setUploading(false);
+  };
 
   const handleSignOut = async () => {
     Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
@@ -112,6 +209,52 @@ export default function ProfessionalProfileScreen() {
           </Card>
         </View>
 
+        {/* Photos */}
+        <Card style={styles.photosCard}>
+          <Card.Content>
+            <View style={styles.sectionHeader}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Minhas Fotos
+              </Text>
+              <Button
+                mode="text"
+                icon={() => <Plus size={16} color={theme.colors.primary} />}
+                onPress={handleAddPhoto}
+                loading={uploading}
+                disabled={uploading}
+              >
+                Adicionar
+              </Button>
+            </View>
+            {photos.length > 0 ? (
+              <FlatList
+                data={photos}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <Image source={{ uri: item }} style={styles.photo} />
+                )}
+                contentContainerStyle={styles.photosGrid}
+              />
+            ) : (
+              <View style={styles.emptyPhotosContainer}>
+                <Camera
+                  size={48}
+                  color={theme.colors.onSurfaceDisabled}
+                  style={styles.emptyPhotosIcon}
+                />
+                <Text variant="bodyMedium" style={styles.emptyPhotosText}>
+                  Nenhuma foto adicionada ainda.
+                </Text>
+                <Text variant="bodySmall" style={styles.emptyPhotosSubtext}>
+                  Adicione fotos para mostrar seu trabalho!
+                </Text>
+              </View>
+            )}
+          </Card.Content>
+        </Card>
+
         {/* Services */}
         <Card style={styles.servicesCard}>
           <Card.Content>
@@ -196,7 +339,9 @@ export default function ProfessionalProfileScreen() {
                 mode="outlined"
                 style={styles.profileButton}
                 icon={() => <Camera size={16} color={theme.colors.primary} />}
-                onPress={() => {}}
+                onPress={handleAddPhoto}
+                loading={uploading}
+                disabled={uploading}
               >
                 Adicionar Fotos
               </Button>
@@ -320,6 +465,40 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   statLabel: {
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  photosCard: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    elevation: 2,
+  },
+  photosGrid: {
+    gap: spacing.sm,
+  },
+  photo: {
+    width: 120,
+    height: 90,
+    borderRadius: theme.roundness,
+    backgroundColor: theme.colors.surfaceVariant,
+  },
+  emptyPhotosContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: theme.roundness,
+  },
+  emptyPhotosIcon: {
+    marginBottom: spacing.md,
+  },
+  emptyPhotosText: {
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  emptyPhotosSubtext: {
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
   },

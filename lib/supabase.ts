@@ -134,6 +134,26 @@ export type Database = {
           updated_at?: string;
         };
       };
+      professional_photos: {
+        Row: {
+          id: string;
+          professional_id: string;
+          photo_url: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          professional_id: string;
+          photo_url: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          professional_id?: string;
+          photo_url?: string;
+          created_at?: string;
+        };
+      };
     };
   };
 };
