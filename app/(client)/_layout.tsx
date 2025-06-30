@@ -1,5 +1,11 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, Search, Calendar, User } from 'lucide-react-native';
+import {
+  Chrome as Home,
+  Search,
+  Calendar,
+  User,
+  HomeIcon,
+} from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 export default function ClientTabLayout() {
@@ -20,7 +26,7 @@ export default function ClientTabLayout() {
         options={{
           title: 'Início',
           tabBarIcon: ({ size, color }) => (
-            <Home size={size} color={color} />
+            <HomeIcon size={size} color={color} />
           ),
         }}
       />
@@ -28,9 +34,7 @@ export default function ClientTabLayout() {
         name="search"
         options={{
           title: 'Buscar',
-          tabBarIcon: ({ size, color }) => (
-            <Search size={size} color={color} />
-          ),
+          tabBarIcon: ({ size, color }) => <Search size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -46,9 +50,7 @@ export default function ClientTabLayout() {
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ size, color }) => (
-            <User size={size} color={color} />
-          ),
+          tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
         }}
       />
     </Tabs>
