@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -18,7 +18,7 @@ import {
   ActivityIndicator,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -54,12 +54,35 @@ export default function ProfessionalProfileScreen() {
   const [uploading, setUploading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+  const fetchServices = useCallback(async () => {
+    if (!profile?.id) return;
+
+    const { data, error } = await supabase
+      .from('services')
+      .select('id, title')
+      .eq('professional_id', profile.id)
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    if (error) {
+      console.error('Erro ao buscar serviços:', error);
+    } else {
+      setServices(data || []);
+    }
+  }, [profile?.id]);
+
   useEffect(() => {
     if (profile?.id) {
       fetchPhotos();
       fetchServices();
     }
-  }, [profile?.id]);
+  }, [profile?.id, fetchServices]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchServices();
+    }, [fetchServices])
+  );
 
   const fetchPhotos = async () => {
     if (!profile?.id) return;
@@ -80,23 +103,6 @@ export default function ProfessionalProfileScreen() {
         return { id: p.id, url, path };
       });
       setPhotos(formattedPhotos);
-    }
-  };
-
-  const fetchServices = async () => {
-    if (!profile?.id) return;
-
-    const { data, error } = await supabase
-      .from('services')
-      .select('id, title')
-      .eq('professional_id', profile.id)
-      .order('created_at', { ascending: false })
-      .limit(3);
-
-    if (error) {
-      console.error('Erro ao buscar serviços:', error);
-    } else {
-      setServices(data || []);
     }
   };
 
@@ -243,7 +249,9 @@ export default function ProfessionalProfileScreen() {
           onPress: async () => {
             try {
               // Delete from storage
-              const photoPath = photo.url.split('/professional_photos/')[1].split('?')[0];
+              const photoPath = photo.url
+                .split('/professional_photos/')[1]
+                .split('?')[0];
 
               // Delete from storage
               const { error: storageError } = await supabase.storage
@@ -605,7 +613,7 @@ export default function ProfessionalProfileScreen() {
               <Button
                 mode="text"
                 icon={() => <Plus size={16} color={theme.colors.primary} />}
-                onPress={() => router.push('/services/create')}
+                onPress={() => router.push('/(professional)/services/create')}
               >
                 Adicionar
               </Button>
@@ -630,7 +638,7 @@ export default function ProfessionalProfileScreen() {
             <Button
               mode="outlined"
               style={styles.manageButton}
-              onPress={() => router.push('/services')}
+              onPress={() => router.push('/(professional)/services')}
             >
               Gerenciar Serviços
             </Button>

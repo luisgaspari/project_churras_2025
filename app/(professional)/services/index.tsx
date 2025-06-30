@@ -33,6 +33,7 @@ import {
   ArrowLeft,
   MenuIcon,
 } from 'lucide-react-native';
+import { useFocusEffect } from 'expo-router';
 
 interface Service {
   id: string;
@@ -53,6 +54,12 @@ export default function ServicesManagementScreen() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [menuVisible, setMenuVisible] = useState<string | null>(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadServices();
+    }, [profile?.id])
+  );
 
   useEffect(() => {
     if (profile) {
