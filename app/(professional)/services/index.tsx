@@ -21,17 +21,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import {
-  Plus,
-  MapPin,
-  Clock,
-  Users,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Eye,
-  ArrowLeft,
-} from 'lucide-react-native';
+import { Plus, MapPin, Clock, Users, MoveVertical as MoreVertical, CreditCard as Edit, Trash2, Eye, ArrowLeft } from 'lucide-react-native';
 
 interface Service {
   id: string;
