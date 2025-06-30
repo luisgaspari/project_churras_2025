@@ -21,7 +21,17 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { Plus, MapPin, Clock, Users, MoveVertical as MoreVertical, CreditCard as Edit, Trash2, Eye, ArrowLeft } from 'lucide-react-native';
+import {
+  Plus,
+  MapPin,
+  Clock,
+  Users,
+  MoveVertical as MoreVertical,
+  CreditCard as Edit,
+  Trash2,
+  Eye,
+  ArrowLeft,
+} from 'lucide-react-native';
 
 interface Service {
   id: string;
@@ -131,7 +141,7 @@ export default function ServicesManagementScreen() {
           source={{
             uri:
               item.images[0] ||
-              'https://images.pexels.com/photos/1459339/pexels-photo-1459339.jpeg?auto=compress&cs=tinysrgb&w=400',
+              'https://images.pexels.com/photos/1482803/pexels-photo-1482803.jpeg?auto=compress&cs=tinysrgb&w=400',
           }}
           style={styles.serviceImage}
         />
