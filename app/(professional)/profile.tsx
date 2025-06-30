@@ -433,7 +433,7 @@ export default function ProfessionalProfileScreen() {
         onPress: async () => {
           try {
             await signOut();
-            router.replace('/');
+            router.replace('../auth/');
           } catch (error) {
             Alert.alert('Erro', 'Não foi possível sair da conta');
           }

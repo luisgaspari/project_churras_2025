@@ -134,7 +134,9 @@ export default function CreateServiceScreen() {
 
     try {
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${session.user.id}/services/${new Date().getTime()}.${fileExt}`;
+      const fileName = `${
+        session.user.id
+      }/services/${new Date().getTime()}.${fileExt}`;
 
       const formData = new FormData();
       formData.append('file', {
@@ -215,10 +217,7 @@ export default function CreateServiceScreen() {
     }
 
     if (priceTo && (isNaN(priceTo) || priceTo <= priceFrom)) {
-      Alert.alert(
-        'Erro',
-        'O preço final deve ser maior que o preço inicial.'
-      );
+      Alert.alert('Erro', 'O preço final deve ser maior que o preço inicial.');
       return false;
     }
 
@@ -230,9 +229,14 @@ export default function CreateServiceScreen() {
 
     const maxGuests = parseInt(form.max_guests);
     if (isNaN(maxGuests) || maxGuests <= 0) {
+      Alert.alert('Erro', 'Por favor, informe um número válido de convidados.');
+      return false;
+    }
+
+    if (images.length === 0) {
       Alert.alert(
         'Erro',
-        'Por favor, informe um número válido de convidados.'
+        'Por favor, adicione pelo menos uma foto do serviço.'
       );
       return false;
     }
@@ -266,21 +270,24 @@ export default function CreateServiceScreen() {
       Alert.alert('Sucesso', 'Serviço criado com sucesso!', [
         {
           text: 'OK',
-          onPress: () => router.back(),
+          onPress: () => router.push('/(professional)/services'),
         },
       ]);
     } catch (error: any) {
       console.error('Error creating service:', error);
-      Alert.alert(
-        'Erro',
-        error.message || 'Não foi possível criar o serviço.'
-      );
+      Alert.alert('Erro', error.message || 'Não foi possível criar o serviço.');
     } finally {
       setLoading(false);
     }
   };
 
-  const renderImageItem = ({ item, index }: { item: string; index: number }) => (
+  const renderImageItem = ({
+    item,
+    index,
+  }: {
+    item: string;
+    index: number;
+  }) => (
     <View style={styles.imageContainer}>
       <Image source={{ uri: item }} style={styles.serviceImage} />
       <TouchableOpacity

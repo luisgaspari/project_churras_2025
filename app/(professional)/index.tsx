@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { Text, Card, Button, FAB } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -272,14 +273,14 @@ export default function ProfessionalHomeScreen() {
             <Button
               mode="contained"
               style={styles.actionButton}
-              onPress={() => {}}
+              onPress={() => router.push('/(professional)/services/create')}
             >
               Criar Novo Serviço
             </Button>
             <Button
               mode="outlined"
               style={styles.actionButton}
-              onPress={() => {}}
+              onPress={() => router.push('/(professional)/analytics')}
             >
               Ver Relatórios
             </Button>
@@ -290,7 +291,7 @@ export default function ProfessionalHomeScreen() {
       <FAB
         icon={() => <Plus size={24} color="white" />}
         style={styles.fab}
-        onPress={() => {}}
+        onPress={() => router.push('/(professional)/services/create')}
       />
     </SafeAreaView>
   );

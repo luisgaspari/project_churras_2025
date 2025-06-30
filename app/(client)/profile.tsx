@@ -182,7 +182,7 @@ export default function ClientProfileScreen() {
         onPress: async () => {
           try {
             await signOut();
-            router.replace('/');
+            router.replace('../auth/');
           } catch (error) {
             Alert.alert('Erro', 'Não foi possível sair da conta');
           }
