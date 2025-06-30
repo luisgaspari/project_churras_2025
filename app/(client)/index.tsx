@@ -47,13 +47,15 @@ export default function ClientHomeScreen() {
     try {
       const { data, error } = await supabase
         .from('services')
-        .select(`
+        .select(
+          `
           *,
           profiles (
             full_name,
             avatar_url
           )
-        `)
+        `
+        )
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -76,10 +78,20 @@ export default function ClientHomeScreen() {
   };
 
   const renderServiceCard = ({ item }: { item: Service }) => (
-    <Card style={styles.serviceCard} onPress={() => router.push(`/service/${item.id}`)}>
+    <Card
+      style={styles.serviceCard}
+      onPress={() =>
+        router.push({
+          pathname: '../(professional)/services/edit/[id]',
+          params: { id: item.id },
+        })
+      }
+    >
       <Image
-        source={{ 
-          uri: item.images?.[0] || 'https://images.pexels.com/photos/1459339/pexels-photo-1459339.jpeg?auto=compress&cs=tinysrgb&w=400'
+        source={{
+          uri:
+            item.images?.[0] ||
+            'https://images.pexels.com/photos/1482803/pexels-photo-1482803.jpeg?auto=compress&cs=tinysrgb&w=400',
         }}
         style={styles.serviceImage}
       />
@@ -87,10 +99,14 @@ export default function ClientHomeScreen() {
         <Text variant="titleMedium" style={styles.serviceTitle}>
           {item.title}
         </Text>
-        <Text variant="bodySmall" style={styles.serviceDescription} numberOfLines={2}>
+        <Text
+          variant="bodySmall"
+          style={styles.serviceDescription}
+          numberOfLines={2}
+        >
           {item.description}
         </Text>
-        
+
         <View style={styles.serviceInfo}>
           <View style={styles.infoRow}>
             <MapPin size={16} color={theme.colors.onSurfaceVariant} />
@@ -116,7 +132,9 @@ export default function ClientHomeScreen() {
             </Text>
             <View style={styles.rating}>
               <Star size={14} color={theme.colors.tertiary} />
-              <Text variant="bodySmall" style={styles.ratingText}>4.8</Text>
+              <Text variant="bodySmall" style={styles.ratingText}>
+                4.8
+              </Text>
             </View>
           </View>
         </View>
@@ -146,7 +164,11 @@ export default function ClientHomeScreen() {
         />
 
         {/* Categories */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesContainer}
+        >
           {categories.map((category) => (
             <Chip
               key={category.key}
@@ -164,7 +186,7 @@ export default function ClientHomeScreen() {
           <Text variant="titleLarge" style={styles.sectionTitle}>
             Churrasqueiros em destaque
           </Text>
-          
+
           {loading ? (
             <Text>Carregando...</Text>
           ) : (
