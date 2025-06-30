@@ -42,15 +42,22 @@ interface Photo {
   path: string;
 }
 
+interface Service {
+  id: string;
+  title: string;
+}
+
 export default function ProfessionalProfileScreen() {
   const { profile, signOut, session, refreshProfile } = useAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (profile?.id) {
       fetchPhotos();
+      fetchServices();
     }
   }, [profile?.id]);
 
@@ -73,6 +80,23 @@ export default function ProfessionalProfileScreen() {
         return { id: p.id, url, path };
       });
       setPhotos(formattedPhotos);
+    }
+  };
+
+  const fetchServices = async () => {
+    if (!profile?.id) return;
+
+    const { data, error } = await supabase
+      .from('services')
+      .select('id, title')
+      .eq('professional_id', profile.id)
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    if (error) {
+      console.error('Erro ao buscar serviços:', error);
+    } else {
+      setServices(data || []);
     }
   };
 
@@ -581,22 +605,32 @@ export default function ProfessionalProfileScreen() {
               <Button
                 mode="text"
                 icon={() => <Plus size={16} color={theme.colors.primary} />}
-                onPress={() => {}}
+                onPress={() => router.push('/services/create')}
               >
                 Adicionar
               </Button>
             </View>
 
-            <View style={styles.servicesGrid}>
-              <Chip style={styles.serviceChip}>Churrasco Tradicional</Chip>
-              <Chip style={styles.serviceChip}>Churrasco Premium</Chip>
-              <Chip style={styles.serviceChip}>Espetinhos</Chip>
-            </View>
+            {services.length > 0 ? (
+              <View style={styles.servicesGrid}>
+                {services.map((service) => (
+                  <Chip key={service.id} style={styles.serviceChip}>
+                    {service.title}
+                  </Chip>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.emptyServicesContainer}>
+                <Text variant="bodyMedium" style={styles.emptyServicesText}>
+                  Nenhum serviço cadastrado ainda.
+                </Text>
+              </View>
+            )}
 
             <Button
               mode="outlined"
               style={styles.manageButton}
-              onPress={() => {}}
+              onPress={() => router.push('/services')}
             >
               Gerenciar Serviços
             </Button>
@@ -863,6 +897,14 @@ const styles = StyleSheet.create({
   },
   serviceChip: {
     backgroundColor: theme.colors.primaryContainer,
+  },
+  emptyServicesContainer: {
+    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
+  },
+  emptyServicesText: {
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
   },
   manageButton: {
     marginTop: spacing.sm,
