@@ -5,7 +5,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { Calendar, DollarSign, Star, TrendingUp, Plus } from 'lucide-react-native';
+import {
+  Calendar,
+  DollarSign,
+  Star,
+  TrendingUp,
+  Plus,
+} from 'lucide-react-native';
 
 interface DashboardStats {
   totalBookings: number;
@@ -50,12 +56,14 @@ export default function ProfessionalHomeScreen() {
       // Load bookings
       const { data: bookings, error } = await supabase
         .from('bookings')
-        .select(`
+        .select(
+          `
           *,
           profiles!bookings_client_id_fkey (
             full_name
           )
-        `)
+        `
+        )
         .eq('professional_id', profile.id)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -64,20 +72,26 @@ export default function ProfessionalHomeScreen() {
         console.error('Error loading bookings:', error);
       } else {
         setRecentBookings(bookings || []);
-        
+
         // Calculate stats
         const totalBookings = bookings?.length || 0;
-        const pendingBookings = bookings?.filter(b => b.status === 'pending').length || 0;
-        
+        const pendingBookings =
+          bookings?.filter((b) => b.status === 'pending').length || 0;
+
         // Calculate monthly revenue (current month)
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
-        const monthlyRevenue = bookings?.filter(b => {
-          const bookingDate = new Date(b.event_date);
-          return bookingDate.getMonth() === currentMonth && 
-                 bookingDate.getFullYear() === currentYear &&
-                 (b.status === 'confirmed' || b.status === 'completed');
-        }).reduce((sum, b) => sum + b.total_price, 0) || 0;
+        const monthlyRevenue =
+          bookings
+            ?.filter((b) => {
+              const bookingDate = new Date(b.event_date);
+              return (
+                bookingDate.getMonth() === currentMonth &&
+                bookingDate.getFullYear() === currentYear &&
+                (b.status === 'confirmed' || b.status === 'completed')
+              );
+            })
+            .reduce((sum, b) => sum + b.total_price, 0) || 0;
 
         setStats({
           totalBookings,
@@ -126,11 +140,11 @@ export default function ProfessionalHomeScreen() {
           <Text variant="titleMedium" style={styles.clientName}>
             {item.profiles?.full_name}
           </Text>
-          <View 
+          <View
             style={[
-              styles.statusDot, 
-              { backgroundColor: getStatusColor(item.status) }
-            ]} 
+              styles.statusDot,
+              { backgroundColor: getStatusColor(item.status) },
+            ]}
           />
         </View>
         <Text variant="bodyMedium" style={styles.bookingDate}>
@@ -253,7 +267,7 @@ export default function ProfessionalHomeScreen() {
           <Text variant="titleLarge" style={styles.sectionTitle}>
             Ações Rápidas
           </Text>
-          
+
           <View style={styles.actionsContainer}>
             <Button
               mode="contained"

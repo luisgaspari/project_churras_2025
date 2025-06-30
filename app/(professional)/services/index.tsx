@@ -31,6 +31,7 @@ import {
   Trash2,
   Eye,
   ArrowLeft,
+  MenuIcon,
 } from 'lucide-react-native';
 
 interface Service {
@@ -157,7 +158,7 @@ export default function ServicesManagementScreen() {
             anchor={
               <IconButton
                 icon={() => (
-                  <MoreVertical size={20} color={theme.colors.onSurface} />
+                  <MenuIcon size={20} color={theme.colors.onSurface} />
                 )}
                 onPress={() => setMenuVisible(item.id)}
               />
@@ -166,7 +167,10 @@ export default function ServicesManagementScreen() {
             <Menu.Item
               onPress={() => {
                 setMenuVisible(null);
-                router.push(`/services/edit/${item.id}`);
+                router.push({
+                  pathname: '/(professional)/services/edit/[id]',
+                  params: { id: item.id },
+                });
               }}
               title="Editar"
               leadingIcon={() => (
