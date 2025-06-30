@@ -33,11 +33,18 @@ import {
   Camera,
   Plus,
   Star,
+  Trash2,
 } from 'lucide-react-native';
+
+interface Photo {
+  id: string;
+  url: string;
+  path: string;
+}
 
 export default function ProfessionalProfileScreen() {
   const { profile, signOut, session, refreshProfile } = useAuth();
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -52,84 +59,206 @@ export default function ProfessionalProfileScreen() {
 
     const { data, error } = await supabase
       .from('professional_photos')
-      .select('photo_url')
-      .eq('professional_id', profile.id);
+      .select('id, photo_url')
+      .eq('professional_id', profile.id)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Erro ao buscar fotos:', error);
       Alert.alert('Erro', 'Não foi possível carregar as fotos.');
     } else {
-      setPhotos(data.map((p) => p.photo_url));
+      const formattedPhotos = data.map((p) => {
+        const url = `${p.photo_url}?t=${new Date().getTime()}`;
+        const path = p.photo_url.substring(p.photo_url.lastIndexOf('/') + 1);
+        return { id: p.id, url, path };
+      });
+      setPhotos(formattedPhotos);
     }
   };
 
-  const handleAddPhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+  const handleAddPhoto = async (source: 'camera' | 'gallery') => {
+    let result;
+    const options: ImagePicker.ImagePickerOptions = {
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
-    });
+      quality: 0.8,
+    };
 
-    if (!result.canceled) {
-      uploadPhoto(result.assets[0].uri);
+    try {
+      if (source === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert(
+            'Permissão necessária',
+            'É necessário permitir o acesso à câmera para tirar uma foto.'
+          );
+          return;
+        }
+        result = await ImagePicker.launchCameraAsync(options);
+      } else {
+        const { status } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert(
+            'Permissão necessária',
+            'É necessário permitir o acesso à galeria para escolher uma foto.'
+          );
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync(options);
+      }
+
+      if (result.canceled) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      const fileSize = asset.fileSize || 0;
+
+      if (fileSize > 50 * 1024 * 1024) {
+        Alert.alert(
+          'Arquivo muito grande',
+          'O tamanho da imagem não pode exceder 50MB.'
+        );
+        return;
+      }
+
+      await uploadPhoto(asset.uri);
+    } catch (error) {
+      console.error('Erro ao selecionar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem.');
     }
+  };
+
+  const showAddPhotoOptions = () => {
+    Alert.alert(
+      'Adicionar Foto',
+      'Escolha uma opção para adicionar uma nova foto:',
+      [
+        {
+          text: 'Tirar foto',
+          onPress: () => handleAddPhoto('camera'),
+        },
+        {
+          text: 'Escolher da Galeria',
+          onPress: () => handleAddPhoto('gallery'),
+        },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+      ]
+    );
   };
 
   const uploadPhoto = async (uri: string) => {
     if (!session?.user) return;
     setUploading(true);
 
-    const photo = {
-      uri,
-      type: 'image/jpeg',
-      name: `${session.user.id}/${new Date().getTime()}.jpg`,
-    };
+    try {
+      const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${session.user.id}/${new Date().getTime()}.${fileExt}`;
 
-    const formData = new FormData();
-    formData.append('file', photo as any);
+      const formData = new FormData();
+      formData.append('file', {
+        uri,
+        name: fileName,
+        type: `image/${fileExt}`,
+      } as any);
 
-    const { error: uploadError } = await supabase.storage
-      .from('professional_photos')
-      .upload(photo.name, formData);
+      const { error: uploadError } = await supabase.storage
+        .from('professional_photos')
+        .upload(fileName, formData, {
+          cacheControl: '3600',
+          upsert: false,
+        });
 
-    if (uploadError) {
-      Alert.alert('Erro', 'Não foi possível enviar a foto.');
-      setUploading(false);
-      return;
-    }
+      if (uploadError) {
+        throw uploadError;
+      }
 
-    const { data: publicUrlData } = supabase.storage
-      .from('professional_photos')
-      .getPublicUrl(photo.name);
+      const { data: publicUrlData } = supabase.storage
+        .from('professional_photos')
+        .getPublicUrl(fileName);
 
-    if (!publicUrlData) {
-      Alert.alert('Erro', 'Não foi possível obter a URL da foto.');
-      setUploading(false);
-      return;
-    }
+      if (!publicUrlData) {
+        throw new Error('Não foi possível obter a URL da foto.');
+      }
 
-    const { error: dbError } = await supabase
-      .from('professional_photos')
-      .insert({
-        professional_id: session.user.id,
-        photo_url: publicUrlData.publicUrl,
-      });
+      const { error: dbError } = await supabase
+        .from('professional_photos')
+        .insert({
+          professional_id: session.user.id,
+          photo_url: publicUrlData.publicUrl,
+        });
 
-    if (dbError) {
-      Alert.alert('Erro', 'Não foi possível salvar a foto no perfil.');
-    } else {
+      if (dbError) {
+        throw dbError;
+      }
+
       Alert.alert('Sucesso', 'Foto adicionada!');
       fetchPhotos();
+    } catch (error: any) {
+      console.error('Erro ao enviar foto:', error);
+      Alert.alert('Erro', error.message || 'Não foi possível enviar a foto.');
+    } finally {
+      setUploading(false);
     }
+  };
 
-    setUploading(false);
+  const handleDeletePhoto = async (photo: Photo) => {
+    Alert.alert(
+      'Excluir Foto',
+      'Tem certeza que deseja excluir esta foto? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Delete from storage
+              const photoPath = photo.url.split('/professional_photos/')[1].split('?')[0];
+
+              // Delete from storage
+              const { error: storageError } = await supabase.storage
+                .from('professional_photos')
+                .remove([photoPath]);
+
+              if (storageError) {
+                throw storageError;
+              }
+
+              // Delete from database
+              const { error: dbError } = await supabase
+                .from('professional_photos')
+                .delete()
+                .eq('id', photo.id);
+
+              if (dbError) {
+                throw dbError;
+              }
+
+              Alert.alert('Sucesso', 'Foto excluída!');
+              setPhotos(photos.filter((p) => p.id !== photo.id));
+            } catch (error: any) {
+              console.error('Erro ao excluir foto:', error);
+              Alert.alert(
+                'Erro',
+                error.message || 'Não foi possível excluir a foto.'
+              );
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleUpdateAvatar = async (source: 'camera' | 'gallery') => {
     let result;
     const options: ImagePicker.ImagePickerOptions = {
-      mediaTypes: ['images'],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -186,44 +315,43 @@ export default function ProfessionalProfileScreen() {
     setUploadingAvatar(true);
 
     try {
-      const response = await fetch(uri);
-      const blob = await response.blob();
-
-      if (blob.size === 0) {
-        Alert.alert(
-          'Erro',
-          'Não foi possível ler a imagem selecionada. Tente novamente.'
-        );
-        setUploadingAvatar(false);
-        return;
-      }
-
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const filePath = `${session.user.id}.${fileExt}`;
+      const fileName = `${session.user.id}.${fileExt}`;
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri,
+        name: fileName,
+        type: `image/${fileExt}`,
+      } as any);
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, blob, {
+        .upload(fileName, formData, {
           cacheControl: '3600',
           upsert: true,
-          contentType: blob.type || `image/${fileExt}`,
         });
 
       if (uploadError) {
         throw uploadError;
       }
 
+      // We need to wait a bit for the CDN to update
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       const { data: publicUrlData } = supabase.storage
         .from('avatars')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
       if (!publicUrlData) {
         throw new Error('Não foi possível obter a URL pública do avatar.');
       }
 
+      const finalUrl = `${publicUrlData.publicUrl}?t=${new Date().getTime()}`;
+
       const { error: dbError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrlData.publicUrl })
+        .update({ avatar_url: finalUrl })
         .eq('id', session.user.id);
 
       if (dbError) {
@@ -399,7 +527,7 @@ export default function ProfessionalProfileScreen() {
               <Button
                 mode="text"
                 icon={() => <Plus size={16} color={theme.colors.primary} />}
-                onPress={handleAddPhoto}
+                onPress={showAddPhotoOptions}
                 loading={uploading}
                 disabled={uploading}
               >
@@ -411,9 +539,17 @@ export default function ProfessionalProfileScreen() {
                 data={photos}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item}
+                keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                  <Image source={{ uri: item }} style={styles.photo} />
+                  <View style={styles.photoContainer}>
+                    <Image source={{ uri: item.url }} style={styles.photo} />
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDeletePhoto(item)}
+                    >
+                      <Trash2 size={18} color={theme.colors.onError} />
+                    </TouchableOpacity>
+                  </View>
                 )}
                 contentContainerStyle={styles.photosGrid}
               />
@@ -519,7 +655,7 @@ export default function ProfessionalProfileScreen() {
                 mode="outlined"
                 style={styles.profileButton}
                 icon={() => <Camera size={16} color={theme.colors.primary} />}
-                onPress={handleAddPhoto}
+                onPress={showAddPhotoOptions}
                 loading={uploading}
                 disabled={uploading}
               >
@@ -667,11 +803,22 @@ const styles = StyleSheet.create({
   photosGrid: {
     gap: spacing.sm,
   },
+  photoContainer: {
+    position: 'relative',
+  },
   photo: {
     width: 120,
     height: 90,
     borderRadius: theme.roundness,
     backgroundColor: theme.colors.surfaceVariant,
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: spacing.xs,
+    borderRadius: 20,
   },
   emptyPhotosContainer: {
     alignItems: 'center',
