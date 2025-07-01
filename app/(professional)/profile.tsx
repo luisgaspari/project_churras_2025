@@ -34,6 +34,7 @@ import {
   Plus,
   Star,
   Trash2,
+  Edit,
 } from 'lucide-react-native';
 
 interface Photo {
@@ -707,7 +708,8 @@ export default function ProfessionalProfileScreen() {
               <Button
                 mode="contained"
                 style={styles.profileButton}
-                onPress={() => {}}
+                icon={() => <Edit size={16} color={theme.colors.onPrimary} />}
+                onPress={() => router.push('/(professional)/edit-profile')}
               >
                 Editar Perfil
               </Button>

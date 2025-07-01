@@ -30,6 +30,7 @@ import {
   CreditCard,
   CircleHelp as HelpCircle,
   Camera,
+  Edit,
 } from 'lucide-react-native';
 
 export default function ClientProfileScreen() {
@@ -293,9 +294,10 @@ export default function ClientProfileScreen() {
             )}
 
             <Button
-              mode="outlined"
+              mode="contained"
               style={styles.editButton}
-              onPress={() => {}}
+              icon={() => <Edit size={16} color={theme.colors.onPrimary} />}
+              onPress={() => router.push('/(client)/edit-profile')}
             >
               Editar Perfil
             </Button>
