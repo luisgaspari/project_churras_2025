@@ -6,6 +6,9 @@ import {
   Image,
   Alert,
   FlatList,
+  Modal,
+  TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import {
   Text,
@@ -33,7 +36,13 @@ import {
   Mail,
   Calendar,
   DollarSign,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Camera,
 } from 'lucide-react-native';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 interface Service {
   id: string;
@@ -54,6 +63,12 @@ interface Service {
   };
 }
 
+interface ProfessionalPhoto {
+  id: string;
+  photo_url: string;
+  created_at: string;
+}
+
 interface BookingForm {
   event_date: Date;
   event_time: Date;
@@ -66,11 +81,15 @@ export default function ServiceDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useAuth();
   const [service, setService] = useState<Service | null>(null);
+  const [professionalPhotos, setProfessionalPhotos] = useState<ProfessionalPhoto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   
   const [bookingForm, setBookingForm] = useState<BookingForm>({
     event_date: new Date(),
@@ -115,6 +134,11 @@ export default function ServiceDetailsScreen() {
         ...prev,
         location: data.location,
       }));
+
+      // Load professional photos
+      if (data.professional_id) {
+        loadProfessionalPhotos(data.professional_id);
+      }
     } catch (error: any) {
       console.error('Error loading service:', error);
       Alert.alert(
@@ -129,6 +153,27 @@ export default function ServiceDetailsScreen() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProfessionalPhotos = async (professionalId: string) => {
+    setLoadingPhotos(true);
+    try {
+      const { data, error } = await supabase
+        .from('professional_photos')
+        .select('*')
+        .eq('professional_id', professionalId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading professional photos:', error);
+      } else {
+        setProfessionalPhotos(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading professional photos:', error);
+    } finally {
+      setLoadingPhotos(false);
     }
   };
 
@@ -261,8 +306,31 @@ export default function ServiceDetailsScreen() {
     }
   };
 
+  const openGallery = (index: number = 0) => {
+    setSelectedPhotoIndex(index);
+    setShowGalleryModal(true);
+  };
+
+  const navigatePhoto = (direction: 'prev' | 'next') => {
+    if (direction === 'prev') {
+      setSelectedPhotoIndex(prev => 
+        prev > 0 ? prev - 1 : professionalPhotos.length - 1
+      );
+    } else {
+      setSelectedPhotoIndex(prev => 
+        prev < professionalPhotos.length - 1 ? prev + 1 : 0
+      );
+    }
+  };
+
   const renderImageItem = ({ item }: { item: string }) => (
     <Image source={{ uri: item }} style={styles.galleryImage} />
+  );
+
+  const renderProfessionalPhotoItem = ({ item, index }: { item: ProfessionalPhoto; index: number }) => (
+    <TouchableOpacity onPress={() => openGallery(index)}>
+      <Image source={{ uri: item.photo_url }} style={styles.professionalPhoto} />
+    </TouchableOpacity>
   );
 
   if (loading) {
@@ -428,12 +496,60 @@ export default function ServiceDetailsScreen() {
           </Card.Content>
         </Card>
 
-        {/* Image Gallery */}
+        {/* Professional Gallery */}
+        <Card style={styles.galleryCard}>
+          <Card.Content>
+            <View style={styles.galleryHeader}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Portfólio do Churrasqueiro
+              </Text>
+              {professionalPhotos.length > 0 && (
+                <Button
+                  mode="text"
+                  onPress={() => openGallery(0)}
+                  labelStyle={styles.viewAllLabel}
+                >
+                  Ver todas ({professionalPhotos.length})
+                </Button>
+              )}
+            </View>
+
+            {loadingPhotos ? (
+              <View style={styles.loadingPhotosContainer}>
+                <ActivityIndicator color={theme.colors.primary} />
+                <Text variant="bodySmall" style={styles.loadingPhotosText}>
+                  Carregando fotos...
+                </Text>
+              </View>
+            ) : professionalPhotos.length > 0 ? (
+              <FlatList
+                data={professionalPhotos.slice(0, 6)} // Show only first 6 photos
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item.id}
+                renderItem={renderProfessionalPhotoItem}
+                contentContainerStyle={styles.professionalGallery}
+              />
+            ) : (
+              <View style={styles.emptyGalleryContainer}>
+                <Camera size={48} color={theme.colors.onSurfaceVariant} />
+                <Text variant="bodyMedium" style={styles.emptyGalleryText}>
+                  Nenhuma foto disponível
+                </Text>
+                <Text variant="bodySmall" style={styles.emptyGallerySubtext}>
+                  O churrasqueiro ainda não adicionou fotos do seu trabalho.
+                </Text>
+              </View>
+            )}
+          </Card.Content>
+        </Card>
+
+        {/* Service Image Gallery */}
         {service.images && service.images.length > 1 && (
           <Card style={styles.galleryCard}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.sectionTitle}>
-                Galeria de Fotos
+                Fotos do Serviço
               </Text>
               <FlatList
                 data={service.images}
@@ -581,6 +697,60 @@ export default function ServiceDetailsScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Gallery Modal */}
+      <Modal
+        visible={showGalleryModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowGalleryModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text variant="titleMedium" style={styles.modalTitle}>
+              Portfólio - {service.profiles?.full_name}
+            </Text>
+            <IconButton
+              icon={() => <X size={24} color="white" />}
+              onPress={() => setShowGalleryModal(false)}
+            />
+          </View>
+
+          <View style={styles.modalContent}>
+            {professionalPhotos.length > 0 && (
+              <Image
+                source={{ uri: professionalPhotos[selectedPhotoIndex]?.photo_url }}
+                style={styles.modalImage}
+                resizeMode="contain"
+              />
+            )}
+
+            {professionalPhotos.length > 1 && (
+              <>
+                <TouchableOpacity
+                  style={[styles.navButton, styles.prevButton]}
+                  onPress={() => navigatePhoto('prev')}
+                >
+                  <ChevronLeft size={32} color="white" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.navButton, styles.nextButton]}
+                  onPress={() => navigatePhoto('next')}
+                >
+                  <ChevronRight size={32} color="white" />
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+
+          <View style={styles.modalFooter}>
+            <Text variant="bodyMedium" style={styles.photoCounter}>
+              {selectedPhotoIndex + 1} de {professionalPhotos.length}
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -725,6 +895,53 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     elevation: 2,
   },
+  galleryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  viewAllLabel: {
+    color: theme.colors.primary,
+    fontSize: 14,
+  },
+  loadingPhotosContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
+  },
+  loadingPhotosText: {
+    marginLeft: spacing.sm,
+    color: theme.colors.onSurfaceVariant,
+  },
+  professionalGallery: {
+    gap: spacing.sm,
+  },
+  professionalPhoto: {
+    width: 120,
+    height: 90,
+    borderRadius: theme.roundness,
+    backgroundColor: theme.colors.surfaceVariant,
+  },
+  emptyGalleryContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: theme.roundness,
+  },
+  emptyGalleryText: {
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  emptyGallerySubtext: {
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
   gallery: {
     gap: spacing.sm,
   },
@@ -780,5 +997,53 @@ const styles = StyleSheet.create({
   },
   bookButton: {
     paddingVertical: spacing.sm,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
+  },
+  modalTitle: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  modalContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  modalImage: {
+    width: screenWidth,
+    height: '80%',
+  },
+  navButton: {
+    position: 'absolute',
+    top: '50%',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 25,
+    padding: spacing.sm,
+    transform: [{ translateY: -25 }],
+  },
+  prevButton: {
+    left: spacing.lg,
+  },
+  nextButton: {
+    right: spacing.lg,
+  },
+  modalFooter: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  photoCounter: {
+    color: 'white',
   },
 });
