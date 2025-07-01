@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -54,6 +54,7 @@ export default function ReviewModal({
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
+  const commentInputRef = useRef<any>(null);
 
   const handleSubmitReview = async () => {
     if (rating === 0) {
@@ -65,6 +66,9 @@ export default function ReviewModal({
       return;
     }
 
+    // Dismiss keyboard before submitting
+    Keyboard.dismiss();
+    
     setLoading(true);
     try {
       const reviewData = {
@@ -108,12 +112,23 @@ export default function ReviewModal({
   };
 
   const handleClose = () => {
-    if (Platform.OS === 'ios') {
-      Keyboard.dismiss();
-    }
+    Keyboard.dismiss();
     setRating(0);
     setComment('');
     onClose();
+  };
+
+  const handleCommentChange = (text: string) => {
+    setComment(text);
+  };
+
+  const handleCommentFocus = () => {
+    // Ensure the input stays focused
+    if (commentInputRef.current) {
+      setTimeout(() => {
+        commentInputRef.current?.focus();
+      }, 100);
+    }
   };
 
   const getRatingText = (rating: number) => {
@@ -153,6 +168,7 @@ export default function ReviewModal({
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.scrollContentContainer}
           bounces={Platform.OS === 'ios'}
+          nestedScrollEnabled={true}
         >
           {/* Professional Info */}
           <Card style={styles.professionalCard}>
@@ -210,9 +226,11 @@ export default function ReviewModal({
             </Text>
 
             <TextInput
+              ref={commentInputRef}
               label="Seu comentário"
               value={comment}
-              onChangeText={setComment}
+              onChangeText={handleCommentChange}
+              onFocus={handleCommentFocus}
               style={styles.commentInput}
               mode="outlined"
               multiline
@@ -221,7 +239,10 @@ export default function ReviewModal({
               maxLength={500}
               textAlignVertical="top"
               returnKeyType="done"
-              blurOnSubmit={true}
+              blurOnSubmit={false}
+              autoCorrect={true}
+              spellCheck={true}
+              scrollEnabled={false}
             />
             <Text variant="bodySmall" style={styles.characterCount}>
               {comment.length}/500 caracteres
@@ -262,26 +283,24 @@ export default function ReviewModal({
       presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'overFullScreen'}
       statusBarTranslucent={Platform.OS === 'android'}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.modalContainer}>
-          {Platform.OS === 'ios' ? (
-            <KeyboardAvoidingView 
-              behavior="padding" 
-              style={styles.keyboardAvoidingView}
-              keyboardVerticalOffset={0}
-            >
-              <ModalContent />
-            </KeyboardAvoidingView>
-          ) : (
-            <KeyboardAvoidingView 
-              behavior="height" 
-              style={styles.keyboardAvoidingView}
-            >
-              <ModalContent />
-            </KeyboardAvoidingView>
-          )}
-        </View>
-      </TouchableWithoutFeedback>
+      <View style={styles.modalContainer}>
+        {Platform.OS === 'ios' ? (
+          <KeyboardAvoidingView 
+            behavior="padding" 
+            style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={0}
+          >
+            <ModalContent />
+          </KeyboardAvoidingView>
+        ) : (
+          <KeyboardAvoidingView 
+            behavior="height" 
+            style={styles.keyboardAvoidingView}
+          >
+            <ModalContent />
+          </KeyboardAvoidingView>
+        )}
+      </View>
     </Modal>
   );
 }
@@ -331,6 +350,7 @@ const styles = StyleSheet.create({
   },
   scrollContentContainer: {
     paddingBottom: Platform.OS === 'ios' ? spacing.xl : spacing.lg,
+    flexGrow: 1,
   },
   professionalCard: {
     marginHorizontal: spacing.lg,
