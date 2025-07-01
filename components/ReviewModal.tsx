@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
+  SafeAreaView,
 } from 'react-native';
 import {
   Text,
@@ -56,12 +57,11 @@ export default function ReviewModal({
 
   const handleSubmitReview = async () => {
     if (rating === 0) {
-      if (Platform.OS === 'ios') {
-        // Use native iOS alert for better compatibility
-        Alert.alert('Avaliação necessária', 'Por favor, selecione uma avaliação de 1 a 5 estrelas.');
-      } else {
-        Alert.alert('Erro', 'Por favor, selecione uma avaliação de 1 a 5 estrelas.');
-      }
+      Alert.alert(
+        'Avaliação necessária', 
+        'Por favor, selecione uma avaliação de 1 a 5 estrelas.',
+        [{ text: 'OK', style: 'default' }]
+      );
       return;
     }
 
@@ -81,15 +81,13 @@ export default function ReviewModal({
         throw error;
       }
 
-      const alertTitle = Platform.OS === 'ios' ? 'Avaliação enviada' : 'Sucesso';
-      const alertMessage = 'Sua avaliação foi enviada com sucesso! Obrigado pelo feedback.';
-
       Alert.alert(
-        alertTitle,
-        alertMessage,
+        'Sucesso',
+        'Sua avaliação foi enviada com sucesso! Obrigado pelo feedback.',
         [
           {
             text: 'OK',
+            style: 'default',
             onPress: () => {
               handleClose();
               onReviewSubmitted?.();
@@ -99,17 +97,17 @@ export default function ReviewModal({
       );
     } catch (error: any) {
       console.error('Error submitting review:', error);
-      const alertTitle = Platform.OS === 'ios' ? 'Erro ao enviar' : 'Erro';
-      const alertMessage = error.message || 'Não foi possível enviar a avaliação. Tente novamente.';
-      
-      Alert.alert(alertTitle, alertMessage);
+      Alert.alert(
+        'Erro',
+        error.message || 'Não foi possível enviar a avaliação. Tente novamente.',
+        [{ text: 'OK', style: 'default' }]
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleClose = () => {
-    // Dismiss keyboard before closing on iOS
     if (Platform.OS === 'ios') {
       Keyboard.dismiss();
     }
@@ -136,129 +134,133 @@ export default function ReviewModal({
   };
 
   const ModalContent = () => (
-    <View style={styles.modalContent}>
-      <View style={styles.modalHeader}>
-        <Text variant="titleLarge" style={styles.modalTitle}>
-          Avaliar Churrasqueiro
-        </Text>
-        <IconButton
-          icon={() => <X size={24} color={theme.colors.onSurface} />}
-          onPress={handleClose}
-          style={styles.closeButton}
-        />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <Text variant="titleLarge" style={styles.modalTitle}>
+            Avaliar Churrasqueiro
+          </Text>
+          <IconButton
+            icon={() => <X size={24} color={theme.colors.onSurface} />}
+            onPress={handleClose}
+            style={styles.closeButton}
+          />
+        </View>
 
-      <ScrollView 
-        style={styles.scrollContent} 
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.scrollContentContainer}
-      >
-        {/* Professional Info */}
-        <Card style={styles.professionalCard}>
-          <Card.Content style={styles.professionalContent}>
-            {booking.profiles?.avatar_url ? (
-              <Avatar.Image
-                size={60}
-                source={{ uri: booking.profiles.avatar_url }}
+        <ScrollView 
+          style={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContentContainer}
+          bounces={Platform.OS === 'ios'}
+        >
+          {/* Professional Info */}
+          <Card style={styles.professionalCard}>
+            <Card.Content style={styles.professionalContent}>
+              {booking.profiles?.avatar_url ? (
+                <Avatar.Image
+                  size={60}
+                  source={{ uri: booking.profiles.avatar_url }}
+                />
+              ) : (
+                <Avatar.Text
+                  size={60}
+                  label={booking.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
+                />
+              )}
+              <View style={styles.professionalInfo}>
+                <Text variant="titleMedium" style={styles.professionalName}>
+                  {booking.profiles?.full_name}
+                </Text>
+                <Text variant="bodyMedium" style={styles.serviceName}>
+                  {booking.services?.title}
+                </Text>
+              </View>
+            </Card.Content>
+          </Card>
+
+          {/* Rating Section */}
+          <View style={styles.ratingSection}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Como foi sua experiência?
+            </Text>
+            <Text variant="bodyMedium" style={styles.sectionDescription}>
+              Sua avaliação ajuda outros clientes a escolher o melhor churrasqueiro.
+            </Text>
+
+            <View style={styles.ratingContainer}>
+              <RatingStars
+                rating={rating}
+                onRatingChange={setRating}
+                size={40}
               />
-            ) : (
-              <Avatar.Text
-                size={60}
-                label={booking.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
-              />
-            )}
-            <View style={styles.professionalInfo}>
-              <Text variant="titleMedium" style={styles.professionalName}>
-                {booking.profiles?.full_name}
-              </Text>
-              <Text variant="bodyMedium" style={styles.serviceName}>
-                {booking.services?.title}
+              <Text variant="titleSmall" style={styles.ratingText}>
+                {getRatingText(rating)}
               </Text>
             </View>
-          </Card.Content>
-        </Card>
+          </View>
 
-        {/* Rating Section */}
-        <View style={styles.ratingSection}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Como foi sua experiência?
-          </Text>
-          <Text variant="bodyMedium" style={styles.sectionDescription}>
-            Sua avaliação ajuda outros clientes a escolher o melhor churrasqueiro.
-          </Text>
+          {/* Comment Section */}
+          <View style={styles.commentSection}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Comentário (opcional)
+            </Text>
+            <Text variant="bodyMedium" style={styles.sectionDescription}>
+              Conte mais sobre sua experiência para ajudar outros clientes.
+            </Text>
 
-          <View style={styles.ratingContainer}>
-            <RatingStars
-              rating={rating}
-              onRatingChange={setRating}
-              size={40}
+            <TextInput
+              label="Seu comentário"
+              value={comment}
+              onChangeText={setComment}
+              style={styles.commentInput}
+              mode="outlined"
+              multiline
+              numberOfLines={4}
+              placeholder="O que você achou do serviço? Como foi a qualidade da comida, pontualidade, atendimento..."
+              maxLength={500}
+              textAlignVertical="top"
+              returnKeyType="done"
+              blurOnSubmit={true}
             />
-            <Text variant="titleSmall" style={styles.ratingText}>
-              {getRatingText(rating)}
+            <Text variant="bodySmall" style={styles.characterCount}>
+              {comment.length}/500 caracteres
             </Text>
           </View>
-        </View>
 
-        {/* Comment Section */}
-        <View style={styles.commentSection}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Comentário (opcional)
-          </Text>
-          <Text variant="bodyMedium" style={styles.sectionDescription}>
-            Conte mais sobre sua experiência para ajudar outros clientes.
-          </Text>
-
-          <TextInput
-            label="Seu comentário"
-            value={comment}
-            onChangeText={setComment}
-            style={styles.commentInput}
-            mode="outlined"
-            multiline
-            numberOfLines={Platform.OS === 'ios' ? 4 : 4}
-            placeholder="O que você achou do serviço? Como foi a qualidade da comida, pontualidade, atendimento..."
-            maxLength={500}
-            textAlignVertical="top"
-            returnKeyType="done"
-            blurOnSubmit={true}
-          />
-          <Text variant="bodySmall" style={styles.characterCount}>
-            {comment.length}/500 caracteres
-          </Text>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <Button
-            mode="outlined"
-            onPress={handleClose}
-            style={styles.actionButton}
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            mode="contained"
-            onPress={handleSubmitReview}
-            style={styles.actionButton}
-            loading={loading}
-            disabled={loading || rating === 0}
-          >
-            Enviar Avaliação
-          </Button>
-        </View>
-      </ScrollView>
-    </View>
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <Button
+              mode="outlined"
+              onPress={handleClose}
+              style={styles.actionButton}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleSubmitReview}
+              style={styles.actionButton}
+              loading={loading}
+              disabled={loading || rating === 0}
+            >
+              Enviar Avaliação
+            </Button>
+          </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 
   return (
     <Modal
       visible={visible}
       transparent={true}
-      animationType={Platform.OS === 'ios' ? 'slide' : 'slide'}
+      animationType="slide"
       onRequestClose={handleClose}
-      presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : undefined}
+      presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'overFullScreen'}
+      statusBarTranslucent={Platform.OS === 'android'}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalContainer}>
@@ -287,29 +289,34 @@ export default function ReviewModal({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   keyboardAvoidingView: {
     flex: 1,
     justifyContent: 'flex-end',
   },
+  safeArea: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+  },
   modalContent: {
     backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: spacing.lg,
-    borderTopRightRadius: spacing.lg,
-    maxHeight: Platform.OS === 'ios' ? '95%' : '90%',
-    paddingBottom: Platform.OS === 'ios' ? spacing.xl + 20 : spacing.xl,
+    borderTopLeftRadius: Platform.OS === 'ios' ? spacing.lg : spacing.lg,
+    borderTopRightRadius: Platform.OS === 'ios' ? spacing.lg : spacing.lg,
+    flex: 1,
+    maxHeight: Platform.OS === 'ios' ? '100%' : '90%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: Platform.OS === 'ios' ? spacing.lg + 10 : spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? spacing.md : spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.surfaceVariant,
+    backgroundColor: theme.colors.surface,
   },
   modalTitle: {
     fontWeight: 'bold',
@@ -323,16 +330,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContentContainer: {
-    paddingBottom: spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? spacing.xl : spacing.lg,
   },
   professionalCard: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     elevation: Platform.OS === 'android' ? 1 : 0,
-    shadowColor: Platform.OS === 'ios' ? '#000' : undefined,
-    shadowOffset: Platform.OS === 'ios' ? { width: 0, height: 1 } : undefined,
-    shadowOpacity: Platform.OS === 'ios' ? 0.1 : undefined,
-    shadowRadius: Platform.OS === 'ios' ? 2 : undefined,
+    shadowColor: Platform.OS === 'ios' ? '#000' : 'transparent',
+    shadowOffset: Platform.OS === 'ios' ? { width: 0, height: 1 } : { width: 0, height: 0 },
+    shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0,
+    shadowRadius: Platform.OS === 'ios' ? 2 : 0,
+    backgroundColor: theme.colors.surface,
   },
   professionalContent: {
     flexDirection: 'row',
@@ -382,7 +390,8 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     marginBottom: spacing.sm,
-    minHeight: Platform.OS === 'ios' ? 100 : 80,
+    minHeight: Platform.OS === 'ios' ? 120 : 100,
+    backgroundColor: theme.colors.surface,
   },
   characterCount: {
     textAlign: 'right',
@@ -393,6 +402,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     marginTop: spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? spacing.lg : 0,
   },
   actionButton: {
     flex: 1,
