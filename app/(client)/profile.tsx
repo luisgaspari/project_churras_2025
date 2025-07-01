@@ -20,18 +20,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import {
-  User,
-  Phone,
-  Mail,
-  MapPin,
-  Settings,
-  LogOut,
-  CreditCard,
-  CircleHelp as HelpCircle,
-  Camera,
-  Edit,
-} from 'lucide-react-native';
+import { User, Phone, Mail, MapPin, Settings, LogOut, CreditCard, CircleHelp as HelpCircle, Camera, CreditCard as Edit } from 'lucide-react-native';
 
 export default function ClientProfileScreen() {
   const { profile, signOut, session, refreshProfile } = useAuth();
