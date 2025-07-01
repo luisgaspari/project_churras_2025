@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  FlatList,
   RefreshControl,
 } from 'react-native';
 import {
@@ -109,8 +108,8 @@ export default function ReviewsList({
     });
   };
 
-  const renderReviewItem = ({ item }: { item: Review }) => (
-    <Card style={styles.reviewCard}>
+  const renderReviewItem = (item: Review, index: number) => (
+    <Card key={item.id} style={[styles.reviewCard, index === 0 && styles.firstReviewCard]}>
       <Card.Content style={styles.reviewContent}>
         <View style={styles.reviewHeader}>
           <View style={styles.clientInfo}>
@@ -193,22 +192,15 @@ export default function ReviewsList({
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={reviews}
-        renderItem={renderReviewItem}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmptyState}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => loadReviews(true)}
-            colors={[theme.colors.primary]}
-          />
-        }
-        contentContainerStyle={reviews.length === 0 ? styles.emptyContainer : undefined}
-      />
+      {renderHeader()}
+      
+      {reviews.length === 0 ? (
+        renderEmptyState()
+      ) : (
+        <View style={styles.reviewsList}>
+          {reviews.map((review, index) => renderReviewItem(review, index))}
+        </View>
+      )}
     </View>
   );
 }
@@ -248,10 +240,15 @@ const styles = StyleSheet.create({
   totalReviews: {
     color: theme.colors.onSurfaceVariant,
   },
+  reviewsList: {
+    paddingHorizontal: spacing.lg,
+  },
   reviewCard: {
-    marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
     elevation: 1,
+  },
+  firstReviewCard: {
+    marginTop: 0,
   },
   reviewContent: {
     padding: spacing.md,
@@ -282,9 +279,6 @@ const styles = StyleSheet.create({
   reviewComment: {
     color: theme.colors.onSurface,
     lineHeight: 20,
-  },
-  emptyContainer: {
-    flex: 1,
   },
   emptyState: {
     flex: 1,
