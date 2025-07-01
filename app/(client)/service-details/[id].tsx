@@ -157,7 +157,7 @@ export default function ServiceDetailsScreen() {
         [
           {
             text: 'OK',
-            onPress: () => router.back(),
+            onPress: () => handleGoBack(),
           },
         ]
       );
@@ -204,6 +204,16 @@ export default function ServiceDetailsScreen() {
       }
     } catch (error) {
       console.error('Error loading professional rating:', error);
+    }
+  };
+
+  const handleGoBack = () => {
+    // Check if we can go back in the navigation stack
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      // If no navigation history, go to client home
+      router.replace('/(client)');
     }
   };
 
@@ -621,7 +631,7 @@ export default function ServiceDetailsScreen() {
           <Text variant="titleMedium" style={styles.errorText}>
             Serviço não encontrado
           </Text>
-          <Button mode="contained" onPress={() => router.back()}>
+          <Button mode="contained" onPress={handleGoBack}>
             Voltar
           </Button>
         </View>
@@ -634,7 +644,7 @@ export default function ServiceDetailsScreen() {
       <View style={styles.header}>
         <IconButton
           icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
-          onPress={() => router.back()}
+          onPress={handleGoBack}
         />
         <Text variant="headlineMedium" style={styles.title}>
           Detalhes do Serviço
