@@ -5,7 +5,6 @@ import {
   ScrollView,
   Image,
   Alert,
-  FlatList,
   Modal,
   TouchableOpacity,
   Dimensions,
@@ -521,15 +520,86 @@ export default function ServiceDetailsScreen() {
     }
   };
 
-  const renderImageItem = ({ item }: { item: string }) => (
-    <Image source={{ uri: item }} style={styles.galleryImage} />
-  );
+  const renderServiceImages = () => {
+    if (!service?.images || service.images.length <= 1) return null;
 
-  const renderProfessionalPhotoItem = ({ item, index }: { item: ProfessionalPhoto; index: number }) => (
-    <TouchableOpacity onPress={() => openGallery(index)}>
-      <Image source={{ uri: item.photo_url }} style={styles.professionalPhoto} />
-    </TouchableOpacity>
-  );
+    return (
+      <Card style={styles.galleryCard}>
+        <Card.Content>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Fotos do Serviço
+          </Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.gallery}
+          >
+            {service.images.map((image, index) => (
+              <Image 
+                key={index} 
+                source={{ uri: image }} 
+                style={styles.galleryImage} 
+              />
+            ))}
+          </ScrollView>
+        </Card.Content>
+      </Card>
+    );
+  };
+
+  const renderProfessionalPhotos = () => {
+    return (
+      <Card style={styles.galleryCard}>
+        <Card.Content>
+          <View style={styles.galleryHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Portfólio do Churrasqueiro
+            </Text>
+            {professionalPhotos.length > 0 && (
+              <Button
+                mode="text"
+                onPress={() => openGallery(0)}
+                labelStyle={styles.viewAllLabel}
+              >
+                Ver todas ({professionalPhotos.length})
+              </Button>
+            )}
+          </View>
+
+          {loadingPhotos ? (
+            <View style={styles.loadingPhotosContainer}>
+              <ActivityIndicator color={theme.colors.primary} />
+              <Text variant="bodySmall" style={styles.loadingPhotosText}>
+                Carregando fotos...
+              </Text>
+            </View>
+          ) : professionalPhotos.length > 0 ? (
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.professionalGallery}
+            >
+              {professionalPhotos.slice(0, 6).map((photo, index) => (
+                <TouchableOpacity key={photo.id} onPress={() => openGallery(index)}>
+                  <Image source={{ uri: photo.photo_url }} style={styles.professionalPhoto} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyGalleryContainer}>
+              <Camera size={48} color={theme.colors.onSurfaceVariant} />
+              <Text variant="bodyMedium" style={styles.emptyGalleryText}>
+                Nenhuma foto disponível
+              </Text>
+              <Text variant="bodySmall" style={styles.emptyGallerySubtext}>
+                O churrasqueiro ainda não adicionou fotos do seu trabalho.
+              </Text>
+            </View>
+          )}
+        </Card.Content>
+      </Card>
+    );
+  };
 
   if (loading) {
     return (
@@ -695,52 +765,7 @@ export default function ServiceDetailsScreen() {
         </Card>
 
         {/* Professional Gallery */}
-        <Card style={styles.galleryCard}>
-          <Card.Content>
-            <View style={styles.galleryHeader}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                Portfólio do Churrasqueiro
-              </Text>
-              {professionalPhotos.length > 0 && (
-                <Button
-                  mode="text"
-                  onPress={() => openGallery(0)}
-                  labelStyle={styles.viewAllLabel}
-                >
-                  Ver todas ({professionalPhotos.length})
-                </Button>
-              )}
-            </View>
-
-            {loadingPhotos ? (
-              <View style={styles.loadingPhotosContainer}>
-                <ActivityIndicator color={theme.colors.primary} />
-                <Text variant="bodySmall" style={styles.loadingPhotosText}>
-                  Carregando fotos...
-                </Text>
-              </View>
-            ) : professionalPhotos.length > 0 ? (
-              <FlatList
-                data={professionalPhotos.slice(0, 6)} // Show only first 6 photos
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item.id}
-                renderItem={renderProfessionalPhotoItem}
-                contentContainerStyle={styles.professionalGallery}
-              />
-            ) : (
-              <View style={styles.emptyGalleryContainer}>
-                <Camera size={48} color={theme.colors.onSurfaceVariant} />
-                <Text variant="bodyMedium" style={styles.emptyGalleryText}>
-                  Nenhuma foto disponível
-                </Text>
-                <Text variant="bodySmall" style={styles.emptyGallerySubtext}>
-                  O churrasqueiro ainda não adicionou fotos do seu trabalho.
-                </Text>
-              </View>
-            )}
-          </Card.Content>
-        </Card>
+        {renderProfessionalPhotos()}
 
         {/* Reviews Section */}
         <Card style={styles.reviewsCard}>
@@ -766,23 +791,7 @@ export default function ServiceDetailsScreen() {
         </Card>
 
         {/* Service Image Gallery */}
-        {service.images && service.images.length > 1 && (
-          <Card style={styles.galleryCard}>
-            <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                Fotos do Serviço
-              </Text>
-              <FlatList
-                data={service.images}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={renderImageItem}
-                contentContainerStyle={styles.gallery}
-              />
-            </Card.Content>
-          </Card>
-        )}
+        {renderServiceImages()}
 
         {/* Booking Form */}
         {showBookingForm && (
