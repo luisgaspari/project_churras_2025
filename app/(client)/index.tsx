@@ -82,7 +82,7 @@ export default function ClientHomeScreen() {
       style={styles.serviceCard}
       onPress={() =>
         router.push({
-          pathname: '../(professional)/services/edit/[id]',
+          pathname: '/service-details/[id]',
           params: { id: item.id },
         })
       }

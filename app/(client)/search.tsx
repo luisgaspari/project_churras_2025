@@ -48,9 +48,7 @@ export default function SearchScreen() {
   const loadServices = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('services')
-        .select(`
+      const { data, error } = await supabase.from('services').select(`
           *,
           profiles (
             full_name,
@@ -75,30 +73,35 @@ export default function SearchScreen() {
 
     // Text search
     if (searchQuery.trim()) {
-      filtered = filtered.filter(service =>
-        service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        service.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        service.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        service.profiles?.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (service) =>
+          service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          service.description
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          service.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          service.profiles?.full_name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
       );
     }
 
     // Apply filters
     if (selectedFilters.includes('budget')) {
-      filtered = filtered.filter(service => service.price_from <= 500);
+      filtered = filtered.filter((service) => service.price_from <= 500);
     }
 
     if (selectedFilters.includes('premium')) {
-      filtered = filtered.filter(service => service.price_from >= 800);
+      filtered = filtered.filter((service) => service.price_from >= 800);
     }
 
     setFilteredServices(filtered);
   };
 
   const toggleFilter = (filterKey: string) => {
-    setSelectedFilters(prev => {
+    setSelectedFilters((prev) => {
       if (prev.includes(filterKey)) {
-        return prev.filter(f => f !== filterKey);
+        return prev.filter((f) => f !== filterKey);
       } else {
         return [...prev, filterKey];
       }
@@ -125,10 +128,14 @@ export default function SearchScreen() {
         <Text variant="titleMedium" style={styles.serviceTitle}>
           {item.title}
         </Text>
-        <Text variant="bodySmall" style={styles.serviceDescription} numberOfLines={2}>
+        <Text
+          variant="bodySmall"
+          style={styles.serviceDescription}
+          numberOfLines={2}
+        >
           {item.description}
         </Text>
-        
+
         <View style={styles.serviceInfo}>
           <View style={styles.infoRow}>
             <MapPin size={16} color={theme.colors.onSurfaceVariant} />
@@ -151,7 +158,9 @@ export default function SearchScreen() {
             </Text>
             <View style={styles.rating}>
               <Star size={14} color={theme.colors.tertiary} />
-              <Text variant="bodySmall" style={styles.ratingText}>4.8</Text>
+              <Text variant="bodySmall" style={styles.ratingText}>
+                4.8
+              </Text>
             </View>
           </View>
         </View>

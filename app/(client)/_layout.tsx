@@ -1,12 +1,15 @@
 import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
-import { Chrome as Home, Search, Calendar, User, PhoneIncoming as HomeIcon } from 'lucide-react-native';
+import { Search, Calendar, User, HomeIcon } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 export default function ClientTabLayout() {
   return (
     <>
-      <Stack.Screen name="service-details/[id]" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="service-details/[id]"
+        options={{ headerShown: false }}
+      />
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -31,7 +34,9 @@ export default function ClientTabLayout() {
           name="search"
           options={{
             title: 'Buscar',
-            tabBarIcon: ({ size, color }) => <Search size={size} color={color} />,
+            tabBarIcon: ({ size, color }) => (
+              <Search size={size} color={color} />
+            ),
           }}
         />
         <Tabs.Screen
