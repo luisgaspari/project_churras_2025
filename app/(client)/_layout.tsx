@@ -10,6 +10,10 @@ export default function ClientTabLayout() {
         name="service-details/[id]"
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="edit-profile"
+        options={{ headerShown: false }}
+      />
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -57,6 +61,12 @@ export default function ClientTabLayout() {
         />
         <Tabs.Screen
           name="service-details"
+          options={{
+            href: null, // This hides the tab from the tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="edit-profile"
           options={{
             href: null, // This hides the tab from the tab bar
           }}
