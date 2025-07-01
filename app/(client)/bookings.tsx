@@ -123,6 +123,23 @@ export default function BookingsScreen() {
     }
   };
 
+  const hexToRgba = (hex: string, alpha: number) => {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse hex to RGB
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const getStatusBackgroundColor = (status: string) => {
+    const color = getStatusColor(status);
+    return hexToRgba(color, 0.2);
+  };
+
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -170,7 +187,7 @@ export default function BookingsScreen() {
             {item.services?.title || 'Serviço de Churrasco'}
           </Text>
           <Chip
-            style={[styles.statusChip, { backgroundColor: getStatusColor(item.status) + '20' }]}
+            style={[styles.statusChip, { backgroundColor: getStatusBackgroundColor(item.status) }]}
             textStyle={{ color: getStatusColor(item.status) }}
           >
             {getStatusLabel(item.status)}
