@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,9 +7,9 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
-  TouchableWithoutFeedback,
   Keyboard,
   SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import {
   Text,
@@ -24,6 +24,8 @@ import { X } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import RatingStars from './RatingStars';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 interface ReviewModalProps {
   visible: boolean;
@@ -54,7 +56,49 @@ export default function ReviewModal({
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const commentInputRef = useRef<any>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      const keyboardWillShowListener = Keyboard.addListener(
+        'keyboardWillShow',
+        (e) => {
+          setKeyboardHeight(e.endCoordinates.height);
+        }
+      );
+      const keyboardWillHideListener = Keyboard.addListener(
+        'keyboardWillHide',
+        () => {
+          setKeyboardHeight(0);
+        }
+      );
+
+      return () => {
+        keyboardWillShowListener?.remove();
+        keyboardWillHideListener?.remove();
+      };
+    } else {
+      const keyboardDidShowListener = Keyboard.addListener(
+        'keyboardDidShow',
+        (e) => {
+          setKeyboardHeight(e.endCoordinates.height);
+        }
+      );
+      const keyboardDidHideListener = Keyboard.addListener(
+        'keyboardDidHide',
+        () => {
+          setKeyboardHeight(0);
+        }
+      );
+
+      return () => {
+        keyboardDidShowListener?.remove();
+        keyboardDidHideListener?.remove();
+      };
+    }
+  }, []);
 
   const handleSubmitReview = async () => {
     if (rating === 0) {
@@ -115,6 +159,7 @@ export default function ReviewModal({
     Keyboard.dismiss();
     setRating(0);
     setComment('');
+    setKeyboardHeight(0);
     onClose();
   };
 
@@ -123,11 +168,20 @@ export default function ReviewModal({
   };
 
   const handleCommentFocus = () => {
-    // Ensure the input stays focused
-    if (commentInputRef.current) {
+    // Scroll to the comment section when focused
+    if (Platform.OS === 'ios') {
       setTimeout(() => {
-        commentInputRef.current?.focus();
-      }, 100);
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 300);
+    }
+  };
+
+  const handleRatingChange = (newRating: number) => {
+    setRating(newRating);
+    // Provide haptic feedback on iOS
+    if (Platform.OS === 'ios') {
+      // Since we can't use Haptics on web, we'll skip this
+      // In a real iOS app, you would use Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
@@ -148,131 +202,154 @@ export default function ReviewModal({
     }
   };
 
+  const modalHeight = Platform.OS === 'ios' 
+    ? screenHeight - keyboardHeight 
+    : keyboardHeight > 0 
+      ? screenHeight * 0.9 - keyboardHeight 
+      : screenHeight * 0.9;
+
   const ModalContent = () => (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.modalContent}>
-        <View style={styles.modalHeader}>
-          <Text variant="titleLarge" style={styles.modalTitle}>
-            Avaliar Churrasqueiro
-          </Text>
-          <IconButton
-            icon={() => <X size={24} color={theme.colors.onSurface} />}
-            onPress={handleClose}
-            style={styles.closeButton}
-          />
-        </View>
+    <View style={[styles.modalContent, { maxHeight: modalHeight }]}>
+      <View style={styles.modalHeader}>
+        <Text variant="titleLarge" style={styles.modalTitle}>
+          Avaliar Churrasqueiro
+        </Text>
+        <IconButton
+          icon={() => <X size={24} color={theme.colors.onSurface} />}
+          onPress={handleClose}
+          style={styles.closeButton}
+        />
+      </View>
 
-        <ScrollView 
-          style={styles.scrollContent} 
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.scrollContentContainer}
-          bounces={Platform.OS === 'ios'}
-          nestedScrollEnabled={true}
-        >
-          {/* Professional Info */}
-          <Card style={styles.professionalCard}>
-            <Card.Content style={styles.professionalContent}>
-              {booking.profiles?.avatar_url ? (
-                <Avatar.Image
-                  size={60}
-                  source={{ uri: booking.profiles.avatar_url }}
-                />
-              ) : (
-                <Avatar.Text
-                  size={60}
-                  label={booking.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
-                />
-              )}
-              <View style={styles.professionalInfo}>
-                <Text variant="titleMedium" style={styles.professionalName}>
-                  {booking.profiles?.full_name}
-                </Text>
-                <Text variant="bodyMedium" style={styles.serviceName}>
-                  {booking.services?.title}
-                </Text>
-              </View>
-            </Card.Content>
-          </Card>
-
-          {/* Rating Section */}
-          <View style={styles.ratingSection}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Como foi sua experiência?
-            </Text>
-            <Text variant="bodyMedium" style={styles.sectionDescription}>
-              Sua avaliação ajuda outros clientes a escolher o melhor churrasqueiro.
-            </Text>
-
-            <View style={styles.ratingContainer}>
-              <RatingStars
-                rating={rating}
-                onRatingChange={setRating}
-                size={40}
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContentContainer}
+        bounces={Platform.OS === 'ios'}
+        nestedScrollEnabled={true}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      >
+        {/* Professional Info */}
+        <Card style={styles.professionalCard}>
+          <Card.Content style={styles.professionalContent}>
+            {booking.profiles?.avatar_url ? (
+              <Avatar.Image
+                size={60}
+                source={{ uri: booking.profiles.avatar_url }}
               />
-              <Text variant="titleSmall" style={styles.ratingText}>
-                {getRatingText(rating)}
+            ) : (
+              <Avatar.Text
+                size={60}
+                label={booking.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
+              />
+            )}
+            <View style={styles.professionalInfo}>
+              <Text variant="titleMedium" style={styles.professionalName}>
+                {booking.profiles?.full_name}
+              </Text>
+              <Text variant="bodyMedium" style={styles.serviceName}>
+                {booking.services?.title}
               </Text>
             </View>
-          </View>
+          </Card.Content>
+        </Card>
 
-          {/* Comment Section */}
-          <View style={styles.commentSection}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Comentário (opcional)
-            </Text>
-            <Text variant="bodyMedium" style={styles.sectionDescription}>
-              Conte mais sobre sua experiência para ajudar outros clientes.
-            </Text>
+        {/* Rating Section */}
+        <View style={styles.ratingSection}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Como foi sua experiência?
+          </Text>
+          <Text variant="bodyMedium" style={styles.sectionDescription}>
+            Sua avaliação ajuda outros clientes a escolher o melhor churrasqueiro.
+          </Text>
 
-            <TextInput
-              ref={commentInputRef}
-              label="Seu comentário"
-              value={comment}
-              onChangeText={handleCommentChange}
-              onFocus={handleCommentFocus}
-              style={styles.commentInput}
-              mode="outlined"
-              multiline
-              numberOfLines={4}
-              placeholder="O que você achou do serviço? Como foi a qualidade da comida, pontualidade, atendimento..."
-              maxLength={500}
-              textAlignVertical="top"
-              returnKeyType="done"
-              blurOnSubmit={false}
-              autoCorrect={true}
-              spellCheck={true}
-              scrollEnabled={false}
+          <View style={styles.ratingContainer}>
+            <RatingStars
+              rating={rating}
+              onRatingChange={handleRatingChange}
+              size={40}
             />
-            <Text variant="bodySmall" style={styles.characterCount}>
-              {comment.length}/500 caracteres
+            <Text variant="titleSmall" style={styles.ratingText}>
+              {getRatingText(rating)}
             </Text>
           </View>
+        </View>
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <Button
-              mode="outlined"
-              onPress={handleClose}
-              style={styles.actionButton}
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              mode="contained"
-              onPress={handleSubmitReview}
-              style={styles.actionButton}
-              loading={loading}
-              disabled={loading || rating === 0}
-            >
-              Enviar Avaliação
-            </Button>
-          </View>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+        {/* Comment Section */}
+        <View style={styles.commentSection}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Comentário (opcional)
+          </Text>
+          <Text variant="bodyMedium" style={styles.sectionDescription}>
+            Conte mais sobre sua experiência para ajudar outros clientes.
+          </Text>
+
+          <TextInput
+            ref={commentInputRef}
+            label="Seu comentário"
+            value={comment}
+            onChangeText={handleCommentChange}
+            onFocus={handleCommentFocus}
+            style={styles.commentInput}
+            mode="outlined"
+            multiline
+            numberOfLines={Platform.OS === 'ios' ? 6 : 4}
+            placeholder="O que você achou do serviço? Como foi a qualidade da comida, pontualidade, atendimento..."
+            maxLength={500}
+            textAlignVertical="top"
+            returnKeyType="done"
+            blurOnSubmit={false}
+            autoCorrect={true}
+            spellCheck={true}
+            scrollEnabled={false}
+            contentStyle={styles.textInputContent}
+          />
+          <Text variant="bodySmall" style={styles.characterCount}>
+            {comment.length}/500 caracteres
+          </Text>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <Button
+            mode="outlined"
+            onPress={handleClose}
+            style={styles.actionButton}
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            mode="contained"
+            onPress={handleSubmitReview}
+            style={styles.actionButton}
+            loading={loading}
+            disabled={loading || rating === 0}
+          >
+            Enviar Avaliação
+          </Button>
+        </View>
+      </ScrollView>
+    </View>
   );
+
+  if (Platform.OS === 'ios') {
+    return (
+      <Modal
+        visible={visible}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={handleClose}
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.iosModalContainer}>
+          <ModalContent />
+        </SafeAreaView>
+      </Modal>
+    );
+  }
 
   return (
     <Modal
@@ -280,51 +357,40 @@ export default function ReviewModal({
       transparent={true}
       animationType="slide"
       onRequestClose={handleClose}
-      presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'overFullScreen'}
-      statusBarTranslucent={Platform.OS === 'android'}
+      statusBarTranslucent={true}
     >
-      <View style={styles.modalContainer}>
-        {Platform.OS === 'ios' ? (
-          <KeyboardAvoidingView 
-            behavior="padding" 
-            style={styles.keyboardAvoidingView}
-            keyboardVerticalOffset={0}
-          >
-            <ModalContent />
-          </KeyboardAvoidingView>
-        ) : (
-          <KeyboardAvoidingView 
-            behavior="height" 
-            style={styles.keyboardAvoidingView}
-          >
-            <ModalContent />
-          </KeyboardAvoidingView>
-        )}
+      <View style={styles.androidModalContainer}>
+        <KeyboardAvoidingView 
+          behavior="height" 
+          style={styles.keyboardAvoidingView}
+        >
+          <ModalContent />
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  iosModalContainer: {
     flex: 1,
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.colors.surface,
+  },
+  androidModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   keyboardAvoidingView: {
     flex: 1,
     justifyContent: 'flex-end',
   },
-  safeArea: {
-    flex: 1,
-    backgroundColor: theme.colors.surface,
-  },
   modalContent: {
     backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: Platform.OS === 'ios' ? spacing.lg : spacing.lg,
-    borderTopRightRadius: Platform.OS === 'ios' ? spacing.lg : spacing.lg,
-    flex: 1,
-    maxHeight: Platform.OS === 'ios' ? '100%' : '90%',
+    borderTopLeftRadius: Platform.OS === 'ios' ? 0 : spacing.lg,
+    borderTopRightRadius: Platform.OS === 'ios' ? 0 : spacing.lg,
+    flex: Platform.OS === 'ios' ? 1 : 0,
+    minHeight: Platform.OS === 'ios' ? '100%' : '60%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -349,7 +415,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContentContainer: {
-    paddingBottom: Platform.OS === 'ios' ? spacing.xl : spacing.lg,
+    paddingBottom: spacing.xl,
     flexGrow: 1,
   },
   professionalCard: {
@@ -410,8 +476,11 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     marginBottom: spacing.sm,
-    minHeight: Platform.OS === 'ios' ? 120 : 100,
+    minHeight: Platform.OS === 'ios' ? 140 : 100,
     backgroundColor: theme.colors.surface,
+  },
+  textInputContent: {
+    paddingTop: Platform.OS === 'ios' ? spacing.md : spacing.sm,
   },
   characterCount: {
     textAlign: 'right',
