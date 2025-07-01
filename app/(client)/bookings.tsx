@@ -75,12 +75,11 @@ export default function BookingsScreen() {
             const { data: reviewData } = await supabase
               .from('reviews')
               .select('id')
-              .eq('booking_id', booking.id)
-              .single();
+              .eq('booking_id', booking.id);
 
             return {
               ...booking,
-              has_review: !!reviewData,
+              has_review: reviewData && reviewData.length > 0,
             };
           })
         );
