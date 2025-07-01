@@ -8,7 +8,6 @@ import {
   Platform,
   KeyboardAvoidingView,
   Keyboard,
-  SafeAreaView,
   Dimensions,
   TouchableWithoutFeedback,
 } from 'react-native';
@@ -57,8 +56,7 @@ export default function ReviewModal({
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const commentInputRef = useRef<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -66,14 +64,12 @@ export default function ReviewModal({
     const keyboardShowEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const keyboardHideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const keyboardShowListener = Keyboard.addListener(keyboardShowEvent, (e) => {
-      setKeyboardHeight(e.endCoordinates.height);
-      setIsKeyboardVisible(true);
+    const keyboardShowListener = Keyboard.addListener(keyboardShowEvent, () => {
+      setKeyboardVisible(true);
     });
 
     const keyboardHideListener = Keyboard.addListener(keyboardHideEvent, () => {
-      setKeyboardHeight(0);
-      setIsKeyboardVisible(false);
+      setKeyboardVisible(false);
     });
 
     return () => {
@@ -87,8 +83,8 @@ export default function ReviewModal({
     if (!visible) {
       setRating(0);
       setComment('');
-      setKeyboardHeight(0);
-      setIsKeyboardVisible(false);
+      setKeyboardVisible(false);
+      Keyboard.dismiss();
     }
   }, [visible]);
 
@@ -102,7 +98,6 @@ export default function ReviewModal({
       return;
     }
 
-    // Dismiss keyboard before submitting
     Keyboard.dismiss();
     
     setLoading(true);
@@ -157,10 +152,9 @@ export default function ReviewModal({
   };
 
   const handleCommentFocus = () => {
-    // Scroll to the comment section when focused
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, Platform.OS === 'ios' ? 300 : 100);
+    }, 300);
   };
 
   const handleRatingChange = (newRating: number) => {
@@ -184,135 +178,6 @@ export default function ReviewModal({
     }
   };
 
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
-
-  // Simplified modal content without complex nesting
-  const renderModalContent = () => (
-    <View style={styles.modalContent}>
-      <View style={styles.modalHeader}>
-        <Text variant="titleLarge" style={styles.modalTitle}>
-          Avaliar Churrasqueiro
-        </Text>
-        <IconButton
-          icon={() => <X size={24} color={theme.colors.onSurface} />}
-          onPress={handleClose}
-          style={styles.closeButton}
-        />
-      </View>
-
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.scrollContent} 
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[
-          styles.scrollContentContainer,
-          isKeyboardVisible && styles.scrollContentWithKeyboard
-        ]}
-      >
-        {/* Professional Info */}
-        <Card style={styles.professionalCard}>
-          <Card.Content style={styles.professionalContent}>
-            {booking.profiles?.avatar_url ? (
-              <Avatar.Image
-                size={60}
-                source={{ uri: booking.profiles.avatar_url }}
-              />
-            ) : (
-              <Avatar.Text
-                size={60}
-                label={booking.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
-              />
-            )}
-            <View style={styles.professionalInfo}>
-              <Text variant="titleMedium" style={styles.professionalName}>
-                {booking.profiles?.full_name}
-              </Text>
-              <Text variant="bodyMedium" style={styles.serviceName}>
-                {booking.services?.title}
-              </Text>
-            </View>
-          </Card.Content>
-        </Card>
-
-        {/* Rating Section */}
-        <View style={styles.ratingSection}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Como foi sua experiência?
-          </Text>
-          <Text variant="bodyMedium" style={styles.sectionDescription}>
-            Sua avaliação ajuda outros clientes a escolher o melhor churrasqueiro.
-          </Text>
-
-          <View style={styles.ratingContainer}>
-            <RatingStars
-              rating={rating}
-              onRatingChange={handleRatingChange}
-              size={40}
-            />
-            <Text variant="titleSmall" style={styles.ratingText}>
-              {getRatingText(rating)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Comment Section */}
-        <View style={styles.commentSection}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Comentário (opcional)
-          </Text>
-          <Text variant="bodyMedium" style={styles.sectionDescription}>
-            Conte mais sobre sua experiência para ajudar outros clientes.
-          </Text>
-
-          <TextInput
-            ref={commentInputRef}
-            label="Seu comentário"
-            value={comment}
-            onChangeText={handleCommentChange}
-            onFocus={handleCommentFocus}
-            style={styles.commentInput}
-            mode="outlined"
-            multiline
-            numberOfLines={4}
-            placeholder="O que você achou do serviço? Como foi a qualidade da comida, pontualidade, atendimento..."
-            maxLength={500}
-            textAlignVertical="top"
-            autoCorrect={true}
-            spellCheck={true}
-            blurOnSubmit={false}
-          />
-          <Text variant="bodySmall" style={styles.characterCount}>
-            {comment.length}/500 caracteres
-          </Text>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <Button
-            mode="outlined"
-            onPress={handleClose}
-            style={styles.actionButton}
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            mode="contained"
-            onPress={handleSubmitReview}
-            style={styles.actionButton}
-            loading={loading}
-            disabled={loading || rating === 0}
-          >
-            Enviar Avaliação
-          </Button>
-        </View>
-      </ScrollView>
-    </View>
-  );
-
   return (
     <Modal
       visible={visible}
@@ -321,19 +186,139 @@ export default function ReviewModal({
       onRequestClose={handleClose}
       statusBarTranslucent={false}
     >
-      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-        <View style={styles.modalContainer}>
-          <TouchableWithoutFeedback>
-            <KeyboardAvoidingView 
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.keyboardAvoidingView}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      <View style={styles.modalContainer}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+        >
+          <View style={styles.modalContent}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text variant="titleLarge" style={styles.modalTitle}>
+                Avaliar Churrasqueiro
+              </Text>
+              <IconButton
+                icon={() => <X size={24} color={theme.colors.onSurface} />}
+                onPress={handleClose}
+                style={styles.closeButton}
+              />
+            </View>
+
+            {/* Scrollable Content */}
+            <ScrollView 
+              ref={scrollViewRef}
+              style={styles.scrollContent} 
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.scrollContentContainer}
             >
-              {renderModalContent()}
-            </KeyboardAvoidingView>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+              {/* Professional Info */}
+              <Card style={styles.professionalCard}>
+                <Card.Content style={styles.professionalContent}>
+                  {booking.profiles?.avatar_url ? (
+                    <Avatar.Image
+                      size={60}
+                      source={{ uri: booking.profiles.avatar_url }}
+                    />
+                  ) : (
+                    <Avatar.Text
+                      size={60}
+                      label={booking.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
+                    />
+                  )}
+                  <View style={styles.professionalInfo}>
+                    <Text variant="titleMedium" style={styles.professionalName}>
+                      {booking.profiles?.full_name}
+                    </Text>
+                    <Text variant="bodyMedium" style={styles.serviceName}>
+                      {booking.services?.title}
+                    </Text>
+                  </View>
+                </Card.Content>
+              </Card>
+
+              {/* Rating Section */}
+              <View style={styles.ratingSection}>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  Como foi sua experiência?
+                </Text>
+                <Text variant="bodyMedium" style={styles.sectionDescription}>
+                  Sua avaliação ajuda outros clientes a escolher o melhor churrasqueiro.
+                </Text>
+
+                <View style={styles.ratingContainer}>
+                  <RatingStars
+                    rating={rating}
+                    onRatingChange={handleRatingChange}
+                    size={40}
+                  />
+                  <Text variant="titleSmall" style={styles.ratingText}>
+                    {getRatingText(rating)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Comment Section */}
+              <View style={styles.commentSection}>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  Comentário (opcional)
+                </Text>
+                <Text variant="bodyMedium" style={styles.sectionDescription}>
+                  Conte mais sobre sua experiência para ajudar outros clientes.
+                </Text>
+
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    ref={commentInputRef}
+                    label="Seu comentário"
+                    value={comment}
+                    onChangeText={handleCommentChange}
+                    onFocus={handleCommentFocus}
+                    style={styles.commentInput}
+                    contentStyle={styles.commentInputContent}
+                    mode="outlined"
+                    multiline={true}
+                    numberOfLines={4}
+                    placeholder="O que você achou do serviço? Como foi a qualidade da comida, pontualidade, atendimento..."
+                    maxLength={500}
+                    textAlignVertical="top"
+                    autoCorrect={true}
+                    spellCheck={true}
+                    blurOnSubmit={false}
+                    returnKeyType="default"
+                    enablesReturnKeyAutomatically={false}
+                  />
+                </View>
+                
+                <Text variant="bodySmall" style={styles.characterCount}>
+                  {comment.length}/500 caracteres
+                </Text>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
+                <Button
+                  mode="outlined"
+                  onPress={handleClose}
+                  style={styles.actionButton}
+                  disabled={loading}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  mode="contained"
+                  onPress={handleSubmitReview}
+                  style={styles.actionButton}
+                  loading={loading}
+                  disabled={loading || rating === 0}
+                >
+                  Enviar Avaliação
+                </Button>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
@@ -354,6 +339,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: spacing.lg,
     maxHeight: '90%',
     minHeight: '60%',
+    flex: 1,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -380,9 +366,6 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: spacing.xl,
     flexGrow: 1,
-  },
-  scrollContentWithKeyboard: {
-    paddingBottom: spacing.xxl,
   },
   professionalCard: {
     marginHorizontal: spacing.lg,
@@ -436,14 +419,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
   },
-  commentInput: {
+  textInputContainer: {
     marginBottom: spacing.sm,
     minHeight: 120,
+  },
+  commentInput: {
+    minHeight: 120,
     backgroundColor: theme.colors.surface,
+  },
+  commentInputContent: {
+    paddingTop: spacing.md,
+    textAlignVertical: 'top',
   },
   characterCount: {
     textAlign: 'right',
     color: theme.colors.onSurfaceVariant,
+    marginTop: spacing.xs,
   },
   actionButtons: {
     flexDirection: 'row',
