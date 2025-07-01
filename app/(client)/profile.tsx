@@ -182,7 +182,8 @@ export default function ClientProfileScreen() {
         onPress: async () => {
           try {
             await signOut();
-            router.replace('../');
+            // Navigate to the welcome screen where user can choose user type
+            router.replace('/');
           } catch (error) {
             Alert.alert('Erro', 'Não foi possível sair da conta');
           }
