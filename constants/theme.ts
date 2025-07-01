@@ -18,6 +18,12 @@ export const theme = {
     onTertiary: '#FFFFFF',
     onSurface: '#212121',
     onBackground: '#212121',
+    onSurfaceVariant: '#757575',
+    onSurfaceDisabled: '#BDBDBD',
+    error: '#F44336',
+    onError: '#FFFFFF',
+    errorContainer: '#FFEBEE',
+    onErrorContainer: '#C62828',
   },
 };
 
