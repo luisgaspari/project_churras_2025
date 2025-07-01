@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Text, Searchbar, Card, Button, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import { MapPin, Star, Filter } from 'lucide-react-native';
@@ -14,6 +15,8 @@ interface Service {
   price_to?: number;
   location: string;
   max_guests: number;
+  duration_hours: number;
+  images: string[];
   profiles?: {
     full_name: string;
     avatar_url?: string;
@@ -109,6 +112,13 @@ export default function SearchScreen() {
     return `A partir de R$ ${priceFrom}`;
   };
 
+  const handleViewDetails = (serviceId: string) => {
+    router.push({
+      pathname: '/service-details/[id]',
+      params: { id: serviceId },
+    });
+  };
+
   const renderServiceCard = ({ item }: { item: Service }) => (
     <Card style={styles.serviceCard}>
       <Card.Content>
@@ -127,7 +137,7 @@ export default function SearchScreen() {
             </Text>
           </View>
           <Text variant="bodySmall" style={styles.guestInfo}>
-            Até {item.max_guests} pessoas
+            Até {item.max_guests} pessoas • {item.duration_hours}h
           </Text>
         </View>
 
@@ -149,7 +159,7 @@ export default function SearchScreen() {
         <Button
           mode="contained"
           style={styles.contactButton}
-          onPress={() => {}}
+          onPress={() => handleViewDetails(item.id)}
         >
           Ver detalhes
         </Button>
