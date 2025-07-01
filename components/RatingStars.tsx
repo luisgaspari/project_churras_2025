@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Star } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
@@ -44,21 +44,26 @@ export default function RatingStars({
     return (
       <TouchableOpacity
         key={index}
-        style={styles.starContainer}
+        style={[
+          styles.starContainer,
+          Platform.OS === 'ios' && styles.iosStarContainer
+        ]}
         onPress={() => handleStarPress(starRating)}
         activeOpacity={0.7}
+        hitSlop={Platform.OS === 'ios' ? { top: 10, bottom: 10, left: 10, right: 10 } : undefined}
       >
         <Star
           size={size}
           color={isFilled ? theme.colors.tertiary : theme.colors.onSurfaceVariant}
           fill={isFilled ? theme.colors.tertiary : 'transparent'}
+          strokeWidth={Platform.OS === 'ios' ? 2.5 : 2}
         />
       </TouchableOpacity>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, Platform.OS === 'ios' && styles.iosContainer]}>
       {[0, 1, 2, 3, 4].map(renderStar)}
     </View>
   );
@@ -68,8 +73,17 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iosContainer: {
+    paddingVertical: 8,
   },
   starContainer: {
-    marginRight: 4,
+    marginHorizontal: 4,
+    padding: 2,
+  },
+  iosStarContainer: {
+    padding: 6,
+    borderRadius: 8,
   },
 });

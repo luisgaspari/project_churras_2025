@@ -5,6 +5,10 @@ import {
   Modal,
   ScrollView,
   Alert,
+  Platform,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import {
   Text,
@@ -52,7 +56,12 @@ export default function ReviewModal({
 
   const handleSubmitReview = async () => {
     if (rating === 0) {
-      Alert.alert('Erro', 'Por favor, selecione uma avaliação de 1 a 5 estrelas.');
+      if (Platform.OS === 'ios') {
+        // Use native iOS alert for better compatibility
+        Alert.alert('Avaliação necessária', 'Por favor, selecione uma avaliação de 1 a 5 estrelas.');
+      } else {
+        Alert.alert('Erro', 'Por favor, selecione uma avaliação de 1 a 5 estrelas.');
+      }
       return;
     }
 
@@ -72,9 +81,12 @@ export default function ReviewModal({
         throw error;
       }
 
+      const alertTitle = Platform.OS === 'ios' ? 'Avaliação enviada' : 'Sucesso';
+      const alertMessage = 'Sua avaliação foi enviada com sucesso! Obrigado pelo feedback.';
+
       Alert.alert(
-        'Sucesso',
-        'Sua avaliação foi enviada com sucesso! Obrigado pelo feedback.',
+        alertTitle,
+        alertMessage,
         [
           {
             text: 'OK',
@@ -87,16 +99,20 @@ export default function ReviewModal({
       );
     } catch (error: any) {
       console.error('Error submitting review:', error);
-      Alert.alert(
-        'Erro',
-        error.message || 'Não foi possível enviar a avaliação. Tente novamente.'
-      );
+      const alertTitle = Platform.OS === 'ios' ? 'Erro ao enviar' : 'Erro';
+      const alertMessage = error.message || 'Não foi possível enviar a avaliação. Tente novamente.';
+      
+      Alert.alert(alertTitle, alertMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const handleClose = () => {
+    // Dismiss keyboard before closing on iOS
+    if (Platform.OS === 'ios') {
+      Keyboard.dismiss();
+    }
     setRating(0);
     setComment('');
     onClose();
@@ -119,120 +135,151 @@ export default function ReviewModal({
     }
   };
 
+  const ModalContent = () => (
+    <View style={styles.modalContent}>
+      <View style={styles.modalHeader}>
+        <Text variant="titleLarge" style={styles.modalTitle}>
+          Avaliar Churrasqueiro
+        </Text>
+        <IconButton
+          icon={() => <X size={24} color={theme.colors.onSurface} />}
+          onPress={handleClose}
+          style={styles.closeButton}
+        />
+      </View>
+
+      <ScrollView 
+        style={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContentContainer}
+      >
+        {/* Professional Info */}
+        <Card style={styles.professionalCard}>
+          <Card.Content style={styles.professionalContent}>
+            {booking.profiles?.avatar_url ? (
+              <Avatar.Image
+                size={60}
+                source={{ uri: booking.profiles.avatar_url }}
+              />
+            ) : (
+              <Avatar.Text
+                size={60}
+                label={booking.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
+              />
+            )}
+            <View style={styles.professionalInfo}>
+              <Text variant="titleMedium" style={styles.professionalName}>
+                {booking.profiles?.full_name}
+              </Text>
+              <Text variant="bodyMedium" style={styles.serviceName}>
+                {booking.services?.title}
+              </Text>
+            </View>
+          </Card.Content>
+        </Card>
+
+        {/* Rating Section */}
+        <View style={styles.ratingSection}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Como foi sua experiência?
+          </Text>
+          <Text variant="bodyMedium" style={styles.sectionDescription}>
+            Sua avaliação ajuda outros clientes a escolher o melhor churrasqueiro.
+          </Text>
+
+          <View style={styles.ratingContainer}>
+            <RatingStars
+              rating={rating}
+              onRatingChange={setRating}
+              size={40}
+            />
+            <Text variant="titleSmall" style={styles.ratingText}>
+              {getRatingText(rating)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Comment Section */}
+        <View style={styles.commentSection}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Comentário (opcional)
+          </Text>
+          <Text variant="bodyMedium" style={styles.sectionDescription}>
+            Conte mais sobre sua experiência para ajudar outros clientes.
+          </Text>
+
+          <TextInput
+            label="Seu comentário"
+            value={comment}
+            onChangeText={setComment}
+            style={styles.commentInput}
+            mode="outlined"
+            multiline
+            numberOfLines={Platform.OS === 'ios' ? 4 : 4}
+            placeholder="O que você achou do serviço? Como foi a qualidade da comida, pontualidade, atendimento..."
+            maxLength={500}
+            textAlignVertical="top"
+            returnKeyType="done"
+            blurOnSubmit={true}
+          />
+          <Text variant="bodySmall" style={styles.characterCount}>
+            {comment.length}/500 caracteres
+          </Text>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <Button
+            mode="outlined"
+            onPress={handleClose}
+            style={styles.actionButton}
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            mode="contained"
+            onPress={handleSubmitReview}
+            style={styles.actionButton}
+            loading={loading}
+            disabled={loading || rating === 0}
+          >
+            Enviar Avaliação
+          </Button>
+        </View>
+      </ScrollView>
+    </View>
+  );
+
   return (
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
+      animationType={Platform.OS === 'ios' ? 'slide' : 'slide'}
       onRequestClose={handleClose}
+      presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : undefined}
     >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text variant="titleLarge" style={styles.modalTitle}>
-              Avaliar Churrasqueiro
-            </Text>
-            <IconButton
-              icon={() => <X size={24} color={theme.colors.onSurface} />}
-              onPress={handleClose}
-            />
-          </View>
-
-          <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {/* Professional Info */}
-            <Card style={styles.professionalCard}>
-              <Card.Content style={styles.professionalContent}>
-                {booking.profiles?.avatar_url ? (
-                  <Avatar.Image
-                    size={60}
-                    source={{ uri: booking.profiles.avatar_url }}
-                  />
-                ) : (
-                  <Avatar.Text
-                    size={60}
-                    label={booking.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
-                  />
-                )}
-                <View style={styles.professionalInfo}>
-                  <Text variant="titleMedium" style={styles.professionalName}>
-                    {booking.profiles?.full_name}
-                  </Text>
-                  <Text variant="bodyMedium" style={styles.serviceName}>
-                    {booking.services?.title}
-                  </Text>
-                </View>
-              </Card.Content>
-            </Card>
-
-            {/* Rating Section */}
-            <View style={styles.ratingSection}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                Como foi sua experiência?
-              </Text>
-              <Text variant="bodyMedium" style={styles.sectionDescription}>
-                Sua avaliação ajuda outros clientes a escolher o melhor churrasqueiro.
-              </Text>
-
-              <View style={styles.ratingContainer}>
-                <RatingStars
-                  rating={rating}
-                  onRatingChange={setRating}
-                  size={40}
-                />
-                <Text variant="titleSmall" style={styles.ratingText}>
-                  {getRatingText(rating)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Comment Section */}
-            <View style={styles.commentSection}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                Comentário (opcional)
-              </Text>
-              <Text variant="bodyMedium" style={styles.sectionDescription}>
-                Conte mais sobre sua experiência para ajudar outros clientes.
-              </Text>
-
-              <TextInput
-                label="Seu comentário"
-                value={comment}
-                onChangeText={setComment}
-                style={styles.commentInput}
-                mode="outlined"
-                multiline
-                numberOfLines={4}
-                placeholder="O que você achou do serviço? Como foi a qualidade da comida, pontualidade, atendimento..."
-                maxLength={500}
-              />
-              <Text variant="bodySmall" style={styles.characterCount}>
-                {comment.length}/500 caracteres
-              </Text>
-            </View>
-
-            {/* Action Buttons */}
-            <View style={styles.actionButtons}>
-              <Button
-                mode="outlined"
-                onPress={handleClose}
-                style={styles.actionButton}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-              <Button
-                mode="contained"
-                onPress={handleSubmitReview}
-                style={styles.actionButton}
-                loading={loading}
-                disabled={loading || rating === 0}
-              >
-                Enviar Avaliação
-              </Button>
-            </View>
-          </ScrollView>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.modalContainer}>
+          {Platform.OS === 'ios' ? (
+            <KeyboardAvoidingView 
+              behavior="padding" 
+              style={styles.keyboardAvoidingView}
+              keyboardVerticalOffset={0}
+            >
+              <ModalContent />
+            </KeyboardAvoidingView>
+          ) : (
+            <KeyboardAvoidingView 
+              behavior="height" 
+              style={styles.keyboardAvoidingView}
+            >
+              <ModalContent />
+            </KeyboardAvoidingView>
+          )}
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
@@ -243,19 +290,23 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
+  keyboardAvoidingView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
   modalContent: {
     backgroundColor: theme.colors.surface,
     borderTopLeftRadius: spacing.lg,
     borderTopRightRadius: spacing.lg,
-    maxHeight: '90%',
-    paddingBottom: spacing.xl,
+    maxHeight: Platform.OS === 'ios' ? '95%' : '90%',
+    paddingBottom: Platform.OS === 'ios' ? spacing.xl + 20 : spacing.xl,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? spacing.lg + 10 : spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.surfaceVariant,
@@ -263,14 +314,25 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontWeight: 'bold',
     color: theme.colors.onSurface,
+    flex: 1,
+  },
+  closeButton: {
+    margin: 0,
   },
   scrollContent: {
     flex: 1,
   },
+  scrollContentContainer: {
+    paddingBottom: spacing.lg,
+  },
   professionalCard: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
-    elevation: 1,
+    elevation: Platform.OS === 'android' ? 1 : 0,
+    shadowColor: Platform.OS === 'ios' ? '#000' : undefined,
+    shadowOffset: Platform.OS === 'ios' ? { width: 0, height: 1 } : undefined,
+    shadowOpacity: Platform.OS === 'ios' ? 0.1 : undefined,
+    shadowRadius: Platform.OS === 'ios' ? 2 : undefined,
   },
   professionalContent: {
     flexDirection: 'row',
@@ -320,6 +382,7 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     marginBottom: spacing.sm,
+    minHeight: Platform.OS === 'ios' ? 100 : 80,
   },
   characterCount: {
     textAlign: 'right',
