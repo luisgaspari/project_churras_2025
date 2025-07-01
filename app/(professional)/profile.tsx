@@ -23,19 +23,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import {
-  ChefHat,
-  Phone,
-  Mail,
-  MapPin,
-  Settings,
-  LogOut,
-  Camera,
-  Plus,
-  Star,
-  Trash2,
-  Edit,
-} from 'lucide-react-native';
+import { ChefHat, Phone, Mail, MapPin, Settings, LogOut, Camera, Plus, Star, Trash2, CreditCard as Edit } from 'lucide-react-native';
 
 interface Photo {
   id: string;
