@@ -9,6 +9,8 @@ import {
   Modal,
   TouchableOpacity,
   Dimensions,
+  Linking,
+  Platform,
 } from 'react-native';
 import {
   Text,
@@ -40,6 +42,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
+  MessageCircle,
+  Send,
 } from 'lucide-react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -90,6 +94,9 @@ export default function ServiceDetailsScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
   
   const [bookingForm, setBookingForm] = useState<BookingForm>({
     event_date: new Date(),
@@ -203,6 +210,190 @@ export default function ServiceDetailsScreen() {
     setBookingForm(prev => ({ ...prev, [field]: value }));
   };
 
+  const openGallery = (index: number = 0) => {
+    setSelectedPhotoIndex(index);
+    setShowGalleryModal(true);
+  };
+
+  const navigatePhoto = (direction: 'prev' | 'next') => {
+    if (direction === 'prev') {
+      setSelectedPhotoIndex(prev => 
+        prev > 0 ? prev - 1 : professionalPhotos.length - 1
+      );
+    } else {
+      setSelectedPhotoIndex(prev => 
+        prev < professionalPhotos.length - 1 ? prev + 1 : 0
+      );
+    }
+  };
+
+  const handlePhoneCall = () => {
+    if (!service?.profiles?.phone) {
+      Alert.alert('Erro', 'Número de telefone não disponível.');
+      return;
+    }
+
+    const phoneNumber = service.profiles.phone.replace(/\D/g, '');
+    const phoneUrl = `tel:${phoneNumber}`;
+
+    Linking.canOpenURL(phoneUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(phoneUrl);
+        } else {
+          Alert.alert('Erro', 'Não foi possível abrir o aplicativo de telefone.');
+        }
+      })
+      .catch((error) => {
+        console.error('Error opening phone app:', error);
+        Alert.alert('Erro', 'Não foi possível fazer a ligação.');
+      });
+  };
+
+  const handleWhatsAppMessage = () => {
+    if (!service?.profiles?.phone) {
+      Alert.alert('Erro', 'Número de telefone não disponível.');
+      return;
+    }
+
+    const phoneNumber = service.profiles.phone.replace(/\D/g, '');
+    const message = `Olá ${service.profiles.full_name}! Vi seu serviço "${service.title}" no ChurrasJa e gostaria de saber mais informações.`;
+    const whatsappUrl = `whatsapp://send?phone=55${phoneNumber}&text=${encodeURIComponent(message)}`;
+    const whatsappWebUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+    Linking.canOpenURL(whatsappUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(whatsappUrl);
+        } else {
+          // Fallback to WhatsApp Web
+          return Linking.openURL(whatsappWebUrl);
+        }
+      })
+      .catch((error) => {
+        console.error('Error opening WhatsApp:', error);
+        Alert.alert('Erro', 'Não foi possível abrir o WhatsApp.');
+      });
+  };
+
+  const handleEmailMessage = () => {
+    if (!service?.profiles?.email) {
+      Alert.alert('Erro', 'E-mail não disponível.');
+      return;
+    }
+
+    const subject = `Interesse no serviço: ${service.title}`;
+    const body = `Olá ${service.profiles.full_name}!\n\nVi seu serviço "${service.title}" no ChurrasJa e gostaria de saber mais informações.\n\nAguardo seu retorno.\n\nAtenciosamente,\n${profile?.full_name}`;
+    const emailUrl = `mailto:${service.profiles.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    Linking.canOpenURL(emailUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(emailUrl);
+        } else {
+          Alert.alert('Erro', 'Não foi possível abrir o aplicativo de e-mail.');
+        }
+      })
+      .catch((error) => {
+        console.error('Error opening email app:', error);
+        Alert.alert('Erro', 'Não foi possível enviar o e-mail.');
+      });
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim()) {
+      Alert.alert('Erro', 'Por favor, digite uma mensagem.');
+      return;
+    }
+
+    if (!profile || !service) {
+      Alert.alert('Erro', 'Informações do usuário não disponíveis.');
+      return;
+    }
+
+    setSendingMessage(true);
+    try {
+      // Here you would typically save the message to your database
+      // For now, we'll simulate sending via email
+      const subject = `Nova mensagem sobre: ${service.title}`;
+      const body = `Olá ${service.profiles?.full_name}!\n\nVocê recebeu uma nova mensagem de ${profile.full_name} através do ChurrasJa:\n\n"${messageText}"\n\nPara responder, entre em contato diretamente com o cliente:\nE-mail: ${profile.email}\nTelefone: ${profile.phone || 'Não informado'}\n\nAtenciosamente,\nEquipe ChurrasJa`;
+      
+      const emailUrl = `mailto:${service.profiles?.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      
+      await Linking.openURL(emailUrl);
+      
+      Alert.alert(
+        'Mensagem Enviada',
+        'Sua mensagem foi enviada com sucesso! O churrasqueiro receberá um e-mail e entrará em contato em breve.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              setShowMessageModal(false);
+              setMessageText('');
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error sending message:', error);
+      Alert.alert('Erro', 'Não foi possível enviar a mensagem. Tente novamente.');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const showContactOptions = () => {
+    const options = [
+      {
+        title: 'WhatsApp',
+        description: 'Conversar pelo WhatsApp',
+        onPress: handleWhatsAppMessage,
+        available: !!service?.profiles?.phone,
+      },
+      {
+        title: 'Telefone',
+        description: 'Fazer uma ligação',
+        onPress: handlePhoneCall,
+        available: !!service?.profiles?.phone,
+      },
+      {
+        title: 'E-mail',
+        description: 'Enviar um e-mail',
+        onPress: handleEmailMessage,
+        available: !!service?.profiles?.email,
+      },
+      {
+        title: 'Mensagem',
+        description: 'Enviar mensagem pelo app',
+        onPress: () => setShowMessageModal(true),
+        available: true,
+      },
+    ];
+
+    const availableOptions = options.filter(option => option.available);
+
+    if (availableOptions.length === 0) {
+      Alert.alert('Erro', 'Nenhuma forma de contato disponível.');
+      return;
+    }
+
+    Alert.alert(
+      'Entrar em Contato',
+      'Escolha como deseja entrar em contato com o churrasqueiro:',
+      [
+        ...availableOptions.map(option => ({
+          text: option.title,
+          onPress: option.onPress,
+        })),
+        {
+          text: 'Cancelar',
+          style: 'cancel' as const,
+        },
+      ]
+    );
+  };
+
   const validateBookingForm = (): boolean => {
     if (!bookingForm.guests_count.trim()) {
       Alert.alert('Erro', 'Por favor, informe o número de convidados.');
@@ -303,23 +494,6 @@ export default function ServiceDetailsScreen() {
       );
     } finally {
       setBookingLoading(false);
-    }
-  };
-
-  const openGallery = (index: number = 0) => {
-    setSelectedPhotoIndex(index);
-    setShowGalleryModal(true);
-  };
-
-  const navigatePhoto = (direction: 'prev' | 'next') => {
-    if (direction === 'prev') {
-      setSelectedPhotoIndex(prev => 
-        prev > 0 ? prev - 1 : professionalPhotos.length - 1
-      );
-    } else {
-      setSelectedPhotoIndex(prev => 
-        prev < professionalPhotos.length - 1 ? prev + 1 : 0
-      );
     }
   };
 
@@ -479,16 +653,16 @@ export default function ServiceDetailsScreen() {
                   mode="outlined"
                   icon={() => <Phone size={16} color={theme.colors.primary} />}
                   style={styles.contactButton}
-                  onPress={() => {}}
+                  onPress={handlePhoneCall}
                 >
                   Ligar
                 </Button>
               )}
               <Button
                 mode="outlined"
-                icon={() => <Mail size={16} color={theme.colors.primary} />}
+                icon={() => <MessageCircle size={16} color={theme.colors.primary} />}
                 style={styles.contactButton}
-                onPress={() => {}}
+                onPress={showContactOptions}
               >
                 Mensagem
               </Button>
@@ -748,6 +922,81 @@ export default function ServiceDetailsScreen() {
             <Text variant="bodyMedium" style={styles.photoCounter}>
               {selectedPhotoIndex + 1} de {professionalPhotos.length}
             </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Message Modal */}
+      <Modal
+        visible={showMessageModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowMessageModal(false)}
+      >
+        <View style={styles.messageModalContainer}>
+          <View style={styles.messageModalContent}>
+            <View style={styles.messageModalHeader}>
+              <Text variant="titleMedium" style={styles.messageModalTitle}>
+                Enviar Mensagem
+              </Text>
+              <IconButton
+                icon={() => <X size={24} color={theme.colors.onSurface} />}
+                onPress={() => setShowMessageModal(false)}
+              />
+            </View>
+
+            <View style={styles.messageRecipient}>
+              {service.profiles?.avatar_url ? (
+                <Avatar.Image
+                  size={40}
+                  source={{ uri: service.profiles.avatar_url }}
+                />
+              ) : (
+                <Avatar.Text
+                  size={40}
+                  label={service.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
+                />
+              )}
+              <View style={styles.recipientInfo}>
+                <Text variant="titleSmall" style={styles.recipientName}>
+                  {service.profiles?.full_name}
+                </Text>
+                <Text variant="bodySmall" style={styles.recipientService}>
+                  {service.title}
+                </Text>
+              </View>
+            </View>
+
+            <TextInput
+              label="Sua mensagem"
+              value={messageText}
+              onChangeText={setMessageText}
+              style={styles.messageInput}
+              mode="outlined"
+              multiline
+              numberOfLines={6}
+              placeholder="Digite sua mensagem aqui..."
+            />
+
+            <View style={styles.messageActions}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowMessageModal(false)}
+                style={styles.messageActionButton}
+              >
+                Cancelar
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleSendMessage}
+                loading={sendingMessage}
+                disabled={sendingMessage || !messageText.trim()}
+                style={styles.messageActionButton}
+                icon={() => <Send size={16} color={theme.colors.onPrimary} />}
+              >
+                Enviar
+              </Button>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1045,5 +1294,68 @@ const styles = StyleSheet.create({
   },
   photoCounter: {
     color: 'white',
+  },
+  // Message Modal styles
+  messageModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  messageModalContent: {
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: spacing.lg,
+    borderTopRightRadius: spacing.lg,
+    paddingBottom: spacing.xl,
+    maxHeight: '80%',
+  },
+  messageModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.surfaceVariant,
+  },
+  messageModalTitle: {
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+  },
+  messageRecipient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: theme.colors.surfaceVariant,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    borderRadius: spacing.sm,
+  },
+  recipientInfo: {
+    marginLeft: spacing.md,
+    flex: 1,
+  },
+  recipientName: {
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  recipientService: {
+    color: theme.colors.onSurfaceVariant,
+  },
+  messageInput: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  messageActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
+  },
+  messageActionButton: {
+    flex: 1,
   },
 });
