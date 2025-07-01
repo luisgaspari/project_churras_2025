@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  FlatList,
+  ScrollView,
   Image,
   Alert,
   TouchableOpacity,
@@ -142,8 +142,8 @@ export default function ServicesManagementScreen() {
     });
   };
 
-  const renderServiceCard = ({ item }: { item: Service }) => (
-    <Card style={styles.serviceCard}>
+  const renderServiceCard = (item: Service) => (
+    <Card key={item.id} style={styles.serviceCard}>
       {item.images && item.images.length > 0 && (
         <Image
           source={{
@@ -262,7 +262,7 @@ export default function ServicesManagementScreen() {
         </View>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {services.length === 0 ? (
           <View style={styles.emptyState}>
             <Plus size={64} color={theme.colors.onSurfaceVariant} />
@@ -281,17 +281,11 @@ export default function ServicesManagementScreen() {
             </Button>
           </View>
         ) : (
-          <FlatList
-            data={services}
-            renderItem={renderServiceCard}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            refreshing={loading}
-            onRefresh={loadServices}
-            contentContainerStyle={styles.listContainer}
-          />
+          <View style={styles.servicesList}>
+            {services.map(renderServiceCard)}
+          </View>
         )}
-      </View>
+      </ScrollView>
 
       {services.length > 0 && (
         <FAB
@@ -328,8 +322,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.lg,
   },
-  listContainer: {
+  servicesList: {
     paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
   serviceCard: {
     marginBottom: spacing.md,
@@ -388,6 +383,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxl,
   },
   emptyTitle: {
     marginTop: spacing.lg,

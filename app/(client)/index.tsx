@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { Text, Card, Button, Searchbar, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -116,8 +116,9 @@ export default function ClientHomeScreen() {
     return rating.toFixed(1);
   };
 
-  const renderServiceCard = ({ item }: { item: Service }) => (
+  const renderServiceCard = (item: Service) => (
     <Card
+      key={item.id}
       style={styles.serviceCard}
       onPress={() =>
         router.push({
@@ -192,7 +193,7 @@ export default function ClientHomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <Text variant="headlineMedium" style={styles.greeting}>
@@ -238,13 +239,9 @@ export default function ClientHomeScreen() {
           {loading ? (
             <Text>Carregando...</Text>
           ) : (
-            <FlatList
-              data={services}
-              renderItem={renderServiceCard}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={false}
-            />
+            <View style={styles.servicesList}>
+              {services.map(renderServiceCard)}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -291,6 +288,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: spacing.md,
     color: theme.colors.onBackground,
+  },
+  servicesList: {
+    paddingBottom: spacing.lg,
   },
   serviceCard: {
     marginBottom: spacing.md,

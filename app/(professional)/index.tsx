@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Text, Card, Button, FAB } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -134,8 +134,8 @@ export default function ProfessionalHomeScreen() {
     }
   };
 
-  const renderBookingCard = ({ item }: { item: RecentBooking }) => (
-    <Card style={styles.bookingCard} onPress={() => {}}>
+  const renderBookingCard = (item: RecentBooking) => (
+    <Card key={item.id} style={styles.bookingCard} onPress={() => {}}>
       <Card.Content>
         <View style={styles.bookingHeader}>
           <Text variant="titleMedium" style={styles.clientName}>
@@ -163,7 +163,7 @@ export default function ProfessionalHomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <Text variant="headlineMedium" style={styles.greeting}>
@@ -253,13 +253,9 @@ export default function ProfessionalHomeScreen() {
               </Card.Content>
             </Card>
           ) : (
-            <FlatList
-              data={recentBookings}
-              renderItem={renderBookingCard}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={false}
-            />
+            <View style={styles.bookingsList}>
+              {recentBookings.map(renderBookingCard)}
+            </View>
           )}
         </View>
 
@@ -357,6 +353,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontWeight: 'bold',
     color: theme.colors.onBackground,
+  },
+  bookingsList: {
+    paddingBottom: spacing.lg,
   },
   bookingCard: {
     marginBottom: spacing.sm,

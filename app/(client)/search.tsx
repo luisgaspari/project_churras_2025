@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Searchbar, Card, Button, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -122,8 +122,8 @@ export default function SearchScreen() {
     });
   };
 
-  const renderServiceCard = ({ item }: { item: Service }) => (
-    <Card style={styles.serviceCard}>
+  const renderServiceCard = (item: Service) => (
+    <Card key={item.id} style={styles.serviceCard}>
       <Card.Content>
         <Text variant="titleMedium" style={styles.serviceTitle}>
           {item.title}
@@ -215,20 +215,15 @@ export default function SearchScreen() {
         </View>
       </View>
 
-      <View style={styles.resultsContainer}>
+      <ScrollView style={styles.resultsContainer} showsVerticalScrollIndicator={false}>
         <Text variant="titleMedium" style={styles.resultsTitle}>
           {filteredServices.length} churrasqueiro(s) encontrado(s)
         </Text>
 
-        <FlatList
-          data={filteredServices}
-          renderItem={renderServiceCard}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          refreshing={loading}
-          onRefresh={loadServices}
-        />
-      </View>
+        <View style={styles.servicesList}>
+          {filteredServices.map(renderServiceCard)}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -283,6 +278,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: spacing.md,
     color: theme.colors.onBackground,
+  },
+  servicesList: {
+    paddingBottom: spacing.lg,
   },
   serviceCard: {
     marginBottom: spacing.md,
