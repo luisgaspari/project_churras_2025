@@ -10,6 +10,7 @@ import {
   Keyboard,
   SafeAreaView,
   Dimensions,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {
   Text,
@@ -57,48 +58,39 @@ export default function ReviewModal({
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const commentInputRef = useRef<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    if (Platform.OS === 'ios') {
-      const keyboardWillShowListener = Keyboard.addListener(
-        'keyboardWillShow',
-        (e) => {
-          setKeyboardHeight(e.endCoordinates.height);
-        }
-      );
-      const keyboardWillHideListener = Keyboard.addListener(
-        'keyboardWillHide',
-        () => {
-          setKeyboardHeight(0);
-        }
-      );
+    const keyboardShowEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const keyboardHideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-      return () => {
-        keyboardWillShowListener?.remove();
-        keyboardWillHideListener?.remove();
-      };
-    } else {
-      const keyboardDidShowListener = Keyboard.addListener(
-        'keyboardDidShow',
-        (e) => {
-          setKeyboardHeight(e.endCoordinates.height);
-        }
-      );
-      const keyboardDidHideListener = Keyboard.addListener(
-        'keyboardDidHide',
-        () => {
-          setKeyboardHeight(0);
-        }
-      );
+    const keyboardShowListener = Keyboard.addListener(keyboardShowEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      setIsKeyboardVisible(true);
+    });
 
-      return () => {
-        keyboardDidShowListener?.remove();
-        keyboardDidHideListener?.remove();
-      };
-    }
+    const keyboardHideListener = Keyboard.addListener(keyboardHideEvent, () => {
+      setKeyboardHeight(0);
+      setIsKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardShowListener?.remove();
+      keyboardHideListener?.remove();
+    };
   }, []);
+
+  // Reset state when modal visibility changes
+  useEffect(() => {
+    if (!visible) {
+      setRating(0);
+      setComment('');
+      setKeyboardHeight(0);
+      setIsKeyboardVisible(false);
+    }
+  }, [visible]);
 
   const handleSubmitReview = async () => {
     if (rating === 0) {
@@ -157,9 +149,6 @@ export default function ReviewModal({
 
   const handleClose = () => {
     Keyboard.dismiss();
-    setRating(0);
-    setComment('');
-    setKeyboardHeight(0);
     onClose();
   };
 
@@ -169,20 +158,13 @@ export default function ReviewModal({
 
   const handleCommentFocus = () => {
     // Scroll to the comment section when focused
-    if (Platform.OS === 'ios') {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 300);
-    }
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, Platform.OS === 'ios' ? 300 : 100);
   };
 
   const handleRatingChange = (newRating: number) => {
     setRating(newRating);
-    // Provide haptic feedback on iOS
-    if (Platform.OS === 'ios') {
-      // Since we can't use Haptics on web, we'll skip this
-      // In a real iOS app, you would use Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
   };
 
   const getRatingText = (rating: number) => {
@@ -202,14 +184,13 @@ export default function ReviewModal({
     }
   };
 
-  const modalHeight = Platform.OS === 'ios' 
-    ? screenHeight - keyboardHeight 
-    : keyboardHeight > 0 
-      ? screenHeight * 0.9 - keyboardHeight 
-      : screenHeight * 0.9;
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
 
-  const ModalContent = () => (
-    <View style={[styles.modalContent, { maxHeight: modalHeight }]}>
+  // Simplified modal content without complex nesting
+  const renderModalContent = () => (
+    <View style={styles.modalContent}>
       <View style={styles.modalHeader}>
         <Text variant="titleLarge" style={styles.modalTitle}>
           Avaliar Churrasqueiro
@@ -226,10 +207,10 @@ export default function ReviewModal({
         style={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.scrollContentContainer}
-        bounces={Platform.OS === 'ios'}
-        nestedScrollEnabled={true}
-        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+        contentContainerStyle={[
+          styles.scrollContentContainer,
+          isKeyboardVisible && styles.scrollContentWithKeyboard
+        ]}
       >
         {/* Professional Info */}
         <Card style={styles.professionalCard}>
@@ -295,16 +276,13 @@ export default function ReviewModal({
             style={styles.commentInput}
             mode="outlined"
             multiline
-            numberOfLines={Platform.OS === 'ios' ? 6 : 4}
+            numberOfLines={4}
             placeholder="O que você achou do serviço? Como foi a qualidade da comida, pontualidade, atendimento..."
             maxLength={500}
             textAlignVertical="top"
-            returnKeyType="done"
-            blurOnSubmit={false}
             autoCorrect={true}
             spellCheck={true}
-            scrollEnabled={false}
-            contentStyle={styles.textInputContent}
+            blurOnSubmit={false}
           />
           <Text variant="bodySmall" style={styles.characterCount}>
             {comment.length}/500 caracteres
@@ -335,48 +313,33 @@ export default function ReviewModal({
     </View>
   );
 
-  if (Platform.OS === 'ios') {
-    return (
-      <Modal
-        visible={visible}
-        transparent={false}
-        animationType="slide"
-        onRequestClose={handleClose}
-        presentationStyle="pageSheet"
-      >
-        <SafeAreaView style={styles.iosModalContainer}>
-          <ModalContent />
-        </SafeAreaView>
-      </Modal>
-    );
-  }
-
   return (
     <Modal
       visible={visible}
       transparent={true}
       animationType="slide"
       onRequestClose={handleClose}
-      statusBarTranslucent={true}
+      statusBarTranslucent={false}
     >
-      <View style={styles.androidModalContainer}>
-        <KeyboardAvoidingView 
-          behavior="height" 
-          style={styles.keyboardAvoidingView}
-        >
-          <ModalContent />
-        </KeyboardAvoidingView>
-      </View>
+      <TouchableWithoutFeedback onPress={dismissKeyboard}>
+        <View style={styles.modalContainer}>
+          <TouchableWithoutFeedback>
+            <KeyboardAvoidingView 
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.keyboardAvoidingView}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            >
+              {renderModalContent()}
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  iosModalContainer: {
-    flex: 1,
-    backgroundColor: theme.colors.surface,
-  },
-  androidModalContainer: {
+  modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
@@ -387,17 +350,17 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: Platform.OS === 'ios' ? 0 : spacing.lg,
-    borderTopRightRadius: Platform.OS === 'ios' ? 0 : spacing.lg,
-    flex: Platform.OS === 'ios' ? 1 : 0,
-    minHeight: Platform.OS === 'ios' ? '100%' : '60%',
+    borderTopLeftRadius: spacing.lg,
+    borderTopRightRadius: spacing.lg,
+    maxHeight: '90%',
+    minHeight: '60%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: Platform.OS === 'ios' ? spacing.md : spacing.lg,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.surfaceVariant,
@@ -418,14 +381,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     flexGrow: 1,
   },
+  scrollContentWithKeyboard: {
+    paddingBottom: spacing.xxl,
+  },
   professionalCard: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
-    elevation: Platform.OS === 'android' ? 1 : 0,
-    shadowColor: Platform.OS === 'ios' ? '#000' : 'transparent',
-    shadowOffset: Platform.OS === 'ios' ? { width: 0, height: 1 } : { width: 0, height: 0 },
-    shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0,
-    shadowRadius: Platform.OS === 'ios' ? 2 : 0,
+    elevation: 1,
     backgroundColor: theme.colors.surface,
   },
   professionalContent: {
@@ -476,11 +438,8 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     marginBottom: spacing.sm,
-    minHeight: Platform.OS === 'ios' ? 140 : 100,
+    minHeight: 120,
     backgroundColor: theme.colors.surface,
-  },
-  textInputContent: {
-    paddingTop: Platform.OS === 'ios' ? spacing.md : spacing.sm,
   },
   characterCount: {
     textAlign: 'right',
@@ -491,7 +450,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     marginTop: spacing.md,
-    paddingBottom: Platform.OS === 'ios' ? spacing.lg : 0,
+    paddingBottom: spacing.lg,
   },
   actionButton: {
     flex: 1,
