@@ -116,25 +116,29 @@ export default function ClientHomeScreen() {
     return rating.toFixed(1);
   };
 
+  const handleServicePress = (serviceId: string) => {
+    router.push({
+      pathname: '/(client)/service-details/[id]',
+      params: { id: serviceId },
+    });
+  };
+
   const renderServiceCard = (item: Service) => (
     <Card
       key={item.id}
       style={styles.serviceCard}
-      onPress={() =>
-        router.push({
-          pathname: '/service-details/[id]',
-          params: { id: item.id },
-        })
-      }
+      onPress={() => handleServicePress(item.id)}
     >
+      {/* Service Image */}
       <Image
         source={{
           uri:
             item.images?.[0] ||
-            'https://images.pexels.com/photos/1482803/pexels-photo-1482803.jpeg?auto=compress&cs=tinysrgb&w=400',
+            'https://images.pexels.com/photos/1482803/pexels-photo-1482803.jpeg?auto=compress&cs=tinysrgb&w=800',
         }}
         style={styles.serviceImage}
       />
+      
       <Card.Content style={styles.serviceContent}>
         <Text variant="titleMedium" style={styles.serviceTitle}>
           {item.title}
@@ -237,7 +241,11 @@ export default function ClientHomeScreen() {
           </Text>
 
           {loading ? (
-            <Text>Carregando...</Text>
+            <View style={styles.loadingContainer}>
+              <Text variant="bodyMedium" style={styles.loadingText}>
+                Carregando churrasqueiros...
+              </Text>
+            </View>
           ) : (
             <View style={styles.servicesList}>
               {services.map(renderServiceCard)}
@@ -289,16 +297,26 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     color: theme.colors.onBackground,
   },
+  loadingContainer: {
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: theme.colors.onSurfaceVariant,
+  },
   servicesList: {
     paddingBottom: spacing.lg,
   },
   serviceCard: {
     marginBottom: spacing.md,
     elevation: 2,
+    borderRadius: spacing.md,
+    overflow: 'hidden',
   },
   serviceImage: {
     width: '100%',
     height: 200,
+    backgroundColor: theme.colors.surfaceVariant,
   },
   serviceContent: {
     padding: spacing.md,
@@ -311,6 +329,7 @@ const styles = StyleSheet.create({
   serviceDescription: {
     color: theme.colors.onSurfaceVariant,
     marginBottom: spacing.md,
+    lineHeight: 18,
   },
   serviceInfo: {
     marginBottom: spacing.md,
