@@ -23,6 +23,8 @@ interface Service {
     full_name: string;
     avatar_url?: string;
   };
+  average_rating?: number;
+  total_reviews?: number;
 }
 
 export default function ClientHomeScreen() {
@@ -61,7 +63,37 @@ export default function ClientHomeScreen() {
       if (error) {
         console.error('Error loading services:', error);
       } else {
-        setServices(data || []);
+        // Load ratings for each service
+        const servicesWithRatings = await Promise.all(
+          (data || []).map(async (service) => {
+            const { data: reviews, error: reviewsError } = await supabase
+              .from('reviews')
+              .select('rating')
+              .eq('professional_id', service.professional_id);
+
+            if (reviewsError) {
+              console.error('Error loading reviews for service:', service.id, reviewsError);
+              return {
+                ...service,
+                average_rating: 0,
+                total_reviews: 0,
+              };
+            }
+
+            const totalReviews = reviews?.length || 0;
+            const averageRating = totalReviews > 0 
+              ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews 
+              : 0;
+
+            return {
+              ...service,
+              average_rating: averageRating,
+              total_reviews: totalReviews,
+            };
+          })
+        );
+
+        setServices(servicesWithRatings);
       }
     } catch (error) {
       console.error('Error loading services:', error);
@@ -75,6 +107,13 @@ export default function ClientHomeScreen() {
       return `R$ ${priceFrom} - ${priceTo}`;
     }
     return `A partir de R$ ${priceFrom}`;
+  };
+
+  const formatRating = (rating: number, totalReviews: number) => {
+    if (totalReviews === 0) {
+      return 'Novo';
+    }
+    return rating.toFixed(1);
   };
 
   const renderServiceCard = ({ item }: { item: Service }) => (
@@ -131,10 +170,19 @@ export default function ClientHomeScreen() {
               {item.profiles?.full_name}
             </Text>
             <View style={styles.rating}>
-              <Star size={14} color={theme.colors.tertiary} />
+              <Star 
+                size={14} 
+                color={item.total_reviews && item.total_reviews > 0 ? theme.colors.tertiary : theme.colors.onSurfaceVariant}
+                fill={item.total_reviews && item.total_reviews > 0 ? theme.colors.tertiary : 'transparent'}
+              />
               <Text variant="bodySmall" style={styles.ratingText}>
-                4.8
+                {formatRating(item.average_rating || 0, item.total_reviews || 0)}
               </Text>
+              {item.total_reviews && item.total_reviews > 0 && (
+                <Text variant="bodySmall" style={styles.reviewsCount}>
+                  ({item.total_reviews})
+                </Text>
+              )}
             </View>
           </View>
         </View>
@@ -299,5 +347,12 @@ const styles = StyleSheet.create({
   ratingText: {
     marginLeft: spacing.xs,
     color: theme.colors.onSurfaceVariant,
+    fontWeight: '500',
+  },
+  reviewsCount: {
+    marginLeft: spacing.xs,
+    color: theme.colors.onSurfaceVariant,
+    fontSize: 12,
   },
 });
+</parameter>
