@@ -5,7 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { Calendar, Clock, MapPin, User } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, User, Star } from 'lucide-react-native';
+import ReviewModal from '@/components/ReviewModal';
 
 interface Booking {
   id: string;
@@ -16,6 +17,8 @@ interface Booking {
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   total_price: number;
   notes?: string;
+  professional_id: string;
+  service_id: string;
   services?: {
     title: string;
     duration_hours: number;
@@ -23,7 +26,9 @@ interface Booking {
   profiles?: {
     full_name: string;
     phone?: string;
+    avatar_url?: string;
   };
+  has_review?: boolean;
 }
 
 export default function BookingsScreen() {
@@ -31,6 +36,8 @@ export default function BookingsScreen() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -52,7 +59,8 @@ export default function BookingsScreen() {
           ),
           profiles!bookings_professional_id_fkey (
             full_name,
-            phone
+            phone,
+            avatar_url
           )
         `)
         .eq('client_id', profile.id)
@@ -61,13 +69,43 @@ export default function BookingsScreen() {
       if (error) {
         console.error('Error loading bookings:', error);
       } else {
-        setBookings(data || []);
+        // Check which bookings have reviews
+        const bookingsWithReviewStatus = await Promise.all(
+          (data || []).map(async (booking) => {
+            const { data: reviewData } = await supabase
+              .from('reviews')
+              .select('id')
+              .eq('booking_id', booking.id)
+              .single();
+
+            return {
+              ...booking,
+              has_review: !!reviewData,
+            };
+          })
+        );
+
+        setBookings(bookingsWithReviewStatus);
       }
     } catch (error) {
       console.error('Error loading bookings:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReviewSubmitted = () => {
+    loadBookings(); // Refresh bookings to update review status
+  };
+
+  const openReviewModal = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedBooking(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -185,16 +223,39 @@ export default function BookingsScreen() {
             Total: R$ {item.total_price}
           </Text>
           
-          {item.status === 'pending' && (
-            <View style={styles.actions}>
-              <Button mode="outlined" style={styles.actionButton}>
-                Cancelar
+          <View style={styles.actions}>
+            {item.status === 'pending' && (
+              <>
+                <Button mode="outlined" style={styles.actionButton}>
+                  Cancelar
+                </Button>
+                <Button mode="contained" style={styles.actionButton}>
+                  Contatar
+                </Button>
+              </>
+            )}
+
+            {item.status === 'completed' && !item.has_review && (
+              <Button
+                mode="contained"
+                style={styles.reviewButton}
+                icon={() => <Star size={16} color={theme.colors.onPrimary} />}
+                onPress={() => openReviewModal(item)}
+              >
+                Avaliar
               </Button>
-              <Button mode="contained" style={styles.actionButton}>
-                Contatar
-              </Button>
-            </View>
-          )}
+            )}
+
+            {item.status === 'completed' && item.has_review && (
+              <Chip
+                style={styles.reviewedChip}
+                textStyle={styles.reviewedChipText}
+                icon={() => <Star size={14} color={theme.colors.tertiary} />}
+              >
+                Avaliado
+              </Chip>
+            )}
+          </View>
         </View>
       </Card.Content>
     </Card>
@@ -250,6 +311,17 @@ export default function BookingsScreen() {
           />
         )}
       </View>
+
+      {/* Review Modal */}
+      {selectedBooking && (
+        <ReviewModal
+          visible={showReviewModal}
+          onClose={closeReviewModal}
+          booking={selectedBooking}
+          clientId={profile?.id || ''}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -336,9 +408,20 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
+    alignItems: 'center',
   },
   actionButton: {
     minWidth: 80,
+  },
+  reviewButton: {
+    minWidth: 100,
+  },
+  reviewedChip: {
+    backgroundColor: theme.colors.tertiaryContainer,
+  },
+  reviewedChipText: {
+    color: theme.colors.tertiary,
+    fontWeight: '500',
   },
   emptyState: {
     flex: 1,

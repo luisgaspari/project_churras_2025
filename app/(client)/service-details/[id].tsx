@@ -45,6 +45,7 @@ import {
   MessageCircle,
   Send,
 } from 'lucide-react-native';
+import ReviewsList from '@/components/ReviewsList';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -97,6 +98,8 @@ export default function ServiceDetailsScreen() {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
   
   const [bookingForm, setBookingForm] = useState<BookingForm>({
     event_date: new Date(),
@@ -142,9 +145,10 @@ export default function ServiceDetailsScreen() {
         location: data.location,
       }));
 
-      // Load professional photos
+      // Load professional photos and reviews
       if (data.professional_id) {
         loadProfessionalPhotos(data.professional_id);
+        loadProfessionalRating(data.professional_id);
       }
     } catch (error: any) {
       console.error('Error loading service:', error);
@@ -181,6 +185,26 @@ export default function ServiceDetailsScreen() {
       console.error('Error loading professional photos:', error);
     } finally {
       setLoadingPhotos(false);
+    }
+  };
+
+  const loadProfessionalRating = async (professionalId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('professional_id', professionalId);
+
+      if (error) {
+        console.error('Error loading reviews:', error);
+      } else if (data && data.length > 0) {
+        const totalRating = data.reduce((sum, review) => sum + review.rating, 0);
+        const avgRating = totalRating / data.length;
+        setAverageRating(avgRating);
+        setTotalReviews(data.length);
+      }
+    } catch (error) {
+      console.error('Error loading professional rating:', error);
     }
   };
 
@@ -574,10 +598,10 @@ export default function ServiceDetailsScreen() {
               <View style={styles.rating}>
                 <Star size={20} color={theme.colors.tertiary} />
                 <Text variant="titleMedium" style={styles.ratingText}>
-                  4.8
+                  {totalReviews > 0 ? averageRating.toFixed(1) : '5.0'}
                 </Text>
                 <Text variant="bodyMedium" style={styles.reviewsText}>
-                  (124 avaliações)
+                  ({totalReviews} {totalReviews === 1 ? 'avaliação' : 'avaliações'})
                 </Text>
               </View>
             </View>
@@ -641,7 +665,7 @@ export default function ServiceDetailsScreen() {
                 <View style={styles.professionalRating}>
                   <Star size={16} color={theme.colors.tertiary} />
                   <Text variant="bodySmall" style={styles.professionalRatingText}>
-                    4.8 • 87 churrascos realizados
+                    {totalReviews > 0 ? averageRating.toFixed(1) : '5.0'} • {totalReviews} churrascos realizados
                   </Text>
                 </View>
               </View>
@@ -714,6 +738,29 @@ export default function ServiceDetailsScreen() {
                   O churrasqueiro ainda não adicionou fotos do seu trabalho.
                 </Text>
               </View>
+            )}
+          </Card.Content>
+        </Card>
+
+        {/* Reviews Section */}
+        <Card style={styles.reviewsCard}>
+          <Card.Content>
+            <ReviewsList 
+              professionalId={service.professional_id} 
+              limit={3}
+              showTitle={true}
+            />
+            {totalReviews > 3 && (
+              <Button
+                mode="text"
+                style={styles.viewAllReviewsButton}
+                onPress={() => {
+                  // Navigate to full reviews screen
+                  // router.push(`/reviews/${service.professional_id}`);
+                }}
+              >
+                Ver todas as avaliações
+              </Button>
             )}
           </Card.Content>
         </Card>
@@ -1190,6 +1237,14 @@ const styles = StyleSheet.create({
   emptyGallerySubtext: {
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
+  },
+  reviewsCard: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    elevation: 2,
+  },
+  viewAllReviewsButton: {
+    marginTop: spacing.md,
   },
   gallery: {
     gap: spacing.sm,
