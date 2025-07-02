@@ -35,6 +35,7 @@ import {
   Star,
   Trash2,
   CreditCard as Edit,
+  Eye,
 } from 'lucide-react-native';
 
 interface Photo {
@@ -54,6 +55,10 @@ export default function ProfessionalProfileScreen() {
   const [services, setServices] = useState<Service[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [reviewsStats, setReviewsStats] = useState({
+    totalReviews: 0,
+    averageRating: 0,
+  });
 
   const fetchServices = useCallback(async () => {
     if (!profile?.id) return;
@@ -72,17 +77,46 @@ export default function ProfessionalProfileScreen() {
     }
   }, [profile?.id]);
 
+  const fetchReviewsStats = useCallback(async () => {
+    if (!profile?.id) return;
+
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('professional_id', profile.id);
+
+    if (error) {
+      console.error('Erro ao buscar estatísticas de avaliações:', error);
+    } else if (data && data.length > 0) {
+      const totalReviews = data.length;
+      const totalRating = data.reduce((sum, review) => sum + review.rating, 0);
+      const averageRating = totalRating / totalReviews;
+      
+      setReviewsStats({
+        totalReviews,
+        averageRating,
+      });
+    } else {
+      setReviewsStats({
+        totalReviews: 0,
+        averageRating: 0,
+      });
+    }
+  }, [profile?.id]);
+
   useEffect(() => {
     if (profile?.id) {
       fetchPhotos();
       fetchServices();
+      fetchReviewsStats();
     }
-  }, [profile?.id, fetchServices]);
+  }, [profile?.id, fetchServices, fetchReviewsStats]);
 
   useFocusEffect(
     useCallback(() => {
       fetchServices();
-    }, [fetchServices])
+      fetchReviewsStats();
+    }, [fetchServices, fetchReviewsStats])
   );
 
   const fetchPhotos = async () => {
@@ -499,7 +533,10 @@ export default function ProfessionalProfileScreen() {
               <View style={styles.ratingContainer}>
                 <Star size={16} color={theme.colors.tertiary} />
                 <Text variant="bodyMedium" style={styles.rating}>
-                  4.8 • 124 avaliações
+                  {reviewsStats.totalReviews > 0 
+                    ? `${reviewsStats.averageRating.toFixed(1)} • ${reviewsStats.totalReviews} ${reviewsStats.totalReviews === 1 ? 'avaliação' : 'avaliações'}`
+                    : 'Nenhuma avaliação ainda'
+                  }
                 </Text>
               </View>
             </View>
@@ -550,6 +587,64 @@ export default function ProfessionalProfileScreen() {
             </Card.Content>
           </Card>
         </View>
+
+        {/* Reviews Card */}
+        <Card style={styles.reviewsCard}>
+          <Card.Content>
+            <View style={styles.sectionHeader}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Avaliações dos Clientes
+              </Text>
+              <Button
+                mode="text"
+                icon={() => <Eye size={16} color={theme.colors.primary} />}
+                onPress={() => router.push('/(professional)/reviews')}
+              >
+                Ver todas
+              </Button>
+            </View>
+
+            {reviewsStats.totalReviews > 0 ? (
+              <View style={styles.reviewsPreview}>
+                <View style={styles.reviewsStats}>
+                  <Text variant="displaySmall" style={styles.averageRating}>
+                    {reviewsStats.averageRating.toFixed(1)}
+                  </Text>
+                  <View style={styles.starsContainer}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={20}
+                        color={star <= Math.round(reviewsStats.averageRating) ? theme.colors.tertiary : theme.colors.onSurfaceVariant}
+                        fill={star <= Math.round(reviewsStats.averageRating) ? theme.colors.tertiary : 'transparent'}
+                      />
+                    ))}
+                  </View>
+                  <Text variant="bodyMedium" style={styles.reviewsCount}>
+                    {reviewsStats.totalReviews} {reviewsStats.totalReviews === 1 ? 'avaliação' : 'avaliações'}
+                  </Text>
+                </View>
+                <Button
+                  mode="contained"
+                  style={styles.viewReviewsButton}
+                  onPress={() => router.push('/(professional)/reviews')}
+                >
+                  Ver Detalhes
+                </Button>
+              </View>
+            ) : (
+              <View style={styles.noReviewsContainer}>
+                <Star size={48} color={theme.colors.onSurfaceVariant} />
+                <Text variant="bodyMedium" style={styles.noReviewsText}>
+                  Você ainda não tem avaliações.
+                </Text>
+                <Text variant="bodySmall" style={styles.noReviewsSubtext}>
+                  Complete seus primeiros churrascos para receber feedback dos clientes!
+                </Text>
+              </View>
+            )}
+          </Card.Content>
+        </Card>
 
         {/* Photos */}
         <Card style={styles.photosCard}>
@@ -837,6 +932,49 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   statLabel: {
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  reviewsCard: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    elevation: 2,
+  },
+  reviewsPreview: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reviewsStats: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  averageRating: {
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: spacing.sm,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+  },
+  reviewsCount: {
+    color: theme.colors.onSurfaceVariant,
+  },
+  viewReviewsButton: {
+    marginLeft: spacing.lg,
+  },
+  noReviewsContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  noReviewsText: {
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  noReviewsSubtext: {
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
   },

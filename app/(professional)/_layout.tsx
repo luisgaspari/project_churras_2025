@@ -5,6 +5,7 @@ import {
   ChartBar as BarChart3,
   User,
   HomeIcon,
+  Star,
 } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
@@ -12,6 +13,7 @@ export default function ProfessionalTabLayout() {
   return (
     <>
       <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
+      <Stack.Screen name="reviews" options={{ headerShown: false }} />
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -38,6 +40,15 @@ export default function ProfessionalTabLayout() {
             title: 'Agendamentos',
             tabBarIcon: ({ size, color }) => (
               <Calendar size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="reviews"
+          options={{
+            title: 'Avaliações',
+            tabBarIcon: ({ size, color }) => (
+              <Star size={size} color={color} />
             ),
           }}
         />
