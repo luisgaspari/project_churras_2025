@@ -220,7 +220,7 @@ export default function ClientHomeScreen() {
         </View>
 
         {/* Quick Search */}
-        <View style={styles.quickSearchContainer}>
+        {/* <View style={styles.quickSearchContainer}>
           <Button
             mode="outlined"
             onPress={() => router.push('/(client)/search')}
@@ -229,7 +229,7 @@ export default function ClientHomeScreen() {
           >
             Buscar churrasqueiros...
           </Button>
-        </View>
+        </View> */}
 
         {/* Featured Services Section */}
         <View style={styles.section}>
@@ -237,10 +237,7 @@ export default function ClientHomeScreen() {
             <Text variant="titleLarge" style={styles.sectionTitle}>
               Churrasqueiros em destaque
             </Text>
-            <Button 
-              mode="text" 
-              onPress={() => router.push('/(client)/search')}
-            >
+            <Button mode="text" onPress={() => router.push('/(client)/search')}>
               Ver todos
             </Button>
           </View>
@@ -272,9 +269,9 @@ export default function ClientHomeScreen() {
           <Text variant="titleLarge" style={styles.sectionTitle}>
             Categorias Populares
           </Text>
-          
+
           <View style={styles.categoriesGrid}>
-            <Card 
+            <Card
               style={styles.categoryCard}
               onPress={() => router.push('/(client)/search')}
             >
@@ -288,7 +285,7 @@ export default function ClientHomeScreen() {
               </Card.Content>
             </Card>
 
-            <Card 
+            <Card
               style={styles.categoryCard}
               onPress={() => router.push('/(client)/search')}
             >
@@ -302,7 +299,7 @@ export default function ClientHomeScreen() {
               </Card.Content>
             </Card>
 
-            <Card 
+            <Card
               style={styles.categoryCard}
               onPress={() => router.push('/(client)/search')}
             >
@@ -316,7 +313,7 @@ export default function ClientHomeScreen() {
               </Card.Content>
             </Card>
 
-            <Card 
+            <Card
               style={styles.categoryCard}
               onPress={() => router.push('/(client)/search')}
             >

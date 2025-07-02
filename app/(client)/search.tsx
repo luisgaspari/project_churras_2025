@@ -449,7 +449,7 @@ export default function SearchScreen() {
         {/* Search */}
         <View style={styles.searchContainer}>
           <Searchbar
-            placeholder="Buscar churrasqueiros, localização..."
+            placeholder="Buscar churrasqueiros..."
             onChangeText={setSearchQuery}
             value={searchQuery}
             style={styles.searchbar}

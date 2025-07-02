@@ -257,7 +257,11 @@ export default function ProfessionalHomeScreen() {
             </Card>
           ) : (
             <View style={styles.bookingsList}>
-              {recentBookings.map(renderBookingCard)}
+              {recentBookings.map((booking) => (
+                <React.Fragment key={booking.id}>
+                  {renderBookingCard(booking)}
+                </React.Fragment>
+              ))}
             </View>
           )}
         </View>

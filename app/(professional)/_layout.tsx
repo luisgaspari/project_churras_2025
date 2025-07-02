@@ -1,15 +1,17 @@
 import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
-import { Calendar, ChartBar as BarChart3, User, PhoneIncoming as HomeIcon } from 'lucide-react-native';
+import {
+  Calendar,
+  ChartBar as BarChart3,
+  User,
+  HomeIcon,
+} from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 export default function ProfessionalTabLayout() {
   return (
     <>
-      <Stack.Screen
-        name="edit-profile"
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Tabs
         screenOptions={{
           headerShown: false,
