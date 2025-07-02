@@ -43,6 +43,32 @@ export type Database = {
           updated_at?: string;
         };
       };
+      conversations: {
+        Row: {
+          id: string;
+          client_id: string;
+          professional_id: string;
+          last_message_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          professional_id: string;
+          last_message_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          professional_id?: string;
+          last_message_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       services: {
         Row: {
           id: string;
@@ -152,6 +178,38 @@ export type Database = {
           professional_id?: string;
           photo_url?: string;
           created_at?: string;
+        };
+      };
+      reviews: {
+        Row: {
+          id: string;
+          booking_id: string;
+          client_id: string;
+          professional_id: string;
+          rating: number;
+          comment?: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          client_id: string;
+          professional_id: string;
+          rating: number;
+          comment?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          booking_id?: string;
+          client_id?: string;
+          professional_id?: string;
+          rating?: number;
+          comment?: string;
+          created_at?: string;
+          updated_at?: string;
         };
       };
     };
