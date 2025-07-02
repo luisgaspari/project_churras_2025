@@ -23,7 +23,19 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { ChefHat, Phone, Mail, MapPin, Settings, LogOut, Camera, Plus, Star, Trash2, CreditCard as Edit } from 'lucide-react-native';
+import {
+  ChefHat,
+  Phone,
+  Mail,
+  MapPin,
+  Settings,
+  LogOut,
+  Camera,
+  Plus,
+  Star,
+  Trash2,
+  CreditCard as Edit,
+} from 'lucide-react-native';
 
 interface Photo {
   id: string;
@@ -445,24 +457,24 @@ export default function ProfessionalProfileScreen() {
         {/* Profile Info */}
         <Card style={styles.profileCard}>
           <Card.Content style={styles.profileContent}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={handleAvatarPress}
               disabled={uploadingAvatar}
-            >
-              {profile?.avatar_url ? (
-                <Avatar.Image
-                  size={80}
-                  source={{ uri: profile.avatar_url }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <Avatar.Text
-                  size={80}
-                  label={profile?.full_name?.charAt(0).toUpperCase() || 'C'}
-                  style={styles.avatar}
-                />
-              )}
-              <View style={styles.avatarEditContainer}>
+            > */}
+            {profile?.avatar_url ? (
+              <Avatar.Image
+                size={80}
+                source={{ uri: profile.avatar_url }}
+                style={styles.avatar}
+              />
+            ) : (
+              <Avatar.Text
+                size={80}
+                label={profile?.full_name?.charAt(0).toUpperCase() || 'C'}
+                style={styles.avatar}
+              />
+            )}
+            {/* <View style={styles.avatarEditContainer}>
                 {uploadingAvatar ? (
                   <ActivityIndicator color={theme.colors.onPrimary} />
                 ) : (
@@ -472,8 +484,8 @@ export default function ProfessionalProfileScreen() {
                     style={styles.avatarEditIcon}
                   />
                 )}
-              </View>
-            </TouchableOpacity>
+              </View> */}
+            {/* </TouchableOpacity> */}
             <View style={styles.profileInfo}>
               <Text variant="headlineSmall" style={styles.userName}>
                 {profile?.full_name || 'Churrasqueiro'}

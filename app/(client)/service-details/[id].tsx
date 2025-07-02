@@ -85,7 +85,9 @@ export default function ServiceDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useAuth();
   const [service, setService] = useState<Service | null>(null);
-  const [professionalPhotos, setProfessionalPhotos] = useState<ProfessionalPhoto[]>([]);
+  const [professionalPhotos, setProfessionalPhotos] = useState<
+    ProfessionalPhoto[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
@@ -99,7 +101,7 @@ export default function ServiceDetailsScreen() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
-  
+
   const [bookingForm, setBookingForm] = useState<BookingForm>({
     event_date: new Date(),
     event_time: new Date(),
@@ -121,7 +123,8 @@ export default function ServiceDetailsScreen() {
     try {
       const { data, error } = await supabase
         .from('services')
-        .select(`
+        .select(
+          `
           *,
           profiles (
             full_name,
@@ -129,7 +132,8 @@ export default function ServiceDetailsScreen() {
             phone,
             email
           )
-        `)
+        `
+        )
         .eq('id', id)
         .single();
 
@@ -139,7 +143,7 @@ export default function ServiceDetailsScreen() {
 
       setService(data);
       // Pre-fill location with service location
-      setBookingForm(prev => ({
+      setBookingForm((prev) => ({
         ...prev,
         location: data.location,
       }));
@@ -197,7 +201,10 @@ export default function ServiceDetailsScreen() {
       if (error) {
         console.error('Error loading reviews:', error);
       } else if (data && data.length > 0) {
-        const totalRating = data.reduce((sum, review) => sum + review.rating, 0);
+        const totalRating = data.reduce(
+          (sum, review) => sum + review.rating,
+          0
+        );
         const avgRating = totalRating / data.length;
         setAverageRating(avgRating);
         setTotalReviews(data.length);
@@ -213,7 +220,7 @@ export default function ServiceDetailsScreen() {
       router.back();
     } else {
       // If no navigation history, go to client home
-      router.replace('/(client)');
+      router.replace('../(client)');
     }
   };
 
@@ -239,8 +246,11 @@ export default function ServiceDetailsScreen() {
     });
   };
 
-  const handleInputChange = (field: keyof BookingForm, value: string | Date) => {
-    setBookingForm(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (
+    field: keyof BookingForm,
+    value: string | Date
+  ) => {
+    setBookingForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const openGallery = (index: number = 0) => {
@@ -250,11 +260,11 @@ export default function ServiceDetailsScreen() {
 
   const navigatePhoto = (direction: 'prev' | 'next') => {
     if (direction === 'prev') {
-      setSelectedPhotoIndex(prev => 
+      setSelectedPhotoIndex((prev) =>
         prev > 0 ? prev - 1 : professionalPhotos.length - 1
       );
     } else {
-      setSelectedPhotoIndex(prev => 
+      setSelectedPhotoIndex((prev) =>
         prev < professionalPhotos.length - 1 ? prev + 1 : 0
       );
     }
@@ -274,7 +284,10 @@ export default function ServiceDetailsScreen() {
         if (supported) {
           return Linking.openURL(phoneUrl);
         } else {
-          Alert.alert('Erro', 'Não foi possível abrir o aplicativo de telefone.');
+          Alert.alert(
+            'Erro',
+            'Não foi possível abrir o aplicativo de telefone.'
+          );
         }
       })
       .catch((error) => {
@@ -291,8 +304,12 @@ export default function ServiceDetailsScreen() {
 
     const phoneNumber = service.profiles.phone.replace(/\D/g, '');
     const message = `Olá ${service.profiles.full_name}! Vi seu serviço "${service.title}" no ChurrasJa e gostaria de saber mais informações.`;
-    const whatsappUrl = `whatsapp://send?phone=55${phoneNumber}&text=${encodeURIComponent(message)}`;
-    const whatsappWebUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `whatsapp://send?phone=55${phoneNumber}&text=${encodeURIComponent(
+      message
+    )}`;
+    const whatsappWebUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(
+      message
+    )}`;
 
     Linking.canOpenURL(whatsappUrl)
       .then((supported) => {
@@ -317,7 +334,9 @@ export default function ServiceDetailsScreen() {
 
     const subject = `Interesse no serviço: ${service.title}`;
     const body = `Olá ${service.profiles.full_name}!\n\nVi seu serviço "${service.title}" no ChurrasJa e gostaria de saber mais informações.\n\nAguardo seu retorno.\n\nAtenciosamente,\n${profile?.full_name}`;
-    const emailUrl = `mailto:${service.profiles.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const emailUrl = `mailto:${
+      service.profiles.email
+    }?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
     Linking.canOpenURL(emailUrl)
       .then((supported) => {
@@ -349,12 +368,24 @@ export default function ServiceDetailsScreen() {
       // Here you would typically save the message to your database
       // For now, we'll simulate sending via email
       const subject = `Nova mensagem sobre: ${service.title}`;
-      const body = `Olá ${service.profiles?.full_name}!\n\nVocê recebeu uma nova mensagem de ${profile.full_name} através do ChurrasJa:\n\n"${messageText}"\n\nPara responder, entre em contato diretamente com o cliente:\nE-mail: ${profile.email}\nTelefone: ${profile.phone || 'Não informado'}\n\nAtenciosamente,\nEquipe ChurrasJa`;
-      
-      const emailUrl = `mailto:${service.profiles?.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      
+      const body = `Olá ${
+        service.profiles?.full_name
+      }!\n\nVocê recebeu uma nova mensagem de ${
+        profile.full_name
+      } através do ChurrasJa:\n\n"${messageText}"\n\nPara responder, entre em contato diretamente com o cliente:\nE-mail: ${
+        profile.email
+      }\nTelefone: ${
+        profile.phone || 'Não informado'
+      }\n\nAtenciosamente,\nEquipe ChurrasJa`;
+
+      const emailUrl = `mailto:${
+        service.profiles?.email
+      }?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+        body
+      )}`;
+
       await Linking.openURL(emailUrl);
-      
+
       Alert.alert(
         'Mensagem Enviada',
         'Sua mensagem foi enviada com sucesso! O churrasqueiro receberá um e-mail e entrará em contato em breve.',
@@ -370,7 +401,10 @@ export default function ServiceDetailsScreen() {
       );
     } catch (error) {
       console.error('Error sending message:', error);
-      Alert.alert('Erro', 'Não foi possível enviar a mensagem. Tente novamente.');
+      Alert.alert(
+        'Erro',
+        'Não foi possível enviar a mensagem. Tente novamente.'
+      );
     } finally {
       setSendingMessage(false);
     }
@@ -404,7 +438,7 @@ export default function ServiceDetailsScreen() {
       },
     ];
 
-    const availableOptions = options.filter(option => option.available);
+    const availableOptions = options.filter((option) => option.available);
 
     if (availableOptions.length === 0) {
       Alert.alert('Erro', 'Nenhuma forma de contato disponível.');
@@ -415,7 +449,7 @@ export default function ServiceDetailsScreen() {
       'Entrar em Contato',
       'Escolha como deseja entrar em contato com o churrasqueiro:',
       [
-        ...availableOptions.map(option => ({
+        ...availableOptions.map((option) => ({
           text: option.title,
           onPress: option.onPress,
         })),
@@ -469,13 +503,13 @@ export default function ServiceDetailsScreen() {
 
   const calculateTotalPrice = (): number => {
     if (!service) return 0;
-    
+
     const guestsCount = parseInt(bookingForm.guests_count) || 0;
     // Simple calculation: base price + additional cost per guest above minimum
     const basePrice = service.price_from;
     const additionalGuests = Math.max(0, guestsCount - 10); // Assume base price covers 10 guests
     const additionalCost = additionalGuests * 20; // R$ 20 per additional guest
-    
+
     return basePrice + additionalCost;
   };
 
@@ -485,7 +519,13 @@ export default function ServiceDetailsScreen() {
     setBookingLoading(true);
     try {
       const eventDateTime = new Date(bookingForm.event_date);
-      const timeString = `${bookingForm.event_time.getHours().toString().padStart(2, '0')}:${bookingForm.event_time.getMinutes().toString().padStart(2, '0')}:00`;
+      const timeString = `${bookingForm.event_time
+        .getHours()
+        .toString()
+        .padStart(2, '0')}:${bookingForm.event_time
+        .getMinutes()
+        .toString()
+        .padStart(2, '0')}:00`;
 
       const bookingData = {
         client_id: profile.id,
@@ -514,17 +554,18 @@ export default function ServiceDetailsScreen() {
             text: 'OK',
             onPress: () => {
               setShowBookingForm(false);
-              router.push('/(client)/bookings');
+              // Atualiza a página de bookings ao navegar
+              router.push({
+                pathname: '/(client)/bookings',
+                params: { refresh: Date.now().toString() },
+              });
             },
           },
         ]
       );
     } catch (error: any) {
       console.error('Error creating booking:', error);
-      Alert.alert(
-        'Erro',
-        error.message || 'Não foi possível criar a reserva.'
-      );
+      Alert.alert('Erro', error.message || 'Não foi possível criar a reserva.');
     } finally {
       setBookingLoading(false);
     }
@@ -539,16 +580,16 @@ export default function ServiceDetailsScreen() {
           <Text variant="titleMedium" style={styles.sectionTitle}>
             Fotos do Serviço
           </Text>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.gallery}
           >
             {service.images.map((image, index) => (
-              <Image 
-                key={index} 
-                source={{ uri: image }} 
-                style={styles.galleryImage} 
+              <Image
+                key={index}
+                source={{ uri: image }}
+                style={styles.galleryImage}
               />
             ))}
           </ScrollView>
@@ -584,14 +625,20 @@ export default function ServiceDetailsScreen() {
               </Text>
             </View>
           ) : professionalPhotos.length > 0 ? (
-            <ScrollView 
-              horizontal 
+            <ScrollView
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.professionalGallery}
             >
               {professionalPhotos.slice(0, 6).map((photo, index) => (
-                <TouchableOpacity key={photo.id} onPress={() => openGallery(index)}>
-                  <Image source={{ uri: photo.photo_url }} style={styles.professionalPhoto} />
+                <TouchableOpacity
+                  key={photo.id}
+                  onPress={() => openGallery(index)}
+                >
+                  <Image
+                    source={{ uri: photo.photo_url }}
+                    style={styles.professionalPhoto}
+                  />
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -642,9 +689,13 @@ export default function ServiceDetailsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <IconButton
+        {/* <IconButton
           icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
           onPress={handleGoBack}
+        /> */}
+        <IconButton
+          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
+          onPress={() => router.replace('/(client)')}
         />
         <Text variant="headlineMedium" style={styles.title}>
           Detalhes do Serviço
@@ -681,7 +732,8 @@ export default function ServiceDetailsScreen() {
                   {totalReviews > 0 ? averageRating.toFixed(1) : '5.0'}
                 </Text>
                 <Text variant="bodyMedium" style={styles.reviewsText}>
-                  ({totalReviews} {totalReviews === 1 ? 'avaliação' : 'avaliações'})
+                  ({totalReviews}{' '}
+                  {totalReviews === 1 ? 'avaliação' : 'avaliações'})
                 </Text>
               </View>
             </View>
@@ -731,7 +783,9 @@ export default function ServiceDetailsScreen() {
               ) : (
                 <Avatar.Text
                   size={60}
-                  label={service.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
+                  label={
+                    service.profiles?.full_name?.charAt(0).toUpperCase() || 'C'
+                  }
                 />
               )}
 
@@ -744,8 +798,12 @@ export default function ServiceDetailsScreen() {
                 </Text>
                 <View style={styles.professionalRating}>
                   <Star size={16} color={theme.colors.tertiary} />
-                  <Text variant="bodySmall" style={styles.professionalRatingText}>
-                    {totalReviews > 0 ? averageRating.toFixed(1) : '5.0'} • {totalReviews} churrascos realizados
+                  <Text
+                    variant="bodySmall"
+                    style={styles.professionalRatingText}
+                  >
+                    {totalReviews > 0 ? averageRating.toFixed(1) : '5.0'} •{' '}
+                    {totalReviews} churrascos realizados
                   </Text>
                 </View>
               </View>
@@ -764,7 +822,9 @@ export default function ServiceDetailsScreen() {
               )}
               <Button
                 mode="outlined"
-                icon={() => <MessageCircle size={16} color={theme.colors.primary} />}
+                icon={() => (
+                  <MessageCircle size={16} color={theme.colors.primary} />
+                )}
                 style={styles.contactButton}
                 onPress={showContactOptions}
               >
@@ -780,8 +840,8 @@ export default function ServiceDetailsScreen() {
         {/* Reviews Section */}
         <Card style={styles.reviewsCard}>
           <Card.Content>
-            <ReviewsList 
-              professionalId={service.professional_id} 
+            <ReviewsList
+              professionalId={service.professional_id}
               limit={3}
               showTitle={true}
             />
@@ -815,7 +875,9 @@ export default function ServiceDetailsScreen() {
                 <View style={styles.dateTimeRow}>
                   <Button
                     mode="outlined"
-                    icon={() => <Calendar size={16} color={theme.colors.primary} />}
+                    icon={() => (
+                      <Calendar size={16} color={theme.colors.primary} />
+                    )}
                     onPress={() => setShowDatePicker(true)}
                     style={styles.dateTimeButton}
                   >
@@ -824,7 +886,9 @@ export default function ServiceDetailsScreen() {
 
                   <Button
                     mode="outlined"
-                    icon={() => <Clock size={16} color={theme.colors.primary} />}
+                    icon={() => (
+                      <Clock size={16} color={theme.colors.primary} />
+                    )}
                     onPress={() => setShowTimePicker(true)}
                     style={styles.dateTimeButton}
                   >
@@ -865,7 +929,9 @@ export default function ServiceDetailsScreen() {
               <TextInput
                 label="Número de convidados *"
                 value={bookingForm.guests_count}
-                onChangeText={(value) => handleInputChange('guests_count', value)}
+                onChangeText={(value) =>
+                  handleInputChange('guests_count', value)
+                }
                 style={styles.input}
                 mode="outlined"
                 keyboardType="numeric"
@@ -959,7 +1025,9 @@ export default function ServiceDetailsScreen() {
           <View style={styles.modalContent}>
             {professionalPhotos.length > 0 && (
               <Image
-                source={{ uri: professionalPhotos[selectedPhotoIndex]?.photo_url }}
+                source={{
+                  uri: professionalPhotos[selectedPhotoIndex]?.photo_url,
+                }}
                 style={styles.modalImage}
                 resizeMode="contain"
               />
@@ -1020,7 +1088,9 @@ export default function ServiceDetailsScreen() {
               ) : (
                 <Avatar.Text
                   size={40}
-                  label={service.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
+                  label={
+                    service.profiles?.full_name?.charAt(0).toUpperCase() || 'C'
+                  }
                 />
               )}
               <View style={styles.recipientInfo}>

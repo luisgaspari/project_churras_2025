@@ -20,7 +20,18 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { User, Phone, Mail, MapPin, Settings, LogOut, CreditCard, CircleHelp as HelpCircle, Camera, CreditCard as Edit } from 'lucide-react-native';
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Settings,
+  LogOut,
+  CreditCard,
+  CircleHelp as HelpCircle,
+  Camera,
+  CreditCard as Edit,
+} from 'lucide-react-native';
 
 export default function ClientProfileScreen() {
   const { profile, signOut, session, refreshProfile } = useAuth();
@@ -173,7 +184,7 @@ export default function ClientProfileScreen() {
           try {
             await signOut();
             // Navigate to the welcome screen where user can choose user type
-            router.replace('/');
+            router.replace('../');
           } catch (error) {
             Alert.alert('Erro', 'Não foi possível sair da conta');
           }
@@ -195,24 +206,24 @@ export default function ClientProfileScreen() {
         {/* Profile Info */}
         <Card style={styles.profileCard}>
           <Card.Content style={styles.profileContent}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={handleAvatarPress}
               disabled={uploadingAvatar}
-            >
-              {profile?.avatar_url ? (
-                <Avatar.Image
-                  size={80}
-                  source={{ uri: profile.avatar_url }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <Avatar.Text
-                  size={80}
-                  label={profile?.full_name?.charAt(0).toUpperCase() || 'C'}
-                  style={styles.avatar}
-                />
-              )}
-              <View style={styles.avatarEditContainer}>
+            > */}
+            {profile?.avatar_url ? (
+              <Avatar.Image
+                size={80}
+                source={{ uri: profile.avatar_url }}
+                style={styles.avatar}
+              />
+            ) : (
+              <Avatar.Text
+                size={80}
+                label={profile?.full_name?.charAt(0).toUpperCase() || 'C'}
+                style={styles.avatar}
+              />
+            )}
+            {/* <View style={styles.avatarEditContainer}>
                 {uploadingAvatar ? (
                   <ActivityIndicator color={theme.colors.onPrimary} />
                 ) : (
@@ -222,8 +233,8 @@ export default function ClientProfileScreen() {
                     style={styles.avatarEditIcon}
                   />
                 )}
-              </View>
-            </TouchableOpacity>
+              </View> */}
+            {/* </TouchableOpacity> */}
             <View style={styles.profileInfo}>
               <Text variant="headlineSmall" style={styles.userName}>
                 {profile?.full_name || 'Usuário'}

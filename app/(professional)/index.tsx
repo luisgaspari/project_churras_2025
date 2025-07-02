@@ -135,29 +135,32 @@ export default function ProfessionalHomeScreen() {
   };
 
   const renderBookingCard = (item: RecentBooking) => (
-    <Card key={item.id} style={styles.bookingCard} onPress={() => {}}>
-      <Card.Content>
-        <View style={styles.bookingHeader}>
-          <Text variant="titleMedium" style={styles.clientName}>
-            {item.profiles?.full_name}
+    <Card style={styles.bookingCard} onPress={() => {}}>
+      {/* Corrija o problema de overflow/shadow envolvendo o conteúdo em uma View */}
+      <View style={{ overflow: 'hidden', borderRadius: 8 }}>
+        <Card.Content>
+          <View style={styles.bookingHeader}>
+            <Text variant="titleMedium" style={styles.clientName}>
+              {item.profiles?.full_name}
+            </Text>
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: getStatusColor(item.status) },
+              ]}
+            />
+          </View>
+          <Text variant="bodyMedium" style={styles.bookingDate}>
+            {formatDate(item.event_date)} • {formatTime(item.event_time)}
           </Text>
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: getStatusColor(item.status) },
-            ]}
-          />
-        </View>
-        <Text variant="bodyMedium" style={styles.bookingDate}>
-          {formatDate(item.event_date)} • {formatTime(item.event_time)}
-        </Text>
-        <Text variant="bodySmall" style={styles.bookingLocation}>
-          {item.location}
-        </Text>
-        <Text variant="titleSmall" style={styles.bookingPrice}>
-          R$ {item.total_price}
-        </Text>
-      </Card.Content>
+          <Text variant="bodySmall" style={styles.bookingLocation}>
+            {item.location}
+          </Text>
+          <Text variant="titleSmall" style={styles.bookingPrice}>
+            R$ {item.total_price}
+          </Text>
+        </Card.Content>
+      </View>
     </Card>
   );
 

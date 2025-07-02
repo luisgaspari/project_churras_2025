@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
-import { Search, Calendar, User, PhoneIncoming as HomeIcon } from 'lucide-react-native';
+import { Search, Calendar, User, HomeIcon } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 export default function ClientTabLayout() {
@@ -10,10 +10,7 @@ export default function ClientTabLayout() {
         name="service-details/[id]"
         options={{ headerShown: false }}
       />
-      <Stack.Screen
-        name="edit-profile"
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Tabs
         screenOptions={{
           headerShown: false,

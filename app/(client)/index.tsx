@@ -113,7 +113,11 @@ export default function ClientHomeScreen() {
               .eq('professional_id', service.professional_id);
 
             if (reviewsError) {
-              console.error('Error loading reviews for service:', service.id, reviewsError);
+              console.error(
+                'Error loading reviews for service:',
+                service.id,
+                reviewsError
+              );
               return {
                 ...service,
                 average_rating: 0,
@@ -122,9 +126,11 @@ export default function ClientHomeScreen() {
             }
 
             const totalReviews = reviews?.length || 0;
-            const averageRating = totalReviews > 0 
-              ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews 
-              : 0;
+            const averageRating =
+              totalReviews > 0
+                ? reviews.reduce((sum, review) => sum + review.rating, 0) /
+                  totalReviews
+                : 0;
 
             return {
               ...service,
@@ -163,14 +169,24 @@ export default function ClientHomeScreen() {
       filtered = filtered.filter((service) => {
         const title = service.title.toLowerCase();
         const description = service.description.toLowerCase();
-        
+
         switch (selectedCategory) {
           case 'traditional':
-            return title.includes('tradicional') || description.includes('tradicional');
+            return (
+              title.includes('tradicional') ||
+              description.includes('tradicional')
+            );
           case 'premium':
-            return title.includes('premium') || description.includes('premium') || service.price_from >= 800;
+            return (
+              title.includes('premium') ||
+              description.includes('premium') ||
+              service.price_from >= 800
+            );
           case 'vegetarian':
-            return title.includes('vegetariano') || description.includes('vegetariano');
+            return (
+              title.includes('vegetariano') ||
+              description.includes('vegetariano')
+            );
           case 'gourmet':
             return title.includes('gourmet') || description.includes('gourmet');
           default:
@@ -181,50 +197,67 @@ export default function ClientHomeScreen() {
 
     // Price range filter
     if (filters.priceRange !== 'all') {
-      const range = priceRanges.find(r => r.key === filters.priceRange);
+      const range = priceRanges.find((r) => r.key === filters.priceRange);
       if (range && 'min' in range) {
-        filtered = filtered.filter(service => 
-          service.price_from >= range.min && service.price_from <= range.max
+        filtered = filtered.filter(
+          (service) =>
+            service.price_from >= (range.min ?? 0) &&
+            service.price_from <= (range.max ?? Infinity)
         );
       }
     }
 
     // Guest count filter
     if (filters.guestCount !== 'all') {
-      const guestRange = guestCounts.find(g => g.key === filters.guestCount);
+      const guestRange = guestCounts.find((g) => g.key === filters.guestCount);
       if (guestRange && 'max' in guestRange) {
         if ('min' in guestRange) {
-          filtered = filtered.filter(service => 
-            service.max_guests >= guestRange.min && service.max_guests <= guestRange.max
+          filtered = filtered.filter(
+            (service) =>
+              service.max_guests >= (guestRange.min ?? 0) &&
+              service.max_guests <= (guestRange.max ?? Infinity)
           );
         } else {
-          filtered = filtered.filter(service => service.max_guests <= guestRange.max);
+          filtered = filtered.filter(
+            (service) => service.max_guests <= (guestRange.max ?? Infinity)
+          );
         }
       } else if (guestRange && 'min' in guestRange) {
-        filtered = filtered.filter(service => service.max_guests >= guestRange.min);
+        filtered = filtered.filter(
+          (service) => service.max_guests >= (guestRange.min ?? 0)
+        );
       }
     }
 
     // Duration filter
     if (filters.duration !== 'all') {
-      const durationRange = durations.find(d => d.key === filters.duration);
+      const durationRange = durations.find((d) => d.key === filters.duration);
       if (durationRange && 'max' in durationRange) {
         if ('min' in durationRange) {
-          filtered = filtered.filter(service => 
-            service.duration_hours >= durationRange.min && service.duration_hours <= durationRange.max
+          filtered = filtered.filter(
+            (service) =>
+              service.duration_hours >= (durationRange.min ?? 0) &&
+              service.duration_hours <= (durationRange.max ?? Infinity)
           );
         } else {
-          filtered = filtered.filter(service => service.duration_hours <= durationRange.max);
+          filtered = filtered.filter(
+            (service) =>
+              service.duration_hours <= (durationRange.max ?? Infinity)
+          );
         }
       } else if (durationRange && 'min' in durationRange) {
-        filtered = filtered.filter(service => service.duration_hours >= durationRange.min);
+        filtered = filtered.filter(
+          (service) => service.duration_hours >= (durationRange.min ?? 0)
+        );
       }
     }
 
     // Rating filter
     if (filters.rating === 'high') {
-      filtered = filtered.filter(service => 
-        (service.average_rating || 0) >= 4.0 && (service.total_reviews || 0) > 0
+      filtered = filtered.filter(
+        (service) =>
+          (service.average_rating || 0) >= 4.0 &&
+          (service.total_reviews || 0) > 0
       );
     }
 
@@ -234,12 +267,12 @@ export default function ClientHomeScreen() {
       const bRating = b.average_rating || 0;
       const aReviews = a.total_reviews || 0;
       const bReviews = b.total_reviews || 0;
-      
+
       // First sort by rating
       if (bRating !== aRating) {
         return bRating - aRating;
       }
-      
+
       // Then by number of reviews
       return bReviews - aReviews;
     });
@@ -248,7 +281,7 @@ export default function ClientHomeScreen() {
   };
 
   const updateFilter = (key: keyof FilterState, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const clearAllFilters = () => {
@@ -294,7 +327,12 @@ export default function ClientHomeScreen() {
     });
   };
 
-  const renderFilterSection = (title: string, options: any[], selectedValue: string, onSelect: (value: string) => void) => (
+  const renderFilterSection = (
+    title: string,
+    options: any[],
+    selectedValue: string,
+    onSelect: (value: string) => void
+  ) => (
     <View style={styles.filterSection}>
       <Text variant="titleSmall" style={styles.filterSectionTitle}>
         {title}
@@ -321,69 +359,83 @@ export default function ClientHomeScreen() {
       style={styles.serviceCard}
       onPress={() => handleServicePress(item.id)}
     >
-      {/* Service Image */}
-      <Image
-        source={{
-          uri:
-            item.images?.[0] ||
-            'https://images.pexels.com/photos/1482803/pexels-photo-1482803.jpeg?auto=compress&cs=tinysrgb&w=800',
-        }}
-        style={styles.serviceImage}
-      />
-      
-      <Card.Content style={styles.serviceContent}>
-        <Text variant="titleMedium" style={styles.serviceTitle}>
-          {item.title}
-        </Text>
-        <Text
-          variant="bodySmall"
-          style={styles.serviceDescription}
-          numberOfLines={2}
-        >
-          {item.description}
-        </Text>
+      {/* Corrija o problema de overflow/shadow envolvendo o conteúdo em uma View */}
+      <View style={{ overflow: 'hidden', borderRadius: spacing.md }}>
+        {/* Service Image */}
+        <Image
+          source={{
+            uri:
+              item.images?.[0] ||
+              'https://images.pexels.com/photos/1482803/pexels-photo-1482803.jpeg?auto=compress&cs=tinysrgb&w=800',
+          }}
+          style={styles.serviceImage}
+        />
 
-        <View style={styles.serviceInfo}>
-          <View style={styles.infoRow}>
-            <MapPin size={16} color={theme.colors.onSurfaceVariant} />
-            <Text variant="bodySmall" style={styles.infoText}>
-              {item.location}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Clock size={16} color={theme.colors.onSurfaceVariant} />
-            <Text variant="bodySmall" style={styles.infoText}>
-              {item.duration_hours}h • até {item.max_guests} pessoas
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.serviceFooter}>
-          <Text variant="titleMedium" style={styles.servicePrice}>
-            {formatPrice(item.price_from, item.price_to)}
+        <Card.Content style={styles.serviceContent}>
+          <Text variant="titleMedium" style={styles.serviceTitle}>
+            {item.title}
           </Text>
-          <View style={styles.professionalInfo}>
-            <Text variant="bodySmall" style={styles.professionalName}>
-              {item.profiles?.full_name}
-            </Text>
-            <View style={styles.rating}>
-              <Star 
-                size={14} 
-                color={item.total_reviews && item.total_reviews > 0 ? theme.colors.tertiary : theme.colors.onSurfaceVariant}
-                fill={item.total_reviews && item.total_reviews > 0 ? theme.colors.tertiary : 'transparent'}
-              />
-              <Text variant="bodySmall" style={styles.ratingText}>
-                {formatRating(item.average_rating || 0, item.total_reviews || 0)}
+          <Text
+            variant="bodySmall"
+            style={styles.serviceDescription}
+            numberOfLines={2}
+          >
+            {item.description}
+          </Text>
+
+          <View style={styles.serviceInfo}>
+            <View style={styles.infoRow}>
+              <MapPin size={16} color={theme.colors.onSurfaceVariant} />
+              <Text variant="bodySmall" style={styles.infoText}>
+                {item.location}
               </Text>
-              {item.total_reviews && item.total_reviews > 0 && (
-                <Text variant="bodySmall" style={styles.reviewsCount}>
-                  ({item.total_reviews})
-                </Text>
-              )}
+            </View>
+            <View style={styles.infoRow}>
+              <Clock size={16} color={theme.colors.onSurfaceVariant} />
+              <Text variant="bodySmall" style={styles.infoText}>
+                {item.duration_hours}h • até {item.max_guests} pessoas
+              </Text>
             </View>
           </View>
-        </View>
-      </Card.Content>
+
+          <View style={styles.serviceFooter}>
+            <Text variant="titleMedium" style={styles.servicePrice}>
+              {formatPrice(item.price_from, item.price_to)}
+            </Text>
+            <View style={styles.professionalInfo}>
+              <Text variant="bodySmall" style={styles.professionalName}>
+                {item.profiles?.full_name}
+              </Text>
+              <View style={styles.rating}>
+                <Star
+                  size={14}
+                  color={
+                    item.total_reviews && item.total_reviews > 0
+                      ? theme.colors.tertiary
+                      : theme.colors.onSurfaceVariant
+                  }
+                  fill={
+                    item.total_reviews && item.total_reviews > 0
+                      ? theme.colors.tertiary
+                      : 'transparent'
+                  }
+                />
+                <Text variant="bodySmall" style={styles.ratingText}>
+                  {formatRating(
+                    item.average_rating || 0,
+                    item.total_reviews || 0
+                  )}
+                </Text>
+                {item.total_reviews && item.total_reviews > 0 && (
+                  <Text variant="bodySmall" style={styles.reviewsCount}>
+                    ({item.total_reviews})
+                  </Text>
+                )}
+              </View>
+            </View>
+          </View>
+        </Card.Content>
+      </View>
     </Card>
   );
 
@@ -408,12 +460,19 @@ export default function ClientHomeScreen() {
             value={searchQuery}
             style={styles.searchbar}
           />
-          
+
           <Button
             mode={showFilters ? 'contained' : 'outlined'}
             onPress={() => setShowFilters(!showFilters)}
             style={styles.filterButton}
-            icon={() => <Filter size={16} color={showFilters ? theme.colors.onPrimary : theme.colors.primary} />}
+            icon={() => (
+              <Filter
+                size={16}
+                color={
+                  showFilters ? theme.colors.onPrimary : theme.colors.primary
+                }
+              />
+            )}
             compact
           >
             Filtros
@@ -463,28 +522,28 @@ export default function ClientHomeScreen() {
             <Text variant="titleMedium" style={styles.filtersTitle}>
               Filtros Avançados
             </Text>
-            
+
             {renderFilterSection(
               'Faixa de Preço',
               priceRanges,
               filters.priceRange,
               (value) => updateFilter('priceRange', value)
             )}
-            
+
             {renderFilterSection(
               'Número de Convidados',
               guestCounts,
               filters.guestCount,
               (value) => updateFilter('guestCount', value)
             )}
-            
+
             {renderFilterSection(
               'Duração do Evento',
               durations,
               filters.duration,
               (value) => updateFilter('duration', value)
             )}
-            
+
             {renderFilterSection(
               'Avaliação',
               [
@@ -501,10 +560,13 @@ export default function ClientHomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text variant="titleLarge" style={styles.sectionTitle}>
-              {searchQuery || hasActiveFilters() ? 'Resultados da busca' : 'Churrasqueiros em destaque'}
+              {searchQuery || hasActiveFilters()
+                ? 'Resultados da busca'
+                : 'Churrasqueiros em destaque'}
             </Text>
             <Text variant="bodyMedium" style={styles.resultsCount}>
-              {filteredServices.length} {filteredServices.length === 1 ? 'resultado' : 'resultados'}
+              {filteredServices.length}{' '}
+              {filteredServices.length === 1 ? 'resultado' : 'resultados'}
             </Text>
           </View>
 
