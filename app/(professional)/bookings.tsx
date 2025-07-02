@@ -1,11 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Alert, Linking, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Alert,
+  Linking,
+  Platform,
+} from 'react-native';
 import { Text, Card, Button, Chip, FAB } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { Calendar, Clock, MapPin, User, Phone, Plus, MessageCircle, Mail } from 'lucide-react-native';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Phone,
+  Plus,
+  MessageCircle,
+  Mail,
+} from 'lucide-react-native';
 
 interface Booking {
   id: string;
@@ -31,7 +47,9 @@ export default function ProfessionalBookingsScreen() {
   const { profile } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'all'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'all'>(
+    'pending'
+  );
   const [updatingBooking, setUpdatingBooking] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,7 +64,8 @@ export default function ProfessionalBookingsScreen() {
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select(`
+        .select(
+          `
           *,
           services (
             title,
@@ -57,7 +76,8 @@ export default function ProfessionalBookingsScreen() {
             phone,
             email
           )
-        `)
+        `
+        )
         .eq('professional_id', profile.id)
         .order('event_date', { ascending: true });
 
@@ -75,13 +95,13 @@ export default function ProfessionalBookingsScreen() {
 
   const updateBookingStatus = async (bookingId: string, status: string) => {
     setUpdatingBooking(bookingId);
-    
+
     try {
       const { error } = await supabase
         .from('bookings')
-        .update({ 
-          status, 
-          updated_at: new Date().toISOString() 
+        .update({
+          status,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', bookingId);
 
@@ -93,16 +113,22 @@ export default function ProfessionalBookingsScreen() {
       const statusMessages = {
         confirmed: 'Agendamento confirmado com sucesso!',
         cancelled: 'Agendamento recusado.',
-        completed: 'Agendamento finalizado com sucesso!'
+        completed: 'Agendamento finalizado com sucesso!',
       };
 
-      Alert.alert('Sucesso', statusMessages[status as keyof typeof statusMessages]);
-      
+      Alert.alert(
+        'Sucesso',
+        statusMessages[status as keyof typeof statusMessages]
+      );
+
       // Refresh bookings
       loadBookings();
     } catch (error: any) {
       console.error('Error updating booking:', error);
-      Alert.alert('Erro', error.message || 'Não foi possível atualizar o agendamento.');
+      Alert.alert(
+        'Erro',
+        error.message || 'Não foi possível atualizar o agendamento.'
+      );
     } finally {
       setUpdatingBooking(null);
     }
@@ -142,7 +168,7 @@ export default function ProfessionalBookingsScreen() {
     // Cancel option
     options.push({
       text: 'Cancelar',
-      style: 'cancel',
+      style: 'cancel' as const,
     });
 
     if (options.length === 1) {
@@ -164,11 +190,15 @@ export default function ProfessionalBookingsScreen() {
     const phoneNumber = client.phone.replace(/\D/g, '');
     const eventDate = formatDate(booking.event_date);
     const eventTime = formatTime(booking.event_time);
-    
+
     const message = `Olá ${client.full_name}! Sou ${profile?.full_name}, churrasqueiro do ChurrasJa. Sobre seu agendamento para ${eventDate} às ${eventTime}, gostaria de conversar sobre os detalhes do evento.`;
-    
-    const whatsappUrl = `whatsapp://send?phone=55${phoneNumber}&text=${encodeURIComponent(message)}`;
-    const whatsappWebUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+    const whatsappUrl = `whatsapp://send?phone=55${phoneNumber}&text=${encodeURIComponent(
+      message
+    )}`;
+    const whatsappWebUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(
+      message
+    )}`;
 
     Linking.canOpenURL(whatsappUrl)
       .then((supported) => {
@@ -194,7 +224,10 @@ export default function ProfessionalBookingsScreen() {
         if (supported) {
           return Linking.openURL(phoneUrl);
         } else {
-          Alert.alert('Erro', 'Não foi possível abrir o aplicativo de telefone.');
+          Alert.alert(
+            'Erro',
+            'Não foi possível abrir o aplicativo de telefone.'
+          );
         }
       })
       .catch((error) => {
@@ -209,11 +242,25 @@ export default function ProfessionalBookingsScreen() {
 
     const eventDate = formatDate(booking.event_date);
     const eventTime = formatTime(booking.event_time);
-    
-    const subject = `Agendamento ChurrasJa - ${booking.services?.title || 'Serviço de Churrasco'}`;
-    const body = `Olá ${client.full_name}!\n\nSou ${profile?.full_name}, churrasqueiro do ChurrasJa.\n\nSobre seu agendamento:\n\nServiço: ${booking.services?.title || 'Serviço de Churrasco'}\nData: ${eventDate}\nHorário: ${eventTime}\nLocal: ${booking.location}\nConvidados: ${booking.guests_count} pessoas\n\nGostaria de conversar sobre os detalhes do seu evento para garantir que tudo saia perfeito!\n\nAtenciosamente,\n${profile?.full_name}\nChurrasqueiro Profissional`;
-    
-    const emailUrl = `mailto:${client.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    const subject = `Agendamento ChurrasJa - ${
+      booking.services?.title || 'Serviço de Churrasco'
+    }`;
+    const body = `Olá ${client.full_name}!\n\nSou ${
+      profile?.full_name
+    }, churrasqueiro do ChurrasJa.\n\nSobre seu agendamento:\n\nServiço: ${
+      booking.services?.title || 'Serviço de Churrasco'
+    }\nData: ${eventDate}\nHorário: ${eventTime}\nLocal: ${
+      booking.location
+    }\nConvidados: ${
+      booking.guests_count
+    } pessoas\n\nGostaria de conversar sobre os detalhes do seu evento para garantir que tudo saia perfeito!\n\nAtenciosamente,\n${
+      profile?.full_name
+    }\nChurrasqueiro Profissional`;
+
+    const emailUrl = `mailto:${client.email}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
 
     Linking.canOpenURL(emailUrl)
       .then((supported) => {
@@ -247,12 +294,12 @@ export default function ProfessionalBookingsScreen() {
   const hexToRgba = (hex: string, alpha: number) => {
     // Remove # if present
     hex = hex.replace('#', '');
-    
+
     // Parse hex to RGB
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
-    
+
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
@@ -288,7 +335,7 @@ export default function ProfessionalBookingsScreen() {
     return time.substring(0, 5);
   };
 
-  const filteredBookings = bookings.filter(booking => {
+  const filteredBookings = bookings.filter((booking) => {
     if (activeTab === 'all') return true;
     return booking.status === activeTab;
   });
@@ -301,7 +348,10 @@ export default function ProfessionalBookingsScreen() {
             {item.profiles?.full_name}
           </Text>
           <Chip
-            style={[styles.statusChip, { backgroundColor: getStatusBackgroundColor(item.status) }]}
+            style={[
+              styles.statusChip,
+              { backgroundColor: getStatusBackgroundColor(item.status) },
+            ]}
             textStyle={{ color: getStatusColor(item.status) }}
           >
             {getStatusLabel(item.status)}
@@ -324,7 +374,8 @@ export default function ProfessionalBookingsScreen() {
             <View style={styles.infoRow}>
               <Clock size={16} color={theme.colors.onSurfaceVariant} />
               <Text variant="bodyMedium" style={styles.infoText}>
-                {formatTime(item.event_time)} • {item.services?.duration_hours || 4}h
+                {formatTime(item.event_time)} •{' '}
+                {item.services?.duration_hours || 4}h
               </Text>
             </View>
 
@@ -379,14 +430,25 @@ export default function ProfessionalBookingsScreen() {
           </View>
         )}
 
-        <View style={styles.actionsContainer}>
+        <View
+          style={[
+            styles.actionsContainer,
+            {
+              flexWrap: 'nowrap',
+              justifyContent: 'flex-end',
+              flexDirection: 'row',
+            },
+          ]}
+        >
           {/* Contact button - available for all statuses except cancelled */}
           {item.status !== 'cancelled' && (
-            <Button 
-              mode="outlined" 
+            <Button
+              mode="outlined"
               style={styles.actionButton}
               onPress={() => handleContactClient(item)}
-              icon={() => <MessageCircle size={16} color={theme.colors.primary} />}
+              icon={() => (
+                <MessageCircle size={16} color={theme.colors.primary} />
+              )}
             >
               Contatar
             </Button>
@@ -395,8 +457,8 @@ export default function ProfessionalBookingsScreen() {
           {/* Status-specific action buttons */}
           {item.status === 'pending' && (
             <>
-              <Button 
-                mode="outlined" 
+              <Button
+                mode="outlined"
                 style={[styles.actionButton, styles.rejectButton]}
                 onPress={() => updateBookingStatus(item.id, 'cancelled')}
                 loading={updatingBooking === item.id}
@@ -404,8 +466,8 @@ export default function ProfessionalBookingsScreen() {
               >
                 Recusar
               </Button>
-              <Button 
-                mode="contained" 
+              <Button
+                mode="contained"
                 style={styles.actionButton}
                 onPress={() => updateBookingStatus(item.id, 'confirmed')}
                 loading={updatingBooking === item.id}
@@ -417,8 +479,8 @@ export default function ProfessionalBookingsScreen() {
           )}
 
           {item.status === 'confirmed' && (
-            <Button 
-              mode="contained" 
+            <Button
+              mode="contained"
               style={styles.actionButton}
               onPress={() => updateBookingStatus(item.id, 'completed')}
               loading={updatingBooking === item.id}
@@ -472,10 +534,11 @@ export default function ProfessionalBookingsScreen() {
               Nenhum agendamento encontrado
             </Text>
             <Text variant="bodyMedium" style={styles.emptyDescription}>
-              {activeTab === 'pending' 
+              {activeTab === 'pending'
                 ? 'Quando você receber novas solicitações, elas aparecerão aqui.'
-                : `Nenhum agendamento ${activeTab === 'confirmed' ? 'confirmado' : ''} no momento.`
-              }
+                : `Nenhum agendamento ${
+                    activeTab === 'confirmed' ? 'confirmado' : ''
+                  } no momento.`}
             </Text>
           </View>
         ) : (

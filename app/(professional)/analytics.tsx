@@ -5,7 +5,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { ChartBar as BarChart3, DollarSign, Calendar, TrendingUp, Star, Users } from 'lucide-react-native';
+import {
+  ChartBar as BarChart3,
+  DollarSign,
+  Calendar,
+  TrendingUp,
+  Star,
+  Users,
+} from 'lucide-react-native';
 
 interface AnalyticsData {
   totalRevenue: number;
@@ -33,7 +40,9 @@ export default function AnalyticsScreen() {
     topServices: [],
   });
   const [loading, setLoading] = useState(true);
-  const [selectedPeriod, setSelectedPeriod] = useState<'month' | 'quarter' | 'year'>('month');
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    'month' | 'quarter' | 'year'
+  >('month');
 
   useEffect(() => {
     if (profile) {
@@ -49,12 +58,14 @@ export default function AnalyticsScreen() {
       // Load bookings for analytics
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
+        .select(
+          `
           *,
           services (
             title
           )
-        `)
+        `
+        )
         .eq('professional_id', profile.id);
 
       if (bookingsError) {
@@ -74,34 +85,48 @@ export default function AnalyticsScreen() {
       if (bookings) {
         // Calculate analytics
         const totalBookings = bookings.length;
-        const completedBookings = bookings.filter(b => b.status === 'completed');
-        const totalRevenue = completedBookings.reduce((sum, b) => sum + b.total_price, 0);
-        const completionRate = totalBookings > 0 ? (completedBookings.length / totalBookings) * 100 : 0;
+        const completedBookings = bookings.filter(
+          (b) => b.status === 'completed'
+        );
+        const totalRevenue = completedBookings.reduce(
+          (sum, b) => sum + b.total_price,
+          0
+        );
+        const completionRate =
+          totalBookings > 0
+            ? (completedBookings.length / totalBookings) * 100
+            : 0;
 
         // Calculate average rating from reviews
         const totalReviews = reviews?.length || 0;
-        const averageRating = totalReviews > 0 
-          ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
-          : 0;
+        const averageRating =
+          totalReviews > 0
+            ? (reviews ?? []).reduce((sum, review) => sum + review.rating, 0) /
+              totalReviews
+            : 0;
 
         // Calculate monthly revenue for chart (last 6 months)
         const monthlyRevenue = Array(6).fill(0);
         const currentDate = new Date();
-        
-        completedBookings.forEach(booking => {
+
+        completedBookings.forEach((booking) => {
           const bookingDate = new Date(booking.event_date);
-          const monthDiff = (currentDate.getFullYear() - bookingDate.getFullYear()) * 12 + 
-                           (currentDate.getMonth() - bookingDate.getMonth());
-          
+          const monthDiff =
+            (currentDate.getFullYear() - bookingDate.getFullYear()) * 12 +
+            (currentDate.getMonth() - bookingDate.getMonth());
+
           if (monthDiff >= 0 && monthDiff < 6) {
             monthlyRevenue[5 - monthDiff] += booking.total_price;
           }
         });
 
         // Calculate top services
-        const serviceStats: { [key: string]: { bookings: number; revenue: number } } = {};
-        completedBookings.forEach(booking => {
-          const serviceTitle = booking.services?.title || 'Serviço de Churrasco';
+        const serviceStats: {
+          [key: string]: { bookings: number; revenue: number };
+        } = {};
+        completedBookings.forEach((booking) => {
+          const serviceTitle =
+            booking.services?.title || 'Serviço de Churrasco';
           if (!serviceStats[serviceTitle]) {
             serviceStats[serviceTitle] = { bookings: 0, revenue: 0 };
           }
@@ -139,7 +164,20 @@ export default function AnalyticsScreen() {
   };
 
   const getMonthName = (monthIndex: number) => {
-    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const months = [
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
+    ];
     const currentMonth = new Date().getMonth();
     const targetMonth = (currentMonth - (5 - monthIndex) + 12) % 12;
     return months[targetMonth];
@@ -221,14 +259,23 @@ export default function AnalyticsScreen() {
                     Avaliação Média
                   </Text>
                 </View>
-                <Text variant="headlineSmall" style={styles.metricValue}>
-                  {analyticsData.totalReviews > 0 ? analyticsData.averageRating.toFixed(1) : '--'}
-                </Text>
-                {analyticsData.totalReviews > 0 && (
-                  <Text variant="bodySmall" style={styles.metricSubValue}>
-                    ({analyticsData.totalReviews} {analyticsData.totalReviews === 1 ? 'avaliação' : 'avaliações'})
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text variant="headlineSmall" style={styles.metricValue}>
+                    {analyticsData.totalReviews > 0
+                      ? analyticsData.averageRating.toFixed(1)
+                      : '--'}
                   </Text>
-                )}
+                  {analyticsData.totalReviews > 0 && (
+                    <Text variant="bodySmall" style={styles.metricSubValue}>
+                      {' '}
+                      ({analyticsData.totalReviews}{' '}
+                      {analyticsData.totalReviews === 1
+                        ? 'avaliação'
+                        : 'avaliações'}
+                      )
+                    </Text>
+                  )}
+                </View>
               </Card.Content>
             </Card>
 
@@ -257,23 +304,24 @@ export default function AnalyticsScreen() {
                 Receita por Mês
               </Text>
             </View>
-            
+
             <View style={styles.chart}>
               {analyticsData.monthlyRevenue.map((revenue, index) => {
                 const maxRevenue = Math.max(...analyticsData.monthlyRevenue);
-                const height = maxRevenue > 0 ? (revenue / maxRevenue) * 100 : 0;
-                
+                const height =
+                  maxRevenue > 0 ? (revenue / maxRevenue) * 100 : 0;
+
                 return (
                   <View key={index} style={styles.chartColumn}>
                     <View style={styles.chartBarContainer}>
-                      <View 
+                      <View
                         style={[
-                          styles.chartBar, 
-                          { 
+                          styles.chartBar,
+                          {
                             height: `${height}%`,
                             backgroundColor: theme.colors.primary,
-                          }
-                        ]} 
+                          },
+                        ]}
                       />
                     </View>
                     <Text variant="bodySmall" style={styles.chartLabel}>
@@ -311,7 +359,8 @@ export default function AnalyticsScreen() {
                       {service.title}
                     </Text>
                     <Text variant="bodySmall" style={styles.serviceStats}>
-                      {service.bookings} agendamentos • {formatCurrency(service.revenue)}
+                      {service.bookings} agendamentos •{' '}
+                      {formatCurrency(service.revenue)}
                     </Text>
                   </View>
                   <View style={styles.serviceRank}>
@@ -331,40 +380,45 @@ export default function AnalyticsScreen() {
             <Text variant="titleMedium" style={styles.insightsTitle}>
               Dicas para Melhorar
             </Text>
-            
+
             <View style={styles.insightItem}>
               <Text variant="bodyMedium" style={styles.insightText}>
                 • Mantenha seus preços competitivos para atrair mais clientes
               </Text>
             </View>
-            
+
             <View style={styles.insightItem}>
               <Text variant="bodyMedium" style={styles.insightText}>
-                • Responda rapidamente às solicitações para aumentar suas confirmações
+                • Responda rapidamente às solicitações para aumentar suas
+                confirmações
               </Text>
             </View>
-            
+
             <View style={styles.insightItem}>
               <Text variant="bodyMedium" style={styles.insightText}>
-                • Adicione mais fotos aos seus serviços para atrair mais visualizações
+                • Adicione mais fotos aos seus serviços para atrair mais
+                visualizações
               </Text>
             </View>
 
             {analyticsData.totalReviews === 0 && (
               <View style={styles.insightItem}>
                 <Text variant="bodyMedium" style={styles.insightText}>
-                  • Complete seus primeiros churrascos para receber avaliações dos clientes
+                  • Complete seus primeiros churrascos para receber avaliações
+                  dos clientes
                 </Text>
               </View>
             )}
 
-            {analyticsData.averageRating > 0 && analyticsData.averageRating < 4.0 && (
-              <View style={styles.insightItem}>
-                <Text variant="bodyMedium" style={styles.insightText}>
-                  • Foque na qualidade do serviço para melhorar sua avaliação média
-                </Text>
-              </View>
-            )}
+            {analyticsData.averageRating > 0 &&
+              analyticsData.averageRating < 4.0 && (
+                <View style={styles.insightItem}>
+                  <Text variant="bodyMedium" style={styles.insightText}>
+                    • Foque na qualidade do serviço para melhorar sua avaliação
+                    média
+                  </Text>
+                </View>
+              )}
           </Card.Content>
         </Card>
       </ScrollView>

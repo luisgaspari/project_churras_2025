@@ -67,7 +67,8 @@ export default function ProfessionalReviewsScreen() {
     try {
       const { data, error } = await supabase
         .from('reviews')
-        .select(`
+        .select(
+          `
           id,
           rating,
           comment,
@@ -83,7 +84,8 @@ export default function ProfessionalReviewsScreen() {
               title
             )
           )
-        `)
+        `
+        )
         .eq('professional_id', profile.id)
         .order('created_at', { ascending: false });
 
@@ -91,8 +93,23 @@ export default function ProfessionalReviewsScreen() {
         throw error;
       }
 
-      setReviews(data || []);
-      calculateStats(data || []);
+      const mappedReviews =
+        (data || []).map((review: any) => ({
+          ...review,
+          profiles: Array.isArray(review.profiles)
+            ? review.profiles[0]
+            : review.profiles,
+          bookings: Array.isArray(review.bookings)
+            ? {
+                ...review.bookings[0],
+                services: Array.isArray(review.bookings[0]?.services)
+                  ? review.bookings[0]?.services[0]
+                  : review.bookings[0]?.services,
+              }
+            : review.bookings,
+        })) || [];
+      setReviews(mappedReviews);
+      calculateStats(mappedReviews);
     } catch (error) {
       console.error('Error loading reviews:', error);
     } finally {
@@ -103,7 +120,7 @@ export default function ProfessionalReviewsScreen() {
 
   const calculateStats = (reviewsData: Review[]) => {
     const totalReviews = reviewsData.length;
-    
+
     if (totalReviews === 0) {
       setStats({
         totalReviews: 0,
@@ -113,11 +130,14 @@ export default function ProfessionalReviewsScreen() {
       return;
     }
 
-    const totalRating = reviewsData.reduce((sum, review) => sum + review.rating, 0);
+    const totalRating = reviewsData.reduce(
+      (sum, review) => sum + review.rating,
+      0
+    );
     const averageRating = totalRating / totalReviews;
 
     const ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    reviewsData.forEach(review => {
+    reviewsData.forEach((review) => {
       ratingDistribution[review.rating as keyof typeof ratingDistribution]++;
     });
 
@@ -153,9 +173,15 @@ export default function ProfessionalReviewsScreen() {
             <Text variant="displaySmall" style={styles.averageRating}>
               {stats.averageRating.toFixed(1)}
             </Text>
-            <RatingStars rating={stats.averageRating} readonly showHalfStars size={24} />
+            <RatingStars
+              rating={stats.averageRating}
+              readonly
+              showHalfStars
+              size={20}
+            />
             <Text variant="bodyMedium" style={styles.totalReviews}>
-              {stats.totalReviews} {stats.totalReviews === 1 ? 'avaliação' : 'avaliações'}
+              {stats.totalReviews}{' '}
+              {stats.totalReviews === 1 ? 'avaliação' : 'avaliações'}
             </Text>
           </View>
 
@@ -165,17 +191,31 @@ export default function ProfessionalReviewsScreen() {
                 <Text variant="bodyMedium" style={styles.ratingLabel}>
                   {rating}
                 </Text>
-                <Star size={16} color={theme.colors.tertiary} fill={theme.colors.tertiary} />
+                <Star
+                  size={16}
+                  color={theme.colors.tertiary}
+                  fill={theme.colors.tertiary}
+                />
                 <View style={styles.ratingBar}>
                   <View
                     style={[
                       styles.ratingBarFill,
-                      { width: `${getRatingPercentage(stats.ratingDistribution[rating as keyof typeof stats.ratingDistribution])}%` }
+                      {
+                        width: `${getRatingPercentage(
+                          stats.ratingDistribution[
+                            rating as keyof typeof stats.ratingDistribution
+                          ]
+                        )}%`,
+                      },
                     ]}
                   />
                 </View>
                 <Text variant="bodySmall" style={styles.ratingCount}>
-                  {stats.ratingDistribution[rating as keyof typeof stats.ratingDistribution]}
+                  {
+                    stats.ratingDistribution[
+                      rating as keyof typeof stats.ratingDistribution
+                    ]
+                  }
                 </Text>
               </View>
             ))}
@@ -198,7 +238,9 @@ export default function ProfessionalReviewsScreen() {
             ) : (
               <Avatar.Text
                 size={48}
-                label={review.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
+                label={
+                  review.profiles?.full_name?.charAt(0).toUpperCase() || 'C'
+                }
               />
             )}
             <View style={styles.clientDetails}>
@@ -218,7 +260,8 @@ export default function ProfessionalReviewsScreen() {
         <View style={styles.serviceInfo}>
           <Calendar size={16} color={theme.colors.onSurfaceVariant} />
           <Text variant="bodyMedium" style={styles.serviceText}>
-            {review.bookings?.services?.title} • {formatDate(review.bookings?.event_date)}
+            {review.bookings?.services?.title} •{' '}
+            {formatDate(review.bookings?.event_date)}
           </Text>
         </View>
 
@@ -241,7 +284,8 @@ export default function ProfessionalReviewsScreen() {
         Nenhuma avaliação ainda
       </Text>
       <Text variant="bodyMedium" style={styles.emptyDescription}>
-        Quando você concluir seus primeiros churrascos, as avaliações dos clientes aparecerão aqui.
+        Quando você concluir seus primeiros churrascos, as avaliações dos
+        clientes aparecerão aqui.
       </Text>
       <View style={styles.emptyTips}>
         <Text variant="titleMedium" style={styles.tipsTitle}>
@@ -293,13 +337,15 @@ export default function ProfessionalReviewsScreen() {
                 Avaliações Recentes
               </Text>
               <Chip
-                icon={() => <TrendingUp size={16} color={theme.colors.primary} />}
+                icon={() => (
+                  <TrendingUp size={16} color={theme.colors.primary} />
+                )}
                 style={styles.reviewsChip}
               >
                 {reviews.length} avaliações
               </Chip>
             </View>
-            
+
             {reviews.map(renderReviewCard)}
           </View>
         )}
@@ -447,7 +493,7 @@ const styles = StyleSheet.create({
   commentSection: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingTop: spacing.md,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: theme.colors.surfaceVariant,
   },

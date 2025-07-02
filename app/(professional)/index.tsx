@@ -102,7 +102,8 @@ export default function ProfessionalHomeScreen() {
       // Calculate monthly revenue (current month)
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
-      const completedBookings = bookings?.filter(b => b.status === 'completed') || [];
+      const completedBookings =
+        bookings?.filter((b) => b.status === 'completed') || [];
       const monthlyRevenue =
         completedBookings
           ?.filter((b) => {
@@ -116,9 +117,11 @@ export default function ProfessionalHomeScreen() {
 
       // Calculate average rating from reviews
       const totalReviews = reviews?.length || 0;
-      const averageRating = totalReviews > 0 
-        ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
-        : 0;
+      const averageRating =
+        totalReviews > 0
+          ? (reviews ?? []).reduce((sum, review) => sum + review.rating, 0) /
+            totalReviews
+          : 0;
 
       setStats({
         totalBookings,
@@ -156,7 +159,7 @@ export default function ProfessionalHomeScreen() {
       case 'cancelled':
         return theme.colors.error;
       case 'completed':
-        return theme.colors.primary;
+        return theme.colors.onSurfaceVariant;
       default:
         return theme.colors.onSurfaceVariant;
     }
@@ -172,11 +175,28 @@ export default function ProfessionalHomeScreen() {
               {item.profiles?.full_name}
             </Text>
             <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: getStatusColor(item.status) },
-              ]}
-            />
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing.xs,
+              }}
+            >
+              <Text
+                variant="bodySmall"
+                style={{
+                  color: getStatusColor(item.status),
+                  marginRight: spacing.xs,
+                }}
+              >
+                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+              </Text>
+              <View
+                style={[
+                  styles.statusDot,
+                  { backgroundColor: getStatusColor(item.status) },
+                ]}
+              />
+            </View>
           </View>
           <Text variant="bodyMedium" style={styles.bookingDate}>
             {formatDate(item.event_date)} • {formatTime(item.event_time)}
@@ -250,14 +270,17 @@ export default function ProfessionalHomeScreen() {
               <Card.Content style={styles.statContent}>
                 <Star size={24} color={theme.colors.tertiary} />
                 <Text variant="headlineSmall" style={styles.statNumber}>
-                  {stats.totalReviews > 0 ? stats.averageRating.toFixed(1) : '--'}
+                  {stats.totalReviews > 0
+                    ? stats.averageRating.toFixed(1)
+                    : '--'}
                 </Text>
                 <Text variant="bodySmall" style={styles.statLabel}>
                   Avaliação Média
                 </Text>
                 {stats.totalReviews > 0 && (
                   <Text variant="bodySmall" style={styles.statSubLabel}>
-                    ({stats.totalReviews} {stats.totalReviews === 1 ? 'avaliação' : 'avaliações'})
+                    ({stats.totalReviews}{' '}
+                    {stats.totalReviews === 1 ? 'avaliação' : 'avaliações'})
                   </Text>
                 )}
               </Card.Content>
@@ -265,18 +288,21 @@ export default function ProfessionalHomeScreen() {
           </View>
         </View>
 
-        {/* Recent Bookings */}
+        {/* Pending Bookings */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text variant="titleLarge" style={styles.sectionTitle}>
-              Agendamentos Recentes
+              Agendamentos Pendentes
             </Text>
-            <Button mode="text" onPress={() => router.push('/(professional)/bookings')}>
+            <Button
+              mode="text"
+              onPress={() => router.push('/(professional)/bookings')}
+            >
               Ver todos
             </Button>
           </View>
 
-          {recentBookings.length === 0 ? (
+          {recentBookings.filter((b) => b.status === 'pending').length === 0 ? (
             <Card style={styles.emptyCard}>
               <Card.Content style={styles.emptyContent}>
                 <Calendar size={48} color={theme.colors.onSurfaceVariant} />
@@ -290,11 +316,13 @@ export default function ProfessionalHomeScreen() {
             </Card>
           ) : (
             <View style={styles.bookingsList}>
-              {recentBookings.map((booking) => (
-                <React.Fragment key={booking.id}>
-                  {renderBookingCard(booking)}
-                </React.Fragment>
-              ))}
+              {recentBookings
+                .filter((booking) => booking.status === 'pending')
+                .map((booking) => (
+                  <React.Fragment key={booking.id}>
+                    {renderBookingCard(booking)}
+                  </React.Fragment>
+                ))}
             </View>
           )}
         </View>
@@ -364,6 +392,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
+    minHeight: 130,
     elevation: 2,
   },
   statContent: {
