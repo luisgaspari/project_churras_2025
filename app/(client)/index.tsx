@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image } from 'react-native';
-import { Text, Card, Button, Searchbar, Chip } from 'react-native-paper';
+import { Text, Card, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { MapPin, Star, Clock, Filter, X } from 'lucide-react-native';
+import { MapPin, Star, Clock, Users } from 'lucide-react-native';
 
 interface Service {
   id: string;
@@ -27,66 +27,16 @@ interface Service {
   total_reviews?: number;
 }
 
-interface FilterState {
-  priceRange: 'all' | 'budget' | 'mid' | 'premium';
-  guestCount: 'all' | 'small' | 'medium' | 'large';
-  duration: 'all' | 'short' | 'standard' | 'long';
-  rating: 'all' | 'high';
-}
-
 export default function ClientHomeScreen() {
   const { profile } = useAuth();
-  const [allServices, setAllServices] = useState<Service[]>([]);
-  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+  const [featuredServices, setFeaturedServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    priceRange: 'all',
-    guestCount: 'all',
-    duration: 'all',
-    rating: 'all',
-  });
-
-  const categories = [
-    { key: 'all', label: 'Todos' },
-    { key: 'traditional', label: 'Tradicional' },
-    { key: 'premium', label: 'Premium' },
-    { key: 'vegetarian', label: 'Vegetariano' },
-    { key: 'gourmet', label: 'Gourmet' },
-  ];
-
-  const priceRanges = [
-    { key: 'all', label: 'Todos os preços' },
-    { key: 'budget', label: 'Até R$ 500', min: 0, max: 500 },
-    { key: 'mid', label: 'R$ 500 - R$ 1000', min: 500, max: 1000 },
-    { key: 'premium', label: 'Acima de R$ 1000', min: 1000, max: Infinity },
-  ];
-
-  const guestCounts = [
-    { key: 'all', label: 'Qualquer quantidade' },
-    { key: 'small', label: 'Até 20 pessoas', max: 20 },
-    { key: 'medium', label: '20 - 50 pessoas', min: 20, max: 50 },
-    { key: 'large', label: 'Mais de 50 pessoas', min: 50 },
-  ];
-
-  const durations = [
-    { key: 'all', label: 'Qualquer duração' },
-    { key: 'short', label: 'Até 3 horas', max: 3 },
-    { key: 'standard', label: '3 - 6 horas', min: 3, max: 6 },
-    { key: 'long', label: 'Mais de 6 horas', min: 6 },
-  ];
 
   useEffect(() => {
-    loadServices();
+    loadFeaturedServices();
   }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [allServices, searchQuery, selectedCategory, filters]);
-
-  const loadServices = async () => {
+  const loadFeaturedServices = async () => {
     try {
       const { data, error } = await supabase
         .from('services')
@@ -99,7 +49,8 @@ export default function ClientHomeScreen() {
           )
         `
         )
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(6);
 
       if (error) {
         console.error('Error loading services:', error);
@@ -140,170 +91,13 @@ export default function ClientHomeScreen() {
           })
         );
 
-        setAllServices(servicesWithRatings);
+        setFeaturedServices(servicesWithRatings);
       }
     } catch (error) {
       console.error('Error loading services:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...allServices];
-
-    // Text search
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (service) =>
-          service.title.toLowerCase().includes(query) ||
-          service.description.toLowerCase().includes(query) ||
-          service.location.toLowerCase().includes(query) ||
-          service.profiles?.full_name.toLowerCase().includes(query)
-      );
-    }
-
-    // Category filter
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter((service) => {
-        const title = service.title.toLowerCase();
-        const description = service.description.toLowerCase();
-
-        switch (selectedCategory) {
-          case 'traditional':
-            return (
-              title.includes('tradicional') ||
-              description.includes('tradicional')
-            );
-          case 'premium':
-            return (
-              title.includes('premium') ||
-              description.includes('premium') ||
-              service.price_from >= 800
-            );
-          case 'vegetarian':
-            return (
-              title.includes('vegetariano') ||
-              description.includes('vegetariano')
-            );
-          case 'gourmet':
-            return title.includes('gourmet') || description.includes('gourmet');
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Price range filter
-    if (filters.priceRange !== 'all') {
-      const range = priceRanges.find((r) => r.key === filters.priceRange);
-      if (range && 'min' in range) {
-        filtered = filtered.filter(
-          (service) =>
-            service.price_from >= (range.min ?? 0) &&
-            service.price_from <= (range.max ?? Infinity)
-        );
-      }
-    }
-
-    // Guest count filter
-    if (filters.guestCount !== 'all') {
-      const guestRange = guestCounts.find((g) => g.key === filters.guestCount);
-      if (guestRange && 'max' in guestRange) {
-        if ('min' in guestRange) {
-          filtered = filtered.filter(
-            (service) =>
-              service.max_guests >= (guestRange.min ?? 0) &&
-              service.max_guests <= (guestRange.max ?? Infinity)
-          );
-        } else {
-          filtered = filtered.filter(
-            (service) => service.max_guests <= (guestRange.max ?? Infinity)
-          );
-        }
-      } else if (guestRange && 'min' in guestRange) {
-        filtered = filtered.filter(
-          (service) => service.max_guests >= (guestRange.min ?? 0)
-        );
-      }
-    }
-
-    // Duration filter
-    if (filters.duration !== 'all') {
-      const durationRange = durations.find((d) => d.key === filters.duration);
-      if (durationRange && 'max' in durationRange) {
-        if ('min' in durationRange) {
-          filtered = filtered.filter(
-            (service) =>
-              service.duration_hours >= (durationRange.min ?? 0) &&
-              service.duration_hours <= (durationRange.max ?? Infinity)
-          );
-        } else {
-          filtered = filtered.filter(
-            (service) =>
-              service.duration_hours <= (durationRange.max ?? Infinity)
-          );
-        }
-      } else if (durationRange && 'min' in durationRange) {
-        filtered = filtered.filter(
-          (service) => service.duration_hours >= (durationRange.min ?? 0)
-        );
-      }
-    }
-
-    // Rating filter
-    if (filters.rating === 'high') {
-      filtered = filtered.filter(
-        (service) =>
-          (service.average_rating || 0) >= 4.0 &&
-          (service.total_reviews || 0) > 0
-      );
-    }
-
-    // Sort by rating and reviews
-    filtered.sort((a, b) => {
-      const aRating = a.average_rating || 0;
-      const bRating = b.average_rating || 0;
-      const aReviews = a.total_reviews || 0;
-      const bReviews = b.total_reviews || 0;
-
-      // First sort by rating
-      if (bRating !== aRating) {
-        return bRating - aRating;
-      }
-
-      // Then by number of reviews
-      return bReviews - aReviews;
-    });
-
-    setFilteredServices(filtered);
-  };
-
-  const updateFilter = (key: keyof FilterState, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const clearAllFilters = () => {
-    setFilters({
-      priceRange: 'all',
-      guestCount: 'all',
-      duration: 'all',
-      rating: 'all',
-    });
-    setSelectedCategory('all');
-    setSearchQuery('');
-  };
-
-  const hasActiveFilters = () => {
-    return (
-      filters.priceRange !== 'all' ||
-      filters.guestCount !== 'all' ||
-      filters.duration !== 'all' ||
-      filters.rating !== 'all' ||
-      selectedCategory !== 'all' ||
-      searchQuery.trim() !== ''
-    );
   };
 
   const formatPrice = (priceFrom: number, priceTo?: number) => {
@@ -315,7 +109,7 @@ export default function ClientHomeScreen() {
 
   const formatRating = (rating: number, totalReviews: number) => {
     if (totalReviews === 0) {
-      return 'Novo';
+      return '5.0';
     }
     return rating.toFixed(1);
   };
@@ -327,39 +121,12 @@ export default function ClientHomeScreen() {
     });
   };
 
-  const renderFilterSection = (
-    title: string,
-    options: any[],
-    selectedValue: string,
-    onSelect: (value: string) => void
-  ) => (
-    <View style={styles.filterSection}>
-      <Text variant="titleSmall" style={styles.filterSectionTitle}>
-        {title}
-      </Text>
-      <View style={styles.filterOptions}>
-        {options.map((option) => (
-          <Chip
-            key={option.key}
-            selected={selectedValue === option.key}
-            onPress={() => onSelect(option.key)}
-            style={styles.filterChip}
-            compact
-          >
-            {option.label}
-          </Chip>
-        ))}
-      </View>
-    </View>
-  );
-
   const renderServiceCard = (item: Service) => (
     <Card
       key={item.id}
       style={styles.serviceCard}
       onPress={() => handleServicePress(item.id)}
     >
-      {/* Corrija o problema de overflow/shadow envolvendo o conteúdo em uma View */}
       <View style={{ overflow: 'hidden', borderRadius: spacing.md }}>
         {/* Service Image */}
         <Image
@@ -452,122 +219,30 @@ export default function ClientHomeScreen() {
           </Text>
         </View>
 
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <Searchbar
-            placeholder="Buscar churrasqueiros, localização..."
-            onChangeText={setSearchQuery}
-            value={searchQuery}
-            style={styles.searchbar}
-          />
-
+        {/* Quick Search */}
+        <View style={styles.quickSearchContainer}>
           <Button
-            mode={showFilters ? 'contained' : 'outlined'}
-            onPress={() => setShowFilters(!showFilters)}
-            style={styles.filterButton}
-            icon={() => (
-              <Filter
-                size={16}
-                color={
-                  showFilters ? theme.colors.onPrimary : theme.colors.primary
-                }
-              />
-            )}
-            compact
+            mode="outlined"
+            onPress={() => router.push('/(client)/search')}
+            style={styles.quickSearchButton}
+            contentStyle={styles.quickSearchContent}
           >
-            Filtros
+            Buscar churrasqueiros...
           </Button>
         </View>
 
-        {/* Active Filters Indicator */}
-        {hasActiveFilters() && (
-          <View style={styles.activeFiltersContainer}>
-            <Text variant="bodySmall" style={styles.activeFiltersText}>
-              Filtros ativos
-            </Text>
-            <Button
-              mode="text"
-              onPress={clearAllFilters}
-              style={styles.clearFiltersButton}
-              labelStyle={styles.clearFiltersLabel}
-              icon={() => <X size={14} color={theme.colors.primary} />}
-              compact
-            >
-              Limpar
-            </Button>
-          </View>
-        )}
-
-        {/* Categories */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
-        >
-          {categories.map((category) => (
-            <Chip
-              key={category.key}
-              selected={selectedCategory === category.key}
-              onPress={() => setSelectedCategory(category.key)}
-              style={styles.categoryChip}
-            >
-              {category.label}
-            </Chip>
-          ))}
-        </ScrollView>
-
-        {/* Advanced Filters */}
-        {showFilters && (
-          <View style={styles.filtersContainer}>
-            <Text variant="titleMedium" style={styles.filtersTitle}>
-              Filtros Avançados
-            </Text>
-
-            {renderFilterSection(
-              'Faixa de Preço',
-              priceRanges,
-              filters.priceRange,
-              (value) => updateFilter('priceRange', value)
-            )}
-
-            {renderFilterSection(
-              'Número de Convidados',
-              guestCounts,
-              filters.guestCount,
-              (value) => updateFilter('guestCount', value)
-            )}
-
-            {renderFilterSection(
-              'Duração do Evento',
-              durations,
-              filters.duration,
-              (value) => updateFilter('duration', value)
-            )}
-
-            {renderFilterSection(
-              'Avaliação',
-              [
-                { key: 'all', label: 'Todas as avaliações' },
-                { key: 'high', label: '4+ estrelas' },
-              ],
-              filters.rating,
-              (value) => updateFilter('rating', value)
-            )}
-          </View>
-        )}
-
-        {/* Results Section */}
+        {/* Featured Services Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text variant="titleLarge" style={styles.sectionTitle}>
-              {searchQuery || hasActiveFilters()
-                ? 'Resultados da busca'
-                : 'Churrasqueiros em destaque'}
+              Churrasqueiros em destaque
             </Text>
-            <Text variant="bodyMedium" style={styles.resultsCount}>
-              {filteredServices.length}{' '}
-              {filteredServices.length === 1 ? 'resultado' : 'resultados'}
-            </Text>
+            <Button 
+              mode="text" 
+              onPress={() => router.push('/(client)/search')}
+            >
+              Ver todos
+            </Button>
           </View>
 
           {loading ? (
@@ -576,29 +251,85 @@ export default function ClientHomeScreen() {
                 Carregando churrasqueiros...
               </Text>
             </View>
-          ) : filteredServices.length === 0 ? (
+          ) : featuredServices.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text variant="titleMedium" style={styles.emptyTitle}>
                 Nenhum churrasqueiro encontrado
               </Text>
               <Text variant="bodyMedium" style={styles.emptyDescription}>
-                Tente ajustar os filtros ou buscar por outros termos.
+                Novos churrasqueiros aparecerão aqui em breve.
               </Text>
-              {hasActiveFilters() && (
-                <Button
-                  mode="outlined"
-                  onPress={clearAllFilters}
-                  style={styles.clearFiltersEmptyButton}
-                >
-                  Limpar filtros
-                </Button>
-              )}
             </View>
           ) : (
             <View style={styles.servicesList}>
-              {filteredServices.map(renderServiceCard)}
+              {featuredServices.map(renderServiceCard)}
             </View>
           )}
+        </View>
+
+        {/* Categories Section */}
+        <View style={styles.section}>
+          <Text variant="titleLarge" style={styles.sectionTitle}>
+            Categorias Populares
+          </Text>
+          
+          <View style={styles.categoriesGrid}>
+            <Card 
+              style={styles.categoryCard}
+              onPress={() => router.push('/(client)/search')}
+            >
+              <Card.Content style={styles.categoryContent}>
+                <Text variant="titleMedium" style={styles.categoryTitle}>
+                  🥩 Tradicional
+                </Text>
+                <Text variant="bodySmall" style={styles.categoryDescription}>
+                  Churrasco clássico brasileiro
+                </Text>
+              </Card.Content>
+            </Card>
+
+            <Card 
+              style={styles.categoryCard}
+              onPress={() => router.push('/(client)/search')}
+            >
+              <Card.Content style={styles.categoryContent}>
+                <Text variant="titleMedium" style={styles.categoryTitle}>
+                  ⭐ Premium
+                </Text>
+                <Text variant="bodySmall" style={styles.categoryDescription}>
+                  Experiência gastronômica única
+                </Text>
+              </Card.Content>
+            </Card>
+
+            <Card 
+              style={styles.categoryCard}
+              onPress={() => router.push('/(client)/search')}
+            >
+              <Card.Content style={styles.categoryContent}>
+                <Text variant="titleMedium" style={styles.categoryTitle}>
+                  🥗 Vegetariano
+                </Text>
+                <Text variant="bodySmall" style={styles.categoryDescription}>
+                  Opções vegetarianas deliciosas
+                </Text>
+              </Card.Content>
+            </Card>
+
+            <Card 
+              style={styles.categoryCard}
+              onPress={() => router.push('/(client)/search')}
+            >
+              <Card.Content style={styles.categoryContent}>
+                <Text variant="titleMedium" style={styles.categoryTitle}>
+                  👨‍🍳 Gourmet
+                </Text>
+                <Text variant="bodySmall" style={styles.categoryDescription}>
+                  Cortes especiais e técnicas refinadas
+                </Text>
+              </Card.Content>
+            </Card>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -625,75 +356,15 @@ const styles = StyleSheet.create({
   subGreeting: {
     color: theme.colors.onSurfaceVariant,
   },
-  searchContainer: {
-    flexDirection: 'row',
+  quickSearchContainer: {
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-  },
-  searchbar: {
-    flex: 1,
-  },
-  filterButton: {
-    alignSelf: 'center',
-  },
-  activeFiltersContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: theme.colors.primaryContainer,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    borderRadius: spacing.sm,
-  },
-  activeFiltersText: {
-    color: theme.colors.onPrimaryContainer,
-    fontWeight: '500',
-  },
-  clearFiltersButton: {
-    margin: 0,
-  },
-  clearFiltersLabel: {
-    fontSize: 12,
-    color: theme.colors.primary,
-  },
-  categoriesContainer: {
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  categoryChip: {
-    marginRight: spacing.sm,
-  },
-  filtersContainer: {
-    backgroundColor: theme.colors.surface,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: spacing.md,
-    elevation: 1,
-  },
-  filtersTitle: {
-    fontWeight: 'bold',
-    color: theme.colors.onSurface,
     marginBottom: spacing.lg,
   },
-  filterSection: {
-    marginBottom: spacing.lg,
+  quickSearchButton: {
+    borderColor: theme.colors.surfaceVariant,
   },
-  filterSectionTitle: {
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.sm,
-  },
-  filterOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  filterChip: {
-    marginBottom: spacing.xs,
+  quickSearchContent: {
+    paddingVertical: spacing.md,
   },
   section: {
     paddingHorizontal: spacing.lg,
@@ -709,10 +380,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.onBackground,
     flex: 1,
-  },
-  resultsCount: {
-    color: theme.colors.onSurfaceVariant,
-    fontSize: 12,
   },
   loadingContainer: {
     paddingVertical: spacing.xl,
@@ -734,10 +401,6 @@ const styles = StyleSheet.create({
   emptyDescription: {
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  clearFiltersEmptyButton: {
-    marginTop: spacing.md,
   },
   servicesList: {
     paddingBottom: spacing.lg,
@@ -807,5 +470,29 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
     color: theme.colors.onSurfaceVariant,
     fontSize: 12,
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
+  categoryCard: {
+    flex: 1,
+    minWidth: '45%',
+    elevation: 1,
+  },
+  categoryContent: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  categoryTitle: {
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
+  },
+  categoryDescription: {
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
   },
 });
