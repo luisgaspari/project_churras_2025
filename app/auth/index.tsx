@@ -45,13 +45,10 @@ export default function AuthScreen() {
         });
       }
       
-      // Redirect based on user type
-      if (userType === 'professional') {
-        router.replace('/(professional)');
-      } else {
-        router.replace('/(client)');
-      }
+      // Navigation will be handled by the auth state change in AuthContext
+      // No need to manually navigate here
     } catch (error: any) {
+      console.error('Auth error:', error);
       Alert.alert('Erro', error.message || 'Erro ao realizar autenticação');
     } finally {
       setIsLoading(false);
@@ -133,8 +130,8 @@ export default function AuthScreen() {
               <Button
                 mode="contained"
                 onPress={handleAuth}
-                loading={isLoading}
-                disabled={isLoading}
+                loading={isLoading || loading}
+                disabled={isLoading || loading}
                 style={styles.authButton}
               >
                 {isLogin ? 'Entrar' : 'Criar conta'}
@@ -144,6 +141,7 @@ export default function AuthScreen() {
                 mode="text"
                 onPress={() => setIsLogin(!isLogin)}
                 style={styles.toggleButton}
+                disabled={isLoading || loading}
               >
                 {isLogin ? 'Não tem conta? Criar conta' : 'Já tem conta? Entrar'}
               </Button>

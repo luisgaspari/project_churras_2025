@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
 interface Profile {
@@ -71,6 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -79,11 +82,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null);
         setLoading(false);
+        // Only redirect to home if we're not already there
+        if (router.canGoBack()) {
+          router.replace('/');
+        }
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Navigate user after profile is loaded
+  useEffect(() => {
+    if (!loading && profile) {
+      if (profile.user_type === 'client') {
+        router.replace('/(client)');
+      } else if (profile.user_type === 'professional') {
+        router.replace('/(professional)');
+      }
+    }
+  }, [profile, loading]);
 
   const loadProfile = async (userId: string) => {
     setLoading(true);

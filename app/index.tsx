@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { Button, Text, Card } from 'react-native-paper';
 import { router } from 'expo-router';
@@ -12,11 +12,12 @@ export default function WelcomeScreen() {
   const { profile, loading } = useAuth();
 
   // Redirect if user is already logged in
-  React.useEffect(() => {
+  useEffect(() => {
     if (!loading && profile) {
+      // Use replace to prevent going back to welcome screen
       if (profile.user_type === 'client') {
         router.replace('/(client)');
-      } else {
+      } else if (profile.user_type === 'professional') {
         router.replace('/(professional)');
       }
     }
@@ -29,12 +30,18 @@ export default function WelcomeScreen() {
     });
   };
 
+  // Show loading state while checking authentication
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <Text>Carregando...</Text>
       </View>
     );
+  }
+
+  // Don't render the welcome screen if user is authenticated
+  if (profile) {
+    return null;
   }
 
   return (
@@ -47,16 +54,9 @@ export default function WelcomeScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Image
-              // source={{
-              //   uri: 'https://images.pexels.com/photos/5175533/pexels-photo-5175533.jpeg?auto=compress&cs=tinysrgb&w=400',
-              // }}
-              // style={styles.heroImage}
               source={require('../assets/images/logo.png')}
               style={styles.image}
             />
-            {/* <Text variant="headlineLarge" style={styles.title}>
-              ChurrasJa
-            </Text> */}
             <Text variant="titleMedium" style={styles.subtitle}>
               O melhor churrasco na palma da sua mão
             </Text>
@@ -125,22 +125,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxl,
     paddingBottom: spacing.xl,
   },
-  heroImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: spacing.lg,
-  },
   image: {
     width: 200,
     height: 200,
     marginBottom: 8,
-  },
-  title: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: spacing.sm,
   },
   subtitle: {
     color: 'rgba(255, 255, 255, 0.9)',
