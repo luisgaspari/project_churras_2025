@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList, Alert, Linking, Platform } from 'react-native';
 import { Text, Card, Button, Chip, FAB } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { Calendar, Clock, MapPin, User, Phone, Plus } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, User, Phone, Plus, MessageCircle, Mail } from 'lucide-react-native';
 
 interface Booking {
   id: string;
@@ -32,6 +32,7 @@ export default function ProfessionalBookingsScreen() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'all'>('pending');
+  const [updatingBooking, setUpdatingBooking] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -73,21 +74,159 @@ export default function ProfessionalBookingsScreen() {
   };
 
   const updateBookingStatus = async (bookingId: string, status: string) => {
+    setUpdatingBooking(bookingId);
+    
     try {
       const { error } = await supabase
         .from('bookings')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ 
+          status, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', bookingId);
 
       if (error) {
-        console.error('Error updating booking:', error);
-      } else {
-        // Refresh bookings
-        loadBookings();
+        throw error;
       }
-    } catch (error) {
+
+      // Show success message
+      const statusMessages = {
+        confirmed: 'Agendamento confirmado com sucesso!',
+        cancelled: 'Agendamento recusado.',
+        completed: 'Agendamento finalizado com sucesso!'
+      };
+
+      Alert.alert('Sucesso', statusMessages[status as keyof typeof statusMessages]);
+      
+      // Refresh bookings
+      loadBookings();
+    } catch (error: any) {
       console.error('Error updating booking:', error);
+      Alert.alert('Erro', error.message || 'Não foi possível atualizar o agendamento.');
+    } finally {
+      setUpdatingBooking(null);
     }
+  };
+
+  const handleContactClient = (booking: Booking) => {
+    const client = booking.profiles;
+    if (!client) {
+      Alert.alert('Erro', 'Informações do cliente não disponíveis.');
+      return;
+    }
+
+    const options = [];
+
+    // WhatsApp option (if phone is available)
+    if (client.phone) {
+      options.push({
+        text: 'WhatsApp',
+        onPress: () => openWhatsApp(booking),
+      });
+    }
+
+    // Phone call option (if phone is available)
+    if (client.phone) {
+      options.push({
+        text: 'Ligar',
+        onPress: () => makePhoneCall(client.phone!),
+      });
+    }
+
+    // Email option
+    options.push({
+      text: 'E-mail',
+      onPress: () => sendEmail(booking),
+    });
+
+    // Cancel option
+    options.push({
+      text: 'Cancelar',
+      style: 'cancel',
+    });
+
+    if (options.length === 1) {
+      Alert.alert('Erro', 'Nenhuma forma de contato disponível.');
+      return;
+    }
+
+    Alert.alert(
+      'Contatar Cliente',
+      `Como você gostaria de entrar em contato com ${client.full_name}?`,
+      options
+    );
+  };
+
+  const openWhatsApp = (booking: Booking) => {
+    const client = booking.profiles;
+    if (!client?.phone) return;
+
+    const phoneNumber = client.phone.replace(/\D/g, '');
+    const eventDate = formatDate(booking.event_date);
+    const eventTime = formatTime(booking.event_time);
+    
+    const message = `Olá ${client.full_name}! Sou ${profile?.full_name}, churrasqueiro do ChurrasJa. Sobre seu agendamento para ${eventDate} às ${eventTime}, gostaria de conversar sobre os detalhes do evento.`;
+    
+    const whatsappUrl = `whatsapp://send?phone=55${phoneNumber}&text=${encodeURIComponent(message)}`;
+    const whatsappWebUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+    Linking.canOpenURL(whatsappUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(whatsappUrl);
+        } else {
+          // Fallback to WhatsApp Web
+          return Linking.openURL(whatsappWebUrl);
+        }
+      })
+      .catch((error) => {
+        console.error('Error opening WhatsApp:', error);
+        Alert.alert('Erro', 'Não foi possível abrir o WhatsApp.');
+      });
+  };
+
+  const makePhoneCall = (phoneNumber: string) => {
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    const phoneUrl = `tel:${cleanPhone}`;
+
+    Linking.canOpenURL(phoneUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(phoneUrl);
+        } else {
+          Alert.alert('Erro', 'Não foi possível abrir o aplicativo de telefone.');
+        }
+      })
+      .catch((error) => {
+        console.error('Error opening phone app:', error);
+        Alert.alert('Erro', 'Não foi possível fazer a ligação.');
+      });
+  };
+
+  const sendEmail = (booking: Booking) => {
+    const client = booking.profiles;
+    if (!client?.email) return;
+
+    const eventDate = formatDate(booking.event_date);
+    const eventTime = formatTime(booking.event_time);
+    
+    const subject = `Agendamento ChurrasJa - ${booking.services?.title || 'Serviço de Churrasco'}`;
+    const body = `Olá ${client.full_name}!\n\nSou ${profile?.full_name}, churrasqueiro do ChurrasJa.\n\nSobre seu agendamento:\n\nServiço: ${booking.services?.title || 'Serviço de Churrasco'}\nData: ${eventDate}\nHorário: ${eventTime}\nLocal: ${booking.location}\nConvidados: ${booking.guests_count} pessoas\n\nGostaria de conversar sobre os detalhes do seu evento para garantir que tudo saia perfeito!\n\nAtenciosamente,\n${profile?.full_name}\nChurrasqueiro Profissional`;
+    
+    const emailUrl = `mailto:${client.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    Linking.canOpenURL(emailUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(emailUrl);
+        } else {
+          Alert.alert('Erro', 'Não foi possível abrir o aplicativo de e-mail.');
+        }
+      })
+      .catch((error) => {
+        console.error('Error opening email app:', error);
+        Alert.alert('Erro', 'Não foi possível enviar o e-mail.');
+      });
   };
 
   const getStatusColor = (status: string) => {
@@ -103,6 +242,23 @@ export default function ProfessionalBookingsScreen() {
       default:
         return theme.colors.onSurfaceVariant;
     }
+  };
+
+  const hexToRgba = (hex: string, alpha: number) => {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse hex to RGB
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const getStatusBackgroundColor = (status: string) => {
+    const color = getStatusColor(status);
+    return hexToRgba(color, 0.2);
   };
 
   const getStatusLabel = (status: string) => {
@@ -145,7 +301,7 @@ export default function ProfessionalBookingsScreen() {
             {item.profiles?.full_name}
           </Text>
           <Chip
-            style={[styles.statusChip, { backgroundColor: getStatusColor(item.status) + '20' }]}
+            style={[styles.statusChip, { backgroundColor: getStatusBackgroundColor(item.status) }]}
             textStyle={{ color: getStatusColor(item.status) }}
           >
             {getStatusLabel(item.status)}
@@ -193,6 +349,15 @@ export default function ProfessionalBookingsScreen() {
               </Text>
             </View>
           )}
+
+          {item.profiles?.email && (
+            <View style={styles.infoRow}>
+              <Mail size={16} color={theme.colors.onSurfaceVariant} />
+              <Text variant="bodyMedium" style={styles.infoText}>
+                {item.profiles.email}
+              </Text>
+            </View>
+          )}
         </View>
 
         {item.notes && (
@@ -211,36 +376,55 @@ export default function ProfessionalBookingsScreen() {
             Total: R$ {item.total_price}
           </Text>
           
-          {item.status === 'pending' && (
-            <View style={styles.actions}>
+          <View style={styles.actions}>
+            {/* Contact button - available for all statuses except cancelled */}
+            {item.status !== 'cancelled' && (
               <Button 
                 mode="outlined" 
                 style={styles.actionButton}
-                onPress={() => updateBookingStatus(item.id, 'cancelled')}
+                onPress={() => handleContactClient(item)}
+                icon={() => <MessageCircle size={16} color={theme.colors.primary} />}
               >
-                Recusar
+                Contatar
               </Button>
-              <Button 
-                mode="contained" 
-                style={styles.actionButton}
-                onPress={() => updateBookingStatus(item.id, 'confirmed')}
-              >
-                Aceitar
-              </Button>
-            </View>
-          )}
+            )}
 
-          {item.status === 'confirmed' && (
-            <View style={styles.actions}>
+            {/* Status-specific action buttons */}
+            {item.status === 'pending' && (
+              <>
+                <Button 
+                  mode="outlined" 
+                  style={[styles.actionButton, styles.rejectButton]}
+                  onPress={() => updateBookingStatus(item.id, 'cancelled')}
+                  loading={updatingBooking === item.id}
+                  disabled={updatingBooking === item.id}
+                >
+                  Recusar
+                </Button>
+                <Button 
+                  mode="contained" 
+                  style={styles.actionButton}
+                  onPress={() => updateBookingStatus(item.id, 'confirmed')}
+                  loading={updatingBooking === item.id}
+                  disabled={updatingBooking === item.id}
+                >
+                  Aceitar
+                </Button>
+              </>
+            )}
+
+            {item.status === 'confirmed' && (
               <Button 
                 mode="contained" 
                 style={styles.actionButton}
                 onPress={() => updateBookingStatus(item.id, 'completed')}
+                loading={updatingBooking === item.id}
+                disabled={updatingBooking === item.id}
               >
                 Finalizar
               </Button>
-            </View>
-          )}
+            )}
+          </View>
         </View>
       </Card.Content>
     </Card>
@@ -399,9 +583,14 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
+    flexWrap: 'wrap',
+    alignItems: 'center',
   },
   actionButton: {
     minWidth: 80,
+  },
+  rejectButton: {
+    borderColor: theme.colors.error,
   },
   emptyState: {
     flex: 1,
