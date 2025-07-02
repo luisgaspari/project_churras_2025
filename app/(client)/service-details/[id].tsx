@@ -96,9 +96,6 @@ export default function ServiceDetailsScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [messageText, setMessageText] = useState('');
-  const [sendingMessage, setSendingMessage] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
 
@@ -352,66 +349,57 @@ export default function ServiceDetailsScreen() {
       });
   };
 
-  const handleSendMessage = async () => {
-    if (!messageText.trim()) {
-      Alert.alert('Erro', 'Por favor, digite uma mensagem.');
+  const handleChatMessage = async () => {
+    if (!service || !profile) {
+      Alert.alert('Erro', 'Informações não disponíveis.');
       return;
     }
 
-    if (!profile || !service) {
-      Alert.alert('Erro', 'Informações do usuário não disponíveis.');
-      return;
-    }
-
-    setSendingMessage(true);
     try {
-      // Here you would typically save the message to your database
-      // For now, we'll simulate sending via email
-      const subject = `Nova mensagem sobre: ${service.title}`;
-      const body = `Olá ${
-        service.profiles?.full_name
-      }!\n\nVocê recebeu uma nova mensagem de ${
-        profile.full_name
-      } através do ChurrasJa:\n\n"${messageText}"\n\nPara responder, entre em contato diretamente com o cliente:\nE-mail: ${
-        profile.email
-      }\nTelefone: ${
-        profile.phone || 'Não informado'
-      }\n\nAtenciosamente,\nEquipe ChurrasJa`;
+      // Check if conversation already exists
+      const { data: existingConversation, error: searchError } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('client_id', profile.id)
+        .eq('professional_id', service.professional_id)
+        .single();
 
-      const emailUrl = `mailto:${
-        service.profiles?.email
-      }?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-        body
-      )}`;
+      let conversationId = existingConversation?.id;
 
-      await Linking.openURL(emailUrl);
+      if (!conversationId) {
+        // Create new conversation
+        const { data: newConversation, error: createError } = await supabase
+          .from('conversations')
+          .insert({
+            client_id: profile.id,
+            professional_id: service.professional_id,
+          })
+          .select('id')
+          .single();
 
-      Alert.alert(
-        'Mensagem Enviada',
-        'Sua mensagem foi enviada com sucesso! O churrasqueiro receberá um e-mail e entrará em contato em breve.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              setShowMessageModal(false);
-              setMessageText('');
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      console.error('Error sending message:', error);
-      Alert.alert(
-        'Erro',
-        'Não foi possível enviar a mensagem. Tente novamente.'
-      );
-    } finally {
-      setSendingMessage(false);
+        if (createError) {
+          throw createError;
+        }
+
+        conversationId = newConversation.id;
+      }
+
+      // Navigate to chat
+      router.push(`/(client)/chat/${conversationId}`);
+    } catch (error: any) {
+      console.error('Error creating/finding conversation:', error);
+      Alert.alert('Erro', 'Não foi possível iniciar a conversa.');
     }
   };
 
   const showContactOptions = () => {
     const options = [
+      {
+        title: 'Chat',
+        description: 'Conversar pelo app',
+        onPress: handleChatMessage,
+        available: true,
+      },
       {
         title: 'WhatsApp',
         description: 'Conversar pelo WhatsApp',
@@ -429,12 +417,6 @@ export default function ServiceDetailsScreen() {
         description: 'Enviar um e-mail',
         onPress: handleEmailMessage,
         available: !!service?.profiles?.email,
-      },
-      {
-        title: 'Mensagem',
-        description: 'Enviar mensagem pelo app',
-        onPress: () => setShowMessageModal(true),
-        available: true,
       },
     ];
 
@@ -689,10 +671,6 @@ export default function ServiceDetailsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        {/* <IconButton
-          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
-          onPress={handleGoBack}
-        /> */}
         <IconButton
           icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
           onPress={() => router.replace('/(client)')}
@@ -1059,83 +1037,6 @@ export default function ServiceDetailsScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* Message Modal */}
-      <Modal
-        visible={showMessageModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowMessageModal(false)}
-      >
-        <View style={styles.messageModalContainer}>
-          <View style={styles.messageModalContent}>
-            <View style={styles.messageModalHeader}>
-              <Text variant="titleMedium" style={styles.messageModalTitle}>
-                Enviar Mensagem
-              </Text>
-              <IconButton
-                icon={() => <X size={24} color={theme.colors.onSurface} />}
-                onPress={() => setShowMessageModal(false)}
-              />
-            </View>
-
-            <View style={styles.messageRecipient}>
-              {service.profiles?.avatar_url ? (
-                <Avatar.Image
-                  size={40}
-                  source={{ uri: service.profiles.avatar_url }}
-                />
-              ) : (
-                <Avatar.Text
-                  size={40}
-                  label={
-                    service.profiles?.full_name?.charAt(0).toUpperCase() || 'C'
-                  }
-                />
-              )}
-              <View style={styles.recipientInfo}>
-                <Text variant="titleSmall" style={styles.recipientName}>
-                  {service.profiles?.full_name}
-                </Text>
-                <Text variant="bodySmall" style={styles.recipientService}>
-                  {service.title}
-                </Text>
-              </View>
-            </View>
-
-            <TextInput
-              label="Sua mensagem"
-              value={messageText}
-              onChangeText={setMessageText}
-              style={styles.messageInput}
-              mode="outlined"
-              multiline
-              numberOfLines={6}
-              placeholder="Digite sua mensagem aqui..."
-            />
-
-            <View style={styles.messageActions}>
-              <Button
-                mode="outlined"
-                onPress={() => setShowMessageModal(false)}
-                style={styles.messageActionButton}
-              >
-                Cancelar
-              </Button>
-              <Button
-                mode="contained"
-                onPress={handleSendMessage}
-                loading={sendingMessage}
-                disabled={sendingMessage || !messageText.trim()}
-                style={styles.messageActionButton}
-                icon={() => <Send size={16} color={theme.colors.onPrimary} />}
-              >
-                Enviar
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -1438,68 +1339,5 @@ const styles = StyleSheet.create({
   },
   photoCounter: {
     color: 'white',
-  },
-  // Message Modal styles
-  messageModalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  messageModalContent: {
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: spacing.lg,
-    borderTopRightRadius: spacing.lg,
-    paddingBottom: spacing.xl,
-    maxHeight: '80%',
-  },
-  messageModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surfaceVariant,
-  },
-  messageModalTitle: {
-    fontWeight: 'bold',
-    color: theme.colors.onSurface,
-  },
-  messageRecipient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: theme.colors.surfaceVariant,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    borderRadius: spacing.sm,
-  },
-  recipientInfo: {
-    marginLeft: spacing.md,
-    flex: 1,
-  },
-  recipientName: {
-    fontWeight: 'bold',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  recipientService: {
-    color: theme.colors.onSurfaceVariant,
-  },
-  messageInput: {
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  messageActions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.md,
-  },
-  messageActionButton: {
-    flex: 1,
   },
 });
