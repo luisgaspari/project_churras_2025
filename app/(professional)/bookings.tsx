@@ -312,52 +312,60 @@ export default function ProfessionalBookingsScreen() {
           {item.services?.title || 'Serviço de Churrasco'}
         </Text>
 
-        <View style={styles.bookingInfo}>
-          <View style={styles.infoRow}>
-            <Calendar size={16} color={theme.colors.onSurfaceVariant} />
-            <Text variant="bodyMedium" style={styles.infoText}>
-              {formatDate(item.event_date)}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Clock size={16} color={theme.colors.onSurfaceVariant} />
-            <Text variant="bodyMedium" style={styles.infoText}>
-              {formatTime(item.event_time)} • {item.services?.duration_hours || 4}h
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <MapPin size={16} color={theme.colors.onSurfaceVariant} />
-            <Text variant="bodyMedium" style={styles.infoText}>
-              {item.location}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <User size={16} color={theme.colors.onSurfaceVariant} />
-            <Text variant="bodyMedium" style={styles.infoText}>
-              {item.guests_count} pessoas
-            </Text>
-          </View>
-
-          {item.profiles?.phone && (
+        <View style={styles.bookingInfoContainer}>
+          <View style={styles.bookingInfo}>
             <View style={styles.infoRow}>
-              <Phone size={16} color={theme.colors.onSurfaceVariant} />
+              <Calendar size={16} color={theme.colors.onSurfaceVariant} />
               <Text variant="bodyMedium" style={styles.infoText}>
-                {item.profiles.phone}
+                {formatDate(item.event_date)}
               </Text>
             </View>
-          )}
 
-          {item.profiles?.email && (
             <View style={styles.infoRow}>
-              <Mail size={16} color={theme.colors.onSurfaceVariant} />
+              <Clock size={16} color={theme.colors.onSurfaceVariant} />
               <Text variant="bodyMedium" style={styles.infoText}>
-                {item.profiles.email}
+                {formatTime(item.event_time)} • {item.services?.duration_hours || 4}h
               </Text>
             </View>
-          )}
+
+            <View style={styles.infoRow}>
+              <MapPin size={16} color={theme.colors.onSurfaceVariant} />
+              <Text variant="bodyMedium" style={styles.infoText}>
+                {item.location}
+              </Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <User size={16} color={theme.colors.onSurfaceVariant} />
+              <Text variant="bodyMedium" style={styles.infoText}>
+                {item.guests_count} pessoas
+              </Text>
+            </View>
+
+            {item.profiles?.phone && (
+              <View style={styles.infoRow}>
+                <Phone size={16} color={theme.colors.onSurfaceVariant} />
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  {item.profiles.phone}
+                </Text>
+              </View>
+            )}
+
+            {item.profiles?.email && (
+              <View style={styles.infoRow}>
+                <Mail size={16} color={theme.colors.onSurfaceVariant} />
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  {item.profiles.email}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.totalPriceContainer}>
+            <Text variant="titleLarge" style={styles.totalPrice}>
+              R$ {item.total_price}
+            </Text>
+          </View>
         </View>
 
         {item.notes && (
@@ -371,60 +379,54 @@ export default function ProfessionalBookingsScreen() {
           </View>
         )}
 
-        <View style={styles.bookingFooter}>
-          <Text variant="titleMedium" style={styles.totalPrice}>
-            Total: R$ {item.total_price}
-          </Text>
-          
-          <View style={styles.actions}>
-            {/* Contact button - available for all statuses except cancelled */}
-            {item.status !== 'cancelled' && (
+        <View style={styles.actionsContainer}>
+          {/* Contact button - available for all statuses except cancelled */}
+          {item.status !== 'cancelled' && (
+            <Button 
+              mode="outlined" 
+              style={styles.actionButton}
+              onPress={() => handleContactClient(item)}
+              icon={() => <MessageCircle size={16} color={theme.colors.primary} />}
+            >
+              Contatar
+            </Button>
+          )}
+
+          {/* Status-specific action buttons */}
+          {item.status === 'pending' && (
+            <>
               <Button 
                 mode="outlined" 
-                style={styles.actionButton}
-                onPress={() => handleContactClient(item)}
-                icon={() => <MessageCircle size={16} color={theme.colors.primary} />}
-              >
-                Contatar
-              </Button>
-            )}
-
-            {/* Status-specific action buttons */}
-            {item.status === 'pending' && (
-              <>
-                <Button 
-                  mode="outlined" 
-                  style={[styles.actionButton, styles.rejectButton]}
-                  onPress={() => updateBookingStatus(item.id, 'cancelled')}
-                  loading={updatingBooking === item.id}
-                  disabled={updatingBooking === item.id}
-                >
-                  Recusar
-                </Button>
-                <Button 
-                  mode="contained" 
-                  style={styles.actionButton}
-                  onPress={() => updateBookingStatus(item.id, 'confirmed')}
-                  loading={updatingBooking === item.id}
-                  disabled={updatingBooking === item.id}
-                >
-                  Aceitar
-                </Button>
-              </>
-            )}
-
-            {item.status === 'confirmed' && (
-              <Button 
-                mode="contained" 
-                style={styles.actionButton}
-                onPress={() => updateBookingStatus(item.id, 'completed')}
+                style={[styles.actionButton, styles.rejectButton]}
+                onPress={() => updateBookingStatus(item.id, 'cancelled')}
                 loading={updatingBooking === item.id}
                 disabled={updatingBooking === item.id}
               >
-                Finalizar
+                Recusar
               </Button>
-            )}
-          </View>
+              <Button 
+                mode="contained" 
+                style={styles.actionButton}
+                onPress={() => updateBookingStatus(item.id, 'confirmed')}
+                loading={updatingBooking === item.id}
+                disabled={updatingBooking === item.id}
+              >
+                Aceitar
+              </Button>
+            </>
+          )}
+
+          {item.status === 'confirmed' && (
+            <Button 
+              mode="contained" 
+              style={styles.actionButton}
+              onPress={() => updateBookingStatus(item.id, 'completed')}
+              loading={updatingBooking === item.id}
+              disabled={updatingBooking === item.id}
+            >
+              Finalizar
+            </Button>
+          )}
         </View>
       </Card.Content>
     </Card>
@@ -545,8 +547,15 @@ const styles = StyleSheet.create({
     color: theme.colors.onSurfaceVariant,
     marginBottom: spacing.md,
   },
-  bookingInfo: {
+  bookingInfoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: spacing.md,
+  },
+  bookingInfo: {
+    flex: 1,
+    marginRight: spacing.md,
   },
   infoRow: {
     flexDirection: 'row',
@@ -556,12 +565,27 @@ const styles = StyleSheet.create({
   infoText: {
     marginLeft: spacing.sm,
     color: theme.colors.onSurface,
+    flex: 1,
+  },
+  totalPriceContainer: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: theme.colors.primaryContainer,
+    borderRadius: spacing.md,
+    minWidth: 100,
+  },
+  totalPrice: {
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    textAlign: 'center',
   },
   notesSection: {
-    marginBottom: spacing.md,
-    padding: spacing.sm,
+    marginBottom: spacing.lg,
+    padding: spacing.md,
     backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: spacing.sm,
+    borderRadius: spacing.md,
   },
   notesLabel: {
     fontWeight: 'bold',
@@ -570,24 +594,20 @@ const styles = StyleSheet.create({
   },
   notes: {
     color: theme.colors.onSurface,
+    lineHeight: 20,
   },
-  bookingFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  totalPrice: {
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-  },
-  actions: {
+  actionsContainer: {
     flexDirection: 'row',
     gap: spacing.sm,
     flexWrap: 'wrap',
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.surfaceVariant,
   },
   actionButton: {
-    minWidth: 80,
+    minWidth: 90,
   },
   rejectButton: {
     borderColor: theme.colors.error,
