@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, IconButton, Avatar, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import { ArrowLeft } from 'lucide-react-native';
 import ChatBubble from '@/components/ChatBubble';
 import ChatInput from '@/components/ChatInput';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 interface Message {
   id: string;
@@ -32,11 +33,22 @@ interface ConversationDetails {
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useAuth();
+  const { refreshUnreadCount } = useUnreadMessages();
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  // Refresh unread count when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (id && profile) {
+        markMessagesAsRead();
+        refreshUnreadCount();
+      }
+    }, [id, profile, refreshUnreadCount])
+  );
 
   useEffect(() => {
     if (id && profile) {
@@ -64,6 +76,9 @@ export default function ChatScreen() {
               markMessagesAsRead();
             }
             
+            // Refresh unread count
+            refreshUnreadCount();
+            
             // Scroll to bottom
             setTimeout(() => {
               flatListRef.current?.scrollToEnd({ animated: true });
@@ -85,6 +100,7 @@ export default function ChatScreen() {
                 msg.id === updatedMessage.id ? updatedMessage : msg
               )
             );
+            refreshUnreadCount();
           }
         )
         .subscribe();
@@ -93,7 +109,7 @@ export default function ChatScreen() {
         subscription.unsubscribe();
       };
     }
-  }, [id, profile]);
+  }, [id, profile, refreshUnreadCount]);
 
   const loadConversation = async () => {
     if (!id) return;
@@ -159,6 +175,7 @@ export default function ChatScreen() {
         conversation_uuid: id,
         user_uuid: profile.id,
       });
+      refreshUnreadCount();
     } catch (error) {
       console.error('Error marking messages as read:', error);
     }

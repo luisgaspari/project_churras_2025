@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Text, Card, Avatar, Badge } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import { MessageCircle } from 'lucide-react-native';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 interface Conversation {
   id: string;
@@ -26,8 +27,16 @@ interface Conversation {
 
 export default function ChatListScreen() {
   const { profile } = useAuth();
+  const { refreshUnreadCount } = useUnreadMessages();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Refresh unread count when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshUnreadCount();
+    }, [refreshUnreadCount])
+  );
 
   useEffect(() => {
     if (profile) {
@@ -46,6 +55,7 @@ export default function ChatListScreen() {
           },
           () => {
             loadConversations();
+            refreshUnreadCount();
           }
         )
         .on(
@@ -57,6 +67,7 @@ export default function ChatListScreen() {
           },
           () => {
             loadConversations();
+            refreshUnreadCount();
           }
         )
         .subscribe();
@@ -65,7 +76,7 @@ export default function ChatListScreen() {
         subscription.unsubscribe();
       };
     }
-  }, [profile]);
+  }, [profile, refreshUnreadCount]);
 
   const loadConversations = async () => {
     if (!profile) return;
@@ -145,11 +156,22 @@ export default function ChatListScreen() {
     }
   };
 
+  const handleConversationPress = (conversationId: string) => {
+    router.push(`/(client)/chat/${conversationId}`);
+    // Refresh unread count after navigation
+    setTimeout(() => {
+      refreshUnreadCount();
+    }, 500);
+  };
+
   const renderConversationItem = ({ item }: { item: Conversation }) => (
     <TouchableOpacity
-      onPress={() => router.push(`/(client)/chat/${item.id}`)}
+      onPress={() => handleConversationPress(item.id)}
     >
-      <Card style={styles.conversationCard}>
+      <Card style={[
+        styles.conversationCard,
+        item.unread_count > 0 && styles.unreadConversationCard
+      ]}>
         <Card.Content style={styles.conversationContent}>
           <View style={styles.avatarContainer}>
             {item.professional_profile?.avatar_url ? (
@@ -175,7 +197,10 @@ export default function ChatListScreen() {
 
           <View style={styles.conversationInfo}>
             <View style={styles.conversationHeader}>
-              <Text variant="titleMedium" style={styles.professionalName}>
+              <Text variant="titleMedium" style={[
+                styles.professionalName,
+                item.unread_count > 0 && styles.unreadText
+              ]}>
                 {item.professional_profile?.full_name}
               </Text>
               <Text variant="bodySmall" style={styles.timestamp}>
@@ -205,6 +230,11 @@ export default function ChatListScreen() {
         <Text variant="headlineMedium" style={styles.title}>
           Conversas
         </Text>
+        {conversations.filter(c => c.unread_count > 0).length > 0 && (
+          <Badge style={styles.headerBadge}>
+            {conversations.reduce((sum, c) => sum + c.unread_count, 0)}
+          </Badge>
+        )}
       </View>
 
       <View style={styles.content}>
@@ -239,12 +269,18 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: spacing.lg,
     paddingBottom: spacing.md,
   },
   title: {
     fontWeight: 'bold',
     color: theme.colors.onBackground,
+  },
+  headerBadge: {
+    backgroundColor: theme.colors.error,
   },
   content: {
     flex: 1,
@@ -253,6 +289,11 @@ const styles = StyleSheet.create({
   conversationCard: {
     marginBottom: spacing.sm,
     elevation: 1,
+  },
+  unreadConversationCard: {
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
   },
   conversationContent: {
     flexDirection: 'row',
@@ -267,7 +308,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -5,
     right: -5,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.error,
   },
   conversationInfo: {
     flex: 1,
@@ -282,6 +323,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.onSurface,
     flex: 1,
+  },
+  unreadText: {
+    color: theme.colors.primary,
   },
   timestamp: {
     color: theme.colors.onSurfaceVariant,

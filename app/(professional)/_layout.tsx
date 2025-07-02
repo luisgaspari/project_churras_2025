@@ -2,8 +2,12 @@ import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
 import { Calendar, ChartBar as BarChart3, User, PhoneIncoming as HomeIcon, Star, MessageCircle } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
+import TabBarBadge from '@/components/TabBarBadge';
 
 export default function ProfessionalTabLayout() {
+  const { unreadCount } = useUnreadMessages();
+
   return (
     <>
       <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
@@ -42,8 +46,11 @@ export default function ProfessionalTabLayout() {
           name="chat"
           options={{
             title: 'Chat',
-            tabBarIcon: ({ size, color }) => (
-              <MessageCircle size={size} color={color} />
+            tabBarIcon: ({ size, color, focused }) => (
+              <div style={{ position: 'relative' }}>
+                <MessageCircle size={size} color={color} />
+                {unreadCount > 0 && <TabBarBadge count={unreadCount} />}
+              </div>
             ),
           }}
         />
