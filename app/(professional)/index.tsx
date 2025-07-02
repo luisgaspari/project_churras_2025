@@ -19,6 +19,7 @@ interface DashboardStats {
   pendingBookings: number;
   monthlyRevenue: number;
   averageRating: number;
+  totalReviews: number;
 }
 
 interface RecentBooking {
@@ -39,7 +40,8 @@ export default function ProfessionalHomeScreen() {
     totalBookings: 0,
     pendingBookings: 0,
     monthlyRevenue: 0,
-    averageRating: 4.8,
+    averageRating: 0,
+    totalReviews: 0,
   });
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,12 +52,21 @@ export default function ProfessionalHomeScreen() {
     }
   }, [profile]);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      if (profile) {
+        loadDashboardData();
+      }
+    }, [profile])
+  );
+
   const loadDashboardData = async () => {
     if (!profile) return;
 
+    setLoading(true);
     try {
-      // Load bookings
-      const { data: bookings, error } = await supabase
+      // Load bookings for analytics
+      const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
         .select(
           `
@@ -69,38 +80,55 @@ export default function ProfessionalHomeScreen() {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      if (error) {
-        console.error('Error loading bookings:', error);
-      } else {
-        setRecentBookings(bookings || []);
-
-        // Calculate stats
-        const totalBookings = bookings?.length || 0;
-        const pendingBookings =
-          bookings?.filter((b) => b.status === 'pending').length || 0;
-
-        // Calculate monthly revenue (current month)
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        const monthlyRevenue =
-          bookings
-            ?.filter((b) => {
-              const bookingDate = new Date(b.event_date);
-              return (
-                bookingDate.getMonth() === currentMonth &&
-                bookingDate.getFullYear() === currentYear &&
-                (b.status === 'confirmed' || b.status === 'completed')
-              );
-            })
-            .reduce((sum, b) => sum + b.total_price, 0) || 0;
-
-        setStats({
-          totalBookings,
-          pendingBookings,
-          monthlyRevenue,
-          averageRating: 4.8, // Mock rating for now
-        });
+      if (bookingsError) {
+        console.error('Error loading bookings:', bookingsError);
       }
+
+      // Load reviews for rating calculation
+      const { data: reviews, error: reviewsError } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('professional_id', profile.id);
+
+      if (reviewsError) {
+        console.error('Error loading reviews:', reviewsError);
+      }
+
+      // Calculate stats
+      const totalBookings = bookings?.length || 0;
+      const pendingBookings =
+        bookings?.filter((b) => b.status === 'pending').length || 0;
+
+      // Calculate monthly revenue (current month)
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const completedBookings = bookings?.filter(b => b.status === 'completed') || [];
+      const monthlyRevenue =
+        completedBookings
+          ?.filter((b) => {
+            const bookingDate = new Date(b.event_date);
+            return (
+              bookingDate.getMonth() === currentMonth &&
+              bookingDate.getFullYear() === currentYear
+            );
+          })
+          .reduce((sum, b) => sum + b.total_price, 0) || 0;
+
+      // Calculate average rating from reviews
+      const totalReviews = reviews?.length || 0;
+      const averageRating = totalReviews > 0 
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+        : 0;
+
+      setStats({
+        totalBookings,
+        pendingBookings,
+        monthlyRevenue,
+        averageRating,
+        totalReviews,
+      });
+
+      setRecentBookings(bookings || []);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -222,11 +250,16 @@ export default function ProfessionalHomeScreen() {
               <Card.Content style={styles.statContent}>
                 <Star size={24} color={theme.colors.tertiary} />
                 <Text variant="headlineSmall" style={styles.statNumber}>
-                  {stats.averageRating}
+                  {stats.totalReviews > 0 ? stats.averageRating.toFixed(1) : '--'}
                 </Text>
                 <Text variant="bodySmall" style={styles.statLabel}>
                   Avaliação Média
                 </Text>
+                {stats.totalReviews > 0 && (
+                  <Text variant="bodySmall" style={styles.statSubLabel}>
+                    ({stats.totalReviews} {stats.totalReviews === 1 ? 'avaliação' : 'avaliações'})
+                  </Text>
+                )}
               </Card.Content>
             </Card>
           </View>
@@ -238,7 +271,7 @@ export default function ProfessionalHomeScreen() {
             <Text variant="titleLarge" style={styles.sectionTitle}>
               Agendamentos Recentes
             </Text>
-            <Button mode="text" onPress={() => {}}>
+            <Button mode="text" onPress={() => router.push('/(professional)/bookings')}>
               Ver todos
             </Button>
           </View>
@@ -346,6 +379,12 @@ const styles = StyleSheet.create({
   statLabel: {
     textAlign: 'center',
     color: theme.colors.onSurfaceVariant,
+  },
+  statSubLabel: {
+    textAlign: 'center',
+    color: theme.colors.onSurfaceVariant,
+    fontSize: 10,
+    marginTop: spacing.xs,
   },
   section: {
     paddingHorizontal: spacing.lg,

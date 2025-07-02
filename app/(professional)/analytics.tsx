@@ -11,6 +11,7 @@ interface AnalyticsData {
   totalRevenue: number;
   totalBookings: number;
   averageRating: number;
+  totalReviews: number;
   completionRate: number;
   monthlyRevenue: number[];
   topServices: Array<{
@@ -25,7 +26,8 @@ export default function AnalyticsScreen() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
     totalRevenue: 0,
     totalBookings: 0,
-    averageRating: 4.8,
+    averageRating: 0,
+    totalReviews: 0,
     completionRate: 0,
     monthlyRevenue: [],
     topServices: [],
@@ -45,7 +47,7 @@ export default function AnalyticsScreen() {
     setLoading(true);
     try {
       // Load bookings for analytics
-      const { data: bookings, error } = await supabase
+      const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
         .select(`
           *,
@@ -55,14 +57,32 @@ export default function AnalyticsScreen() {
         `)
         .eq('professional_id', profile.id);
 
-      if (error) {
-        console.error('Error loading analytics data:', error);
-      } else {
+      if (bookingsError) {
+        console.error('Error loading bookings:', bookingsError);
+      }
+
+      // Load reviews for rating calculation
+      const { data: reviews, error: reviewsError } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('professional_id', profile.id);
+
+      if (reviewsError) {
+        console.error('Error loading reviews:', reviewsError);
+      }
+
+      if (bookings) {
         // Calculate analytics
-        const totalBookings = bookings?.length || 0;
-        const completedBookings = bookings?.filter(b => b.status === 'completed') || [];
+        const totalBookings = bookings.length;
+        const completedBookings = bookings.filter(b => b.status === 'completed');
         const totalRevenue = completedBookings.reduce((sum, b) => sum + b.total_price, 0);
         const completionRate = totalBookings > 0 ? (completedBookings.length / totalBookings) * 100 : 0;
+
+        // Calculate average rating from reviews
+        const totalReviews = reviews?.length || 0;
+        const averageRating = totalReviews > 0 
+          ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+          : 0;
 
         // Calculate monthly revenue for chart (last 6 months)
         const monthlyRevenue = Array(6).fill(0);
@@ -97,7 +117,8 @@ export default function AnalyticsScreen() {
         setAnalyticsData({
           totalRevenue,
           totalBookings,
-          averageRating: 4.8, // Mock rating
+          averageRating,
+          totalReviews,
           completionRate,
           monthlyRevenue,
           topServices,
@@ -201,8 +222,13 @@ export default function AnalyticsScreen() {
                   </Text>
                 </View>
                 <Text variant="headlineSmall" style={styles.metricValue}>
-                  {analyticsData.averageRating.toFixed(1)}
+                  {analyticsData.totalReviews > 0 ? analyticsData.averageRating.toFixed(1) : '--'}
                 </Text>
+                {analyticsData.totalReviews > 0 && (
+                  <Text variant="bodySmall" style={styles.metricSubValue}>
+                    ({analyticsData.totalReviews} {analyticsData.totalReviews === 1 ? 'avaliação' : 'avaliações'})
+                  </Text>
+                )}
               </Card.Content>
             </Card>
 
@@ -323,6 +349,22 @@ export default function AnalyticsScreen() {
                 • Adicione mais fotos aos seus serviços para atrair mais visualizações
               </Text>
             </View>
+
+            {analyticsData.totalReviews === 0 && (
+              <View style={styles.insightItem}>
+                <Text variant="bodyMedium" style={styles.insightText}>
+                  • Complete seus primeiros churrascos para receber avaliações dos clientes
+                </Text>
+              </View>
+            )}
+
+            {analyticsData.averageRating > 0 && analyticsData.averageRating < 4.0 && (
+              <View style={styles.insightItem}>
+                <Text variant="bodyMedium" style={styles.insightText}>
+                  • Foque na qualidade do serviço para melhorar sua avaliação média
+                </Text>
+              </View>
+            )}
           </Card.Content>
         </Card>
       </ScrollView>
@@ -383,6 +425,11 @@ const styles = StyleSheet.create({
   metricValue: {
     fontWeight: 'bold',
     color: theme.colors.onSurface,
+  },
+  metricSubValue: {
+    color: theme.colors.onSurfaceVariant,
+    fontSize: 12,
+    marginTop: spacing.xs,
   },
   chartCard: {
     marginHorizontal: spacing.lg,
