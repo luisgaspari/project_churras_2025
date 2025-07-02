@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList, Alert, Linking, Platform } from 'react-native';
 import { Text, Card, Button, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { Calendar, Clock, MapPin, User, Star } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, User, Star, Phone, MessageCircle } from 'lucide-react-native';
 import ReviewModal from '@/components/ReviewModal';
 
 interface Booking {
@@ -26,6 +26,7 @@ interface Booking {
   profiles?: {
     full_name: string;
     phone?: string;
+    email: string;
     avatar_url?: string;
   };
   has_review?: boolean;
@@ -38,6 +39,7 @@ export default function BookingsScreen() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [cancellingBooking, setCancellingBooking] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -60,6 +62,7 @@ export default function BookingsScreen() {
           profiles!bookings_professional_id_fkey (
             full_name,
             phone,
+            email,
             avatar_url
           )
         `)
@@ -105,6 +108,212 @@ export default function BookingsScreen() {
   const closeReviewModal = () => {
     setShowReviewModal(false);
     setSelectedBooking(null);
+  };
+
+  const handleCancelBooking = async (booking: Booking) => {
+    // Only allow cancellation for pending bookings
+    if (booking.status !== 'pending') {
+      Alert.alert(
+        'Não é possível cancelar',
+        'Apenas agendamentos pendentes podem ser cancelados.'
+      );
+      return;
+    }
+
+    // Check if the event is within 24 hours
+    const eventDateTime = new Date(`${booking.event_date}T${booking.event_time}`);
+    const now = new Date();
+    const hoursUntilEvent = (eventDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (hoursUntilEvent < 24) {
+      Alert.alert(
+        'Cancelamento não permitido',
+        'Não é possível cancelar agendamentos com menos de 24 horas de antecedência. Entre em contato diretamente com o churrasqueiro.',
+        [
+          {
+            text: 'OK',
+            style: 'default',
+          },
+          {
+            text: 'Contatar Churrasqueiro',
+            onPress: () => handleContactProfessional(booking),
+          },
+        ]
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Cancelar Agendamento',
+      `Tem certeza que deseja cancelar o agendamento com ${booking.profiles?.full_name}?\n\nEsta ação não pode ser desfeita.`,
+      [
+        {
+          text: 'Não',
+          style: 'cancel',
+        },
+        {
+          text: 'Sim, Cancelar',
+          style: 'destructive',
+          onPress: () => confirmCancelBooking(booking.id),
+        },
+      ]
+    );
+  };
+
+  const confirmCancelBooking = async (bookingId: string) => {
+    setCancellingBooking(bookingId);
+    
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', bookingId);
+
+      if (error) {
+        throw error;
+      }
+
+      Alert.alert(
+        'Agendamento Cancelado',
+        'Seu agendamento foi cancelado com sucesso. O churrasqueiro será notificado.',
+        [{ text: 'OK', style: 'default' }]
+      );
+
+      // Refresh bookings list
+      loadBookings();
+    } catch (error: any) {
+      console.error('Error cancelling booking:', error);
+      Alert.alert(
+        'Erro',
+        error.message || 'Não foi possível cancelar o agendamento. Tente novamente.'
+      );
+    } finally {
+      setCancellingBooking(null);
+    }
+  };
+
+  const handleContactProfessional = (booking: Booking) => {
+    const professional = booking.profiles;
+    if (!professional) {
+      Alert.alert('Erro', 'Informações do churrasqueiro não disponíveis.');
+      return;
+    }
+
+    const options = [];
+
+    // WhatsApp option (if phone is available)
+    if (professional.phone) {
+      options.push({
+        text: 'WhatsApp',
+        onPress: () => openWhatsApp(booking),
+      });
+    }
+
+    // Phone call option (if phone is available)
+    if (professional.phone) {
+      options.push({
+        text: 'Ligar',
+        onPress: () => makePhoneCall(professional.phone!),
+      });
+    }
+
+    // Email option
+    options.push({
+      text: 'E-mail',
+      onPress: () => sendEmail(booking),
+    });
+
+    // Cancel option
+    options.push({
+      text: 'Cancelar',
+      style: 'cancel',
+    });
+
+    if (options.length === 1) {
+      Alert.alert('Erro', 'Nenhuma forma de contato disponível.');
+      return;
+    }
+
+    Alert.alert(
+      'Contatar Churrasqueiro',
+      `Como você gostaria de entrar em contato com ${professional.full_name}?`,
+      options
+    );
+  };
+
+  const openWhatsApp = (booking: Booking) => {
+    const professional = booking.profiles;
+    if (!professional?.phone) return;
+
+    const phoneNumber = professional.phone.replace(/\D/g, '');
+    const eventDate = formatDate(booking.event_date);
+    const eventTime = formatTime(booking.event_time);
+    
+    const message = `Olá ${professional.full_name}! Sou ${profile?.full_name} e tenho um agendamento com você para ${eventDate} às ${eventTime}. Gostaria de conversar sobre os detalhes do evento.`;
+    
+    const whatsappUrl = `whatsapp://send?phone=55${phoneNumber}&text=${encodeURIComponent(message)}`;
+    const whatsappWebUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+    Linking.canOpenURL(whatsappUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(whatsappUrl);
+        } else {
+          // Fallback to WhatsApp Web
+          return Linking.openURL(whatsappWebUrl);
+        }
+      })
+      .catch((error) => {
+        console.error('Error opening WhatsApp:', error);
+        Alert.alert('Erro', 'Não foi possível abrir o WhatsApp.');
+      });
+  };
+
+  const makePhoneCall = (phoneNumber: string) => {
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    const phoneUrl = `tel:${cleanPhone}`;
+
+    Linking.canOpenURL(phoneUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(phoneUrl);
+        } else {
+          Alert.alert('Erro', 'Não foi possível abrir o aplicativo de telefone.');
+        }
+      })
+      .catch((error) => {
+        console.error('Error opening phone app:', error);
+        Alert.alert('Erro', 'Não foi possível fazer a ligação.');
+      });
+  };
+
+  const sendEmail = (booking: Booking) => {
+    const professional = booking.profiles;
+    if (!professional?.email) return;
+
+    const eventDate = formatDate(booking.event_date);
+    const eventTime = formatTime(booking.event_time);
+    
+    const subject = `Agendamento - ${booking.services?.title || 'Serviço de Churrasco'}`;
+    const body = `Olá ${professional.full_name}!\n\nSou ${profile?.full_name} e tenho um agendamento com você:\n\nServiço: ${booking.services?.title || 'Serviço de Churrasco'}\nData: ${eventDate}\nHorário: ${eventTime}\nLocal: ${booking.location}\nConvidados: ${booking.guests_count} pessoas\n\nGostaria de conversar sobre os detalhes do evento.\n\nAtenciosamente,\n${profile?.full_name}`;
+    
+    const emailUrl = `mailto:${professional.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    Linking.canOpenURL(emailUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(emailUrl);
+        } else {
+          Alert.alert('Erro', 'Não foi possível abrir o aplicativo de e-mail.');
+        }
+      })
+      .catch((error) => {
+        console.error('Error opening email app:', error);
+        Alert.alert('Erro', 'Não foi possível enviar o e-mail.');
+      });
   };
 
   const getStatusColor = (status: string) => {
@@ -242,13 +451,35 @@ export default function BookingsScreen() {
           <View style={styles.actions}>
             {item.status === 'pending' && (
               <>
-                <Button mode="outlined" style={styles.actionButton}>
+                <Button 
+                  mode="outlined" 
+                  style={styles.actionButton}
+                  onPress={() => handleCancelBooking(item)}
+                  loading={cancellingBooking === item.id}
+                  disabled={cancellingBooking === item.id}
+                >
                   Cancelar
                 </Button>
-                <Button mode="contained" style={styles.actionButton}>
+                <Button 
+                  mode="contained" 
+                  style={styles.actionButton}
+                  onPress={() => handleContactProfessional(item)}
+                  icon={() => <MessageCircle size={16} color={theme.colors.onPrimary} />}
+                >
                   Contatar
                 </Button>
               </>
+            )}
+
+            {(item.status === 'confirmed' || item.status === 'completed') && (
+              <Button 
+                mode="outlined" 
+                style={styles.actionButton}
+                onPress={() => handleContactProfessional(item)}
+                icon={() => <Phone size={16} color={theme.colors.primary} />}
+              >
+                Contatar
+              </Button>
             )}
 
             {item.status === 'completed' && !item.has_review && (
@@ -307,7 +538,7 @@ export default function BookingsScreen() {
           <View style={styles.emptyState}>
             <Calendar size={64} color={theme.colors.onSurfaceVariant} />
             <Text variant="titleMedium" style={styles.emptyTitle}>
-              {activeTab === 'upcoming' ? 'Nenhum agendamento próximo' : 'Nenhum histórico'}
+              Nenhum agendamento encontrado
             </Text>
             <Text variant="bodyMedium" style={styles.emptyDescription}>
               {activeTab === 'upcoming' 
