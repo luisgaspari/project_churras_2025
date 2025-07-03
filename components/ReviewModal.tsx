@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Dimensions,
-  TouchableWithoutFeedback,
 } from 'react-native';
 import {
   Text,
@@ -18,7 +17,6 @@ import {
   IconButton,
   Avatar,
   Card,
-  ActivityIndicator,
 } from 'react-native-paper';
 import { X } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
@@ -61,8 +59,10 @@ export default function ReviewModal({
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    const keyboardShowEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const keyboardHideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const keyboardShowEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const keyboardHideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const keyboardShowListener = Keyboard.addListener(keyboardShowEvent, () => {
       setKeyboardVisible(true);
@@ -78,7 +78,7 @@ export default function ReviewModal({
     };
   }, []);
 
-  // Reset state when modal visibility changes
+  // Redefinir estado quando a visibilidade modal muda
   useEffect(() => {
     if (!visible) {
       setRating(0);
@@ -91,7 +91,7 @@ export default function ReviewModal({
   const handleSubmitReview = async () => {
     if (rating === 0) {
       Alert.alert(
-        'Avaliação necessária', 
+        'Avaliação necessária',
         'Por favor, selecione uma avaliação de 1 a 5 estrelas.',
         [{ text: 'OK', style: 'default' }]
       );
@@ -99,7 +99,7 @@ export default function ReviewModal({
     }
 
     Keyboard.dismiss();
-    
+
     setLoading(true);
     try {
       const reviewData = {
@@ -134,7 +134,8 @@ export default function ReviewModal({
       console.error('Error submitting review:', error);
       Alert.alert(
         'Erro',
-        error.message || 'Não foi possível enviar a avaliação. Tente novamente.',
+        error.message ||
+          'Não foi possível enviar a avaliação. Tente novamente.',
         [{ text: 'OK', style: 'default' }]
       );
     } finally {
@@ -187,7 +188,7 @@ export default function ReviewModal({
       statusBarTranslucent={false}
     >
       <View style={styles.modalContainer}>
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}
         >
@@ -204,15 +205,15 @@ export default function ReviewModal({
               />
             </View>
 
-            {/* Scrollable Content */}
-            <ScrollView 
+            {/* Conteúdo rolável */}
+            <ScrollView
               ref={scrollViewRef}
-              style={styles.scrollContent} 
+              style={styles.scrollContent}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.scrollContentContainer}
             >
-              {/* Professional Info */}
+              {/* Informações profissionais */}
               <Card style={styles.professionalCard}>
                 <Card.Content style={styles.professionalContent}>
                   {booking.profiles?.avatar_url ? (
@@ -223,7 +224,10 @@ export default function ReviewModal({
                   ) : (
                     <Avatar.Text
                       size={60}
-                      label={booking.profiles?.full_name?.charAt(0).toUpperCase() || 'C'}
+                      label={
+                        booking.profiles?.full_name?.charAt(0).toUpperCase() ||
+                        'C'
+                      }
                     />
                   )}
                   <View style={styles.professionalInfo}>
@@ -237,13 +241,14 @@ export default function ReviewModal({
                 </Card.Content>
               </Card>
 
-              {/* Rating Section */}
+              {/* Seção de classificação */}
               <View style={styles.ratingSection}>
                 <Text variant="titleMedium" style={styles.sectionTitle}>
                   Como foi sua experiência?
                 </Text>
                 <Text variant="bodyMedium" style={styles.sectionDescription}>
-                  Sua avaliação ajuda outros clientes a escolher o melhor churrasqueiro.
+                  Sua avaliação ajuda outros clientes a escolher o melhor
+                  churrasqueiro.
                 </Text>
 
                 <View style={styles.ratingContainer}>
@@ -258,7 +263,7 @@ export default function ReviewModal({
                 </View>
               </View>
 
-              {/* Comment Section */}
+              {/* Seção de comentários */}
               <View style={styles.commentSection}>
                 <Text variant="titleMedium" style={styles.sectionTitle}>
                   Comentário (opcional)
@@ -289,13 +294,13 @@ export default function ReviewModal({
                     enablesReturnKeyAutomatically={false}
                   />
                 </View>
-                
+
                 <Text variant="bodySmall" style={styles.characterCount}>
                   {comment.length}/500 caracteres
                 </Text>
               </View>
 
-              {/* Action Buttons */}
+              {/* Botões de ação */}
               <View style={styles.actionButtons}>
                 <Button
                   mode="outlined"

@@ -1,18 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Alert,
-  Linking,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, FlatList, Alert, Linking } from 'react-native';
 import { Text, Card, Button, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { useRouter } from 'expo-router';
 import {
   Calendar,
   Clock,
@@ -20,7 +12,6 @@ import {
   User,
   Star,
   Phone,
-  Mail,
 } from 'lucide-react-native';
 import ReviewModal from '@/components/ReviewModal';
 
@@ -48,7 +39,6 @@ interface Booking {
   has_review?: boolean;
 }
 export default function BookingsScreen() {
-  const router = useRouter();
   const { profile } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +82,7 @@ export default function BookingsScreen() {
       if (error) {
         console.error('Error loading bookings:', error);
       } else {
-        // Check which bookings have reviews
+        // Verifique quais reservas têm avaliações
         const bookingsWithReviewStatus = await Promise.all(
           (data || []).map(async (booking) => {
             const { data: reviewData } = await supabase
@@ -117,7 +107,7 @@ export default function BookingsScreen() {
   };
 
   const handleReviewSubmitted = () => {
-    loadBookings(); // Refresh bookings to update review status
+    loadBookings(); // Atualize as reservas para atualizar o status da avaliação
   };
 
   const openReviewModal = (booking: Booking) => {
@@ -131,7 +121,7 @@ export default function BookingsScreen() {
   };
 
   const handleCancelBooking = async (booking: Booking) => {
-    // Only allow cancellation for pending bookings
+    // Permitir cancelamento apenas para reservas pendentes
     if (booking.status !== 'pending') {
       Alert.alert(
         'Não é possível cancelar',
@@ -140,7 +130,7 @@ export default function BookingsScreen() {
       return;
     }
 
-    // Check if the event is within 24 hours
+    // Verifique se o evento ocorrerá dentro de 24 horas
     const eventDateTime = new Date(
       `${booking.event_date}T${booking.event_time}`
     );
@@ -205,7 +195,7 @@ export default function BookingsScreen() {
         [{ text: 'OK', style: 'default' }]
       );
 
-      // Refresh bookings list
+      // Atualizar lista de reservas
       loadBookings();
     } catch (error: any) {
       console.error('Error cancelling booking:', error);
@@ -219,7 +209,7 @@ export default function BookingsScreen() {
     }
   };
 
-  // Define AlertButton type for Alert.alert options
+  // Definir o tipo AlertButton para as opções Alert.alert
   type AlertButton = {
     text: string;
     onPress?: () => void;
@@ -235,7 +225,7 @@ export default function BookingsScreen() {
 
     const options: AlertButton[] = [];
 
-    // WhatsApp option (if phone is available)
+    // Opção WhatsApp (se o telefone estiver disponível)
     if (professional.phone) {
       options.push({
         text: 'WhatsApp',
@@ -243,7 +233,7 @@ export default function BookingsScreen() {
       });
     }
 
-    // Phone call option (if phone is available)
+    // Opção de chamada telefônica (se o telefone estiver disponível)
     if (professional.phone) {
       options.push({
         text: 'Ligar',
@@ -251,13 +241,13 @@ export default function BookingsScreen() {
       });
     }
 
-    // Email option
+    // Opção de e-mail
     options.push({
       text: 'E-mail',
       onPress: () => sendEmail(booking),
     });
 
-    // Cancel option
+    // Opção de cancelamento
     options.push({
       text: 'Cancelar',
       style: 'cancel',
@@ -297,7 +287,7 @@ export default function BookingsScreen() {
         if (supported) {
           return Linking.openURL(whatsappUrl);
         } else {
-          // Fallback to WhatsApp Web
+          // Retorno ao WhatsApp Web
           return Linking.openURL(whatsappWebUrl);
         }
       })
@@ -384,10 +374,10 @@ export default function BookingsScreen() {
   };
 
   const hexToRgba = (hex: string, alpha: number) => {
-    // Remove # if present
+    // Remova # se presente
     hex = hex.replace('#', '');
 
-    // Parse hex to RGB
+    // Analisar hexadecimal para RGB
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
@@ -624,7 +614,7 @@ export default function BookingsScreen() {
         )}
       </View>
 
-      {/* Review Modal */}
+      {/* Análise Modal */}
       {selectedBooking && (
         <ReviewModal
           visible={showReviewModal}

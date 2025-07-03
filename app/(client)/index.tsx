@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { MapPin, Star, Clock, Users } from 'lucide-react-native';
+import { MapPin, Star, Clock } from 'lucide-react-native';
 
 interface Service {
   id: string;
@@ -55,7 +55,7 @@ export default function ClientHomeScreen() {
       if (error) {
         console.error('Error loading services:', error);
       } else {
-        // Load ratings for each service
+        // Carrega as classificações para cada serviço
         const servicesWithRatings = await Promise.all(
           (data || []).map(async (service) => {
             const { data: reviews, error: reviewsError } = await supabase
@@ -128,7 +128,7 @@ export default function ClientHomeScreen() {
       onPress={() => handleServicePress(item.id)}
     >
       <View style={{ overflow: 'hidden', borderRadius: spacing.md }}>
-        {/* Service Image */}
+        {/* Imagem de serviço */}
         <Image
           source={{
             uri:
@@ -219,19 +219,7 @@ export default function ClientHomeScreen() {
           </Text>
         </View>
 
-        {/* Quick Search */}
-        {/* <View style={styles.quickSearchContainer}>
-          <Button
-            mode="outlined"
-            onPress={() => router.push('/(client)/search')}
-            style={styles.quickSearchButton}
-            contentStyle={styles.quickSearchContent}
-          >
-            Buscar churrasqueiros...
-          </Button>
-        </View> */}
-
-        {/* Featured Services Section */}
+        {/* Seção de Serviços em Destaque */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text variant="titleLarge" style={styles.sectionTitle}>
@@ -264,7 +252,7 @@ export default function ClientHomeScreen() {
           )}
         </View>
 
-        {/* Categories Section */}
+        {/* Seção de categorias */}
         <View style={styles.section}>
           <Text variant="titleLarge" style={styles.sectionTitle}>
             Categorias Populares
@@ -351,16 +339,6 @@ const styles = StyleSheet.create({
   },
   subGreeting: {
     color: theme.colors.onSurfaceVariant,
-  },
-  quickSearchContainer: {
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  quickSearchButton: {
-    borderColor: theme.colors.surfaceVariant,
-  },
-  quickSearchContent: {
-    paddingVertical: spacing.md,
   },
   section: {
     paddingHorizontal: spacing.lg,

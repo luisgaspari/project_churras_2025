@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
-import { Button, Text, Card } from 'react-native-paper';
+import { Text, Card } from 'react-native-paper';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,10 +11,10 @@ import { ChefHat, Users } from 'lucide-react-native';
 export default function WelcomeScreen() {
   const { profile, loading } = useAuth();
 
-  // Redirect if user is already logged in
+  // Redirecionar se o usuário já estiver logado
   useEffect(() => {
     if (!loading && profile) {
-      // Use replace to prevent going back to welcome screen
+      // Use substituir para evitar retornar à tela de boas-vindas
       if (profile.user_type === 'client') {
         router.replace('/(client)');
       } else if (profile.user_type === 'professional') {
@@ -30,7 +30,7 @@ export default function WelcomeScreen() {
     });
   };
 
-  // Show loading state while checking authentication
+  // Mostrar estado de carregamento durante a verificação da autenticação
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -39,7 +39,7 @@ export default function WelcomeScreen() {
     );
   }
 
-  // Don't render the welcome screen if user is authenticated
+  // Não renderize a tela de boas-vindas se o usuário estiver autenticado
   if (profile) {
     return null;
   }
@@ -62,7 +62,7 @@ export default function WelcomeScreen() {
             </Text>
           </View>
 
-          {/* User Type Selection */}
+          {/* Seleção de tipo de usuário */}
           <View style={styles.selectionContainer}>
             <Text variant="headlineSmall" style={styles.selectionTitle}>
               Como você quer começar?

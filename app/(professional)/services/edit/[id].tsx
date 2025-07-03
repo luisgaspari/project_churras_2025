@@ -200,7 +200,9 @@ export default function EditServiceScreen() {
 
     try {
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${session.user.id}/services/${new Date().getTime()}.${fileExt}`;
+      const fileName = `${
+        session.user.id
+      }/services/${new Date().getTime()}.${fileExt}`;
 
       const formData = new FormData();
       formData.append('file', {
@@ -281,10 +283,7 @@ export default function EditServiceScreen() {
     }
 
     if (priceTo && (isNaN(priceTo) || priceTo <= priceFrom)) {
-      Alert.alert(
-        'Erro',
-        'O preço final deve ser maior que o preço inicial.'
-      );
+      Alert.alert('Erro', 'O preço final deve ser maior que o preço inicial.');
       return false;
     }
 
@@ -296,10 +295,7 @@ export default function EditServiceScreen() {
 
     const maxGuests = parseInt(form.max_guests);
     if (isNaN(maxGuests) || maxGuests <= 0) {
-      Alert.alert(
-        'Erro',
-        'Por favor, informe um número válido de convidados.'
-      );
+      Alert.alert('Erro', 'Por favor, informe um número válido de convidados.');
       return false;
     }
 
@@ -349,7 +345,13 @@ export default function EditServiceScreen() {
     }
   };
 
-  const renderImageItem = ({ item, index }: { item: string; index: number }) => (
+  const renderImageItem = ({
+    item,
+    index,
+  }: {
+    item: string;
+    index: number;
+  }) => (
     <View style={styles.imageContainer}>
       <Image source={{ uri: item }} style={styles.serviceImage} />
       <TouchableOpacity
@@ -389,7 +391,7 @@ export default function EditServiceScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Basic Information */}
+        {/* Informações básicas */}
         <Card style={styles.section}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -430,7 +432,7 @@ export default function EditServiceScreen() {
           </Card.Content>
         </Card>
 
-        {/* Pricing */}
+        {/* Preços */}
         <Card style={styles.section}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -465,7 +467,7 @@ export default function EditServiceScreen() {
           </Card.Content>
         </Card>
 
-        {/* Service Details */}
+        {/* Detalhes do serviço */}
         <Card style={styles.section}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -500,7 +502,7 @@ export default function EditServiceScreen() {
           </Card.Content>
         </Card>
 
-        {/* Images */}
+        {/* Imagens */}
         <Card style={styles.section}>
           <Card.Content>
             <View style={styles.sectionHeader}>
@@ -554,7 +556,7 @@ export default function EditServiceScreen() {
           </Card.Content>
         </Card>
 
-        {/* Update Button */}
+        {/* Botão Atualizar */}
         <View style={styles.buttonContainer}>
           <Button
             mode="contained"

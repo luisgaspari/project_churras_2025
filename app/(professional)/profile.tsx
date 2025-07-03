@@ -8,15 +8,7 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import {
-  Text,
-  Card,
-  Button,
-  List,
-  Avatar,
-  Chip,
-  ActivityIndicator,
-} from 'react-native-paper';
+import { Text, Card, Button, List, Avatar, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -118,8 +110,9 @@ export default function ProfessionalProfileScreen() {
     if (!profile?.id) return;
 
     try {
-      const { data, error } = await supabase
-        .rpc('get_current_subscription', { professional_uuid: profile.id });
+      const { data, error } = await supabase.rpc('get_current_subscription', {
+        professional_uuid: profile.id,
+      });
 
       if (error) {
         console.error('Error loading subscription:', error);
@@ -314,12 +307,12 @@ export default function ProfessionalProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Delete from storage
+              // Excluir do armazenamento
               const photoPath = photo.url
                 .split('/professional_photos/')[1]
                 .split('?')[0];
 
-              // Delete from storage
+              // Excluir do armazenamento
               const { error: storageError } = await supabase.storage
                 .from('professional_photos')
                 .remove([photoPath]);
@@ -328,7 +321,7 @@ export default function ProfessionalProfileScreen() {
                 throw storageError;
               }
 
-              // Delete from database
+              // Excluir do banco de dados
               const { error: dbError } = await supabase
                 .from('professional_photos')
                 .delete()
@@ -434,7 +427,7 @@ export default function ProfessionalProfileScreen() {
         throw uploadError;
       }
 
-      // We need to wait a bit for the CDN to update
+      // Precisamos esperar um pouco para que o CDN atualize
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const { data: publicUrlData } = supabase.storage
@@ -469,27 +462,6 @@ export default function ProfessionalProfileScreen() {
     }
   };
 
-  const handleAvatarPress = () => {
-    Alert.alert(
-      'Alterar foto do perfil',
-      'Escolha uma opção para alterar seu avatar:',
-      [
-        {
-          text: 'Tirar foto',
-          onPress: () => handleUpdateAvatar('camera'),
-        },
-        {
-          text: 'Escolher da Galeria',
-          onPress: () => handleUpdateAvatar('gallery'),
-        },
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-      ]
-    );
-  };
-
   const handleSignOut = async () => {
     Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
       { text: 'Cancelar', style: 'cancel' },
@@ -499,7 +471,7 @@ export default function ProfessionalProfileScreen() {
         onPress: async () => {
           try {
             await signOut();
-            // Navigate to the welcome screen where user can choose user type
+            // Navegue até a tela de boas-vindas onde o usuário pode escolher o tipo de usuário
             router.replace('../');
           } catch (error: any) {
             Alert.alert(
@@ -561,13 +533,9 @@ export default function ProfessionalProfileScreen() {
           </Text>
         </View>
 
-        {/* Profile Info */}
+        {/* Informações do perfil */}
         <Card style={styles.profileCard}>
           <Card.Content style={styles.profileContent}>
-            {/* <TouchableOpacity
-              onPress={handleAvatarPress}
-              disabled={uploadingAvatar}
-            > */}
             {profile?.avatar_url ? (
               <Avatar.Image
                 size={80}
@@ -581,18 +549,6 @@ export default function ProfessionalProfileScreen() {
                 style={styles.avatar}
               />
             )}
-            {/* <View style={styles.avatarEditContainer}>
-                {uploadingAvatar ? (
-                  <ActivityIndicator color={theme.colors.onPrimary} />
-                ) : (
-                  <Camera
-                    size={16}
-                    color={theme.colors.onPrimary}
-                    style={styles.avatarEditIcon}
-                  />
-                )}
-              </View> */}
-            {/* </TouchableOpacity> */}
             <View style={styles.profileInfo}>
               <Text variant="headlineSmall" style={styles.userName}>
                 {profile?.full_name || 'Churrasqueiro'}
@@ -621,7 +577,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Subscription Status */}
+        {/* Status da assinatura */}
         <Card style={styles.subscriptionCard}>
           <Card.Content>
             <View style={styles.sectionHeader}>
@@ -641,7 +597,7 @@ export default function ProfessionalProfileScreen() {
                     {getPlanName(subscription.plan_type)}
                   </Text>
                 </View>
-                
+
                 <View style={styles.subscriptionRow}>
                   <Text variant="bodyMedium" style={styles.subscriptionLabel}>
                     Status:
@@ -649,9 +605,15 @@ export default function ProfessionalProfileScreen() {
                   <Chip
                     style={[
                       styles.statusChip,
-                      { backgroundColor: `${getSubscriptionStatusColor(subscription.status)}20` },
+                      {
+                        backgroundColor: `${getSubscriptionStatusColor(
+                          subscription.status
+                        )}20`,
+                      },
                     ]}
-                    textStyle={{ color: getSubscriptionStatusColor(subscription.status) }}
+                    textStyle={{
+                      color: getSubscriptionStatusColor(subscription.status),
+                    }}
                   >
                     {getSubscriptionStatusLabel(subscription.status)}
                   </Chip>
@@ -663,7 +625,9 @@ export default function ProfessionalProfileScreen() {
                       Válida até:
                     </Text>
                     <Text variant="bodyMedium" style={styles.subscriptionValue}>
-                      {new Date(subscription.end_date).toLocaleDateString('pt-BR')} 
+                      {new Date(subscription.end_date).toLocaleDateString(
+                        'pt-BR'
+                      )}
                       ({subscription.days_remaining} dias)
                     </Text>
                   </View>
@@ -688,7 +652,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Reviews Card */}
+        {/* Cartão de avaliações */}
         <Card style={styles.reviewsCard}>
           <Card.Content>
             <View style={styles.sectionHeader}>
@@ -758,7 +722,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Photos */}
+        {/* Fotos */}
         <Card style={styles.photosCard}>
           <Card.Content>
             <View style={styles.sectionHeader}>
@@ -812,7 +776,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Services */}
+        {/* Serviços */}
         <Card style={styles.servicesCard}>
           <Card.Content>
             <View style={styles.sectionHeader}>
@@ -854,7 +818,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Personal Information */}
+        {/* Informações pessoais */}
         <Card style={styles.infoCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -924,7 +888,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Menu Options */}
+        {/* Opções de menu */}
         <Card style={styles.menuCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -986,17 +950,6 @@ const styles = StyleSheet.create({
   avatar: {
     backgroundColor: theme.colors.primary,
   },
-  avatarEditContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: spacing.xs,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarEditIcon: {},
   profileInfo: {
     marginLeft: spacing.lg,
     flex: 1,
@@ -1059,28 +1012,9 @@ const styles = StyleSheet.create({
   manageSubscriptionButton: {
     marginTop: spacing.sm,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-    gap: spacing.sm,
-  },
   statCard: {
     flex: 1,
     elevation: 2,
-  },
-  statContent: {
-    alignItems: 'center',
-    padding: spacing.md,
-  },
-  statNumber: {
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: spacing.xs,
-  },
-  statLabel: {
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
   },
   reviewsCard: {
     marginHorizontal: spacing.lg,

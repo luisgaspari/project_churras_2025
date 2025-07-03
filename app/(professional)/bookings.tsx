@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Alert,
-  Linking,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, FlatList, Alert, Linking } from 'react-native';
 import { Text, Card, Button, Chip, FAB } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -108,7 +101,7 @@ export default function ProfessionalBookingsScreen() {
         throw error;
       }
 
-      // Show success message
+      // Mostrar mensagem de sucesso
       const statusMessages = {
         confirmed: 'Agendamento confirmado com sucesso!',
         cancelled: 'Agendamento recusado.',
@@ -120,7 +113,7 @@ export default function ProfessionalBookingsScreen() {
         statusMessages[status as keyof typeof statusMessages]
       );
 
-      // Refresh bookings
+      // Atualizar reservas
       loadBookings();
     } catch (error: any) {
       console.error('Error updating booking:', error);
@@ -142,7 +135,7 @@ export default function ProfessionalBookingsScreen() {
 
     const options = [];
 
-    // WhatsApp option (if phone is available)
+    // Opção WhatsApp (se o telefone estiver disponível)
     if (client.phone) {
       options.push({
         text: 'WhatsApp',
@@ -150,7 +143,7 @@ export default function ProfessionalBookingsScreen() {
       });
     }
 
-    // Phone call option (if phone is available)
+    // Opção de chamada telefônica (se o telefone estiver disponível)
     if (client.phone) {
       options.push({
         text: 'Ligar',
@@ -158,13 +151,13 @@ export default function ProfessionalBookingsScreen() {
       });
     }
 
-    // Email option
+    // Opção de e-mail
     options.push({
       text: 'E-mail',
       onPress: () => sendEmail(booking),
     });
 
-    // Cancel option
+    // Opção de cancelamento
     options.push({
       text: 'Cancelar',
       style: 'cancel' as const,
@@ -204,7 +197,7 @@ export default function ProfessionalBookingsScreen() {
         if (supported) {
           return Linking.openURL(whatsappUrl);
         } else {
-          // Fallback to WhatsApp Web
+          // Retorno ao WhatsApp Web
           return Linking.openURL(whatsappWebUrl);
         }
       })
@@ -291,10 +284,10 @@ export default function ProfessionalBookingsScreen() {
   };
 
   const hexToRgba = (hex: string, alpha: number) => {
-    // Remove # if present
+    // Remova # se presente
     hex = hex.replace('#', '');
 
-    // Parse hex to RGB
+    // Analisar hexadecimal para RGB
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
@@ -439,21 +432,19 @@ export default function ProfessionalBookingsScreen() {
             },
           ]}
         >
-          {/* Contact button - available for all statuses except cancelled */}
+          {/* Botão de contato - disponível para todos os status, exceto cancelado */}
           {item.status !== 'cancelled' && (
             <Button
               mode="outlined"
               style={styles.actionButton}
               onPress={() => handleContactClient(item)}
-              icon={() => (
-                <Phone size={16} color={theme.colors.primary} />
-              )}
+              icon={() => <Phone size={16} color={theme.colors.primary} />}
             >
               Contatar
             </Button>
           )}
 
-          {/* Status-specific action buttons */}
+          {/* Botões de ação específicos de status */}
           {item.status === 'pending' && (
             <>
               <Button

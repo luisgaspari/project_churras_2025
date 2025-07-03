@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  RefreshControl,
-} from 'react-native';
-import {
-  Text,
-  Card,
-  Avatar,
-  ActivityIndicator,
-} from 'react-native-paper';
+import { View, StyleSheet } from 'react-native';
+import { Text, Card, Avatar, ActivityIndicator } from 'react-native-paper';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import RatingStars from './RatingStars';
@@ -56,7 +47,8 @@ export default function ReviewsList({
     try {
       let query = supabase
         .from('reviews')
-        .select(`
+        .select(
+          `
           id,
           rating,
           comment,
@@ -65,7 +57,8 @@ export default function ReviewsList({
             full_name,
             avatar_url
           )
-        `)
+        `
+        )
         .eq('professional_id', professionalId)
         .order('created_at', { ascending: false });
 
@@ -79,11 +72,21 @@ export default function ReviewsList({
         throw error;
       }
 
-      setReviews(data || []);
+      setReviews(
+        (data || []).map((review: any) => ({
+          ...review,
+          profiles: Array.isArray(review.profiles)
+            ? review.profiles[0]
+            : review.profiles,
+        }))
+      );
 
       // Calculate average rating and total reviews
       if (data && data.length > 0) {
-        const totalRating = data.reduce((sum, review) => sum + review.rating, 0);
+        const totalRating = data.reduce(
+          (sum, review) => sum + review.rating,
+          0
+        );
         const avgRating = totalRating / data.length;
         setAverageRating(avgRating);
         setTotalReviews(data.length);
@@ -109,7 +112,10 @@ export default function ReviewsList({
   };
 
   const renderReviewItem = (item: Review, index: number) => (
-    <Card key={item.id} style={[styles.reviewCard, index === 0 && styles.firstReviewCard]}>
+    <Card
+      key={item.id}
+      style={[styles.reviewCard, index === 0 && styles.firstReviewCard]}
+    >
       <Card.Content style={styles.reviewContent}>
         <View style={styles.reviewHeader}>
           <View style={styles.clientInfo}>
@@ -155,7 +161,12 @@ export default function ReviewsList({
         </Text>
         {totalReviews > 0 && (
           <View style={styles.ratingsSummary}>
-            <RatingStars rating={averageRating} readonly showHalfStars size={20} />
+            <RatingStars
+              rating={averageRating}
+              readonly
+              showHalfStars
+              size={20}
+            />
             <Text variant="titleMedium" style={styles.averageRating}>
               {averageRating.toFixed(1)}
             </Text>
@@ -174,7 +185,8 @@ export default function ReviewsList({
         Nenhuma avaliação ainda
       </Text>
       <Text variant="bodyMedium" style={styles.emptyDescription}>
-        As avaliações dos clientes aparecerão aqui após a conclusão dos serviços.
+        As avaliações dos clientes aparecerão aqui após a conclusão dos
+        serviços.
       </Text>
     </View>
   );
@@ -193,7 +205,7 @@ export default function ReviewsList({
   return (
     <View style={styles.container}>
       {renderHeader()}
-      
+
       {reviews.length === 0 ? (
         renderEmptyState()
       ) : (

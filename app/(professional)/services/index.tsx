@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Image,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import {
   Text,
   Card,
@@ -21,7 +14,17 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { Plus, MapPin, Clock, Users, MoveVertical as MoreVertical, CreditCard as Edit, Trash2, Eye, ArrowLeft, Menu as MenuIcon } from 'lucide-react-native';
+import {
+  Plus,
+  MapPin,
+  Clock,
+  Users,
+  CreditCard as Edit,
+  Trash2,
+  Eye,
+  ArrowLeft,
+  Menu as MenuIcon,
+} from 'lucide-react-native';
 import { useFocusEffect } from 'expo-router';
 
 interface Service {
@@ -173,16 +176,16 @@ export default function ServicesManagementScreen() {
                 <Edit size={20} color={theme.colors.onSurface} />
               )}
             />
-            <Menu.Item
+            {/* Futuro: Implementar detalhes do serviço de visualização */}
+            {/* <Menu.Item
               onPress={() => {
                 setMenuVisible(null);
-                // TODO: Implement view service details
               }}
               title="Visualizar"
               leadingIcon={() => (
                 <Eye size={20} color={theme.colors.onSurface} />
               )}
-            />
+            /> */}
             <Divider />
             <Menu.Item
               onPress={() => {

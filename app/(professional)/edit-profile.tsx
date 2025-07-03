@@ -65,16 +65,16 @@ export default function EditProfessionalProfileScreen() {
   }, [profile]);
 
   const handleInputChange = (field: keyof ProfileForm, value: string) => {
-    setForm(prev => {
+    setForm((prev) => {
       const newForm = { ...prev, [field]: value };
-      
-      // Check if there are changes compared to original profile
-      const hasFormChanges = 
+
+      // Verifique se há alterações em relação ao perfil original
+      const hasFormChanges =
         newForm.full_name !== (profile?.full_name || '') ||
         newForm.email !== (profile?.email || '') ||
         newForm.phone !== (profile?.phone || '') ||
         newForm.location !== (profile?.location || '');
-      
+
       setHasChanges(hasFormChanges);
       return newForm;
     });
@@ -104,7 +104,8 @@ export default function EditProfessionalProfileScreen() {
         result = await ImagePicker.launchCameraAsync(options);
       } else {
         if (Platform.OS !== 'web') {
-          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          const { status } =
+            await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (status !== 'granted') {
             Alert.alert(
               'Permissão necessária',
@@ -164,7 +165,7 @@ export default function EditProfessionalProfileScreen() {
         throw uploadError;
       }
 
-      // Wait for CDN to update
+      // Aguarde a atualização do CDN
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const { data: publicUrlData } = supabase.storage
@@ -201,7 +202,7 @@ export default function EditProfessionalProfileScreen() {
 
   const handleAvatarPress = () => {
     if (Platform.OS === 'web') {
-      // On web, only show gallery option
+      // Na web, mostrar apenas a opção de galeria
       handleUpdateAvatar('gallery');
     } else {
       Alert.alert(
@@ -236,7 +237,7 @@ export default function EditProfessionalProfileScreen() {
       return false;
     }
 
-    // Basic email validation
+    // Validação básica de e-mail
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
       Alert.alert('Erro', 'Por favor, informe um e-mail válido.');
@@ -244,7 +245,10 @@ export default function EditProfessionalProfileScreen() {
     }
 
     if (!form.phone.trim()) {
-      Alert.alert('Erro', 'Por favor, informe seu telefone para contato com clientes.');
+      Alert.alert(
+        'Erro',
+        'Por favor, informe seu telefone para contato com clientes.'
+      );
       return false;
     }
 
@@ -280,7 +284,7 @@ export default function EditProfessionalProfileScreen() {
 
       await refreshProfile();
       setHasChanges(false);
-      
+
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!', [
         {
           text: 'OK',
@@ -311,12 +315,12 @@ export default function EditProfessionalProfileScreen() {
           {
             text: 'Descartar',
             style: 'destructive',
-            onPress: () => router.back(),
+            onPress: () => router.push('/profile'),
           },
         ]
       );
     } else {
-      router.back();
+      router.push('/profile');
     }
   };
 
@@ -334,7 +338,7 @@ export default function EditProfessionalProfileScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Avatar Section */}
+        {/* Seção Avatar */}
         <Card style={styles.avatarCard}>
           <Card.Content style={styles.avatarContent}>
             <TouchableOpacity
@@ -357,12 +361,12 @@ export default function EditProfessionalProfileScreen() {
               )}
               <View style={styles.avatarEditContainer}>
                 {uploadingAvatar ? (
-                  <ActivityIndicator size="small" color={theme.colors.onPrimary} />
-                ) : (
-                  <Camera
-                    size={20}
+                  <ActivityIndicator
+                    size="small"
                     color={theme.colors.onPrimary}
                   />
+                ) : (
+                  <Camera size={20} color={theme.colors.onPrimary} />
                 )}
               </View>
             </TouchableOpacity>
@@ -378,7 +382,7 @@ export default function EditProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Personal Information */}
+        {/* Informações pessoais */}
         <Card style={styles.formCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -439,14 +443,15 @@ export default function EditProfessionalProfileScreen() {
             <Text variant="bodySmall" style={styles.requiredNote}>
               * Campos obrigatórios
             </Text>
-            
+
             <Text variant="bodySmall" style={styles.professionalNote}>
-              💡 Mantenha suas informações atualizadas para que os clientes possam entrar em contato facilmente.
+              💡 Mantenha suas informações atualizadas para que os clientes
+              possam entrar em contato facilmente.
             </Text>
           </Card.Content>
         </Card>
 
-        {/* Save Button */}
+        {/* Botão Salvar */}
         <View style={styles.buttonContainer}>
           <Button
             mode="contained"
@@ -484,7 +489,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerSpacer: {
-    width: 48, // Same width as IconButton
+    width: 48, // Mesma largura do IconButton
   },
   content: {
     flex: 1,

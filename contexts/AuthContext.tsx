@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await supabase.auth.signOut();
     } catch (error) {
-      // Ignore signOut errors as we're clearing state anyway
+      // Ignore os erros de signOut, pois estamos limpando o estado de qualquer maneira
       console.log('SignOut error (ignored):', error);
     }
     setSession(null);
@@ -50,15 +50,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Get initial session with proper error handling for invalid refresh tokens
+    // Obtenha a sessão inicial com tratamento de erro adequado
+    // para tokens de atualização inválidos
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        // Check for specific refresh token errors
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        // Verifique se há erros específicos no token de atualização
         if (error) {
           const errorMessage = error.message?.toLowerCase() || '';
-          const isRefreshTokenError = 
+          const isRefreshTokenError =
             errorMessage.includes('refresh token not found') ||
             errorMessage.includes('invalid refresh token') ||
             error.message?.includes('refresh_token_not_found');
@@ -68,14 +72,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await clearAuthState();
             return;
           }
-          
-          // For other errors, still clear state but log the error
+
+          // Para outros erros, ainda limpe o estado, mas registre o erro
           console.error('Auth initialization error:', error);
           await clearAuthState();
           return;
         }
 
-        // If there's no session or user, clear any stale tokens
+        // Se não houver sessão ou usuário, limpe todos os tokens obsoletos
         if (!session?.user) {
           await clearAuthState();
           return;
@@ -86,9 +90,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await loadProfile(session.user.id);
       } catch (error) {
         console.error('Error initializing auth:', error);
-        // Check if the error is related to refresh tokens
+        // Verifique se o erro está relacionado aos tokens de atualização
         const errorString = String(error).toLowerCase();
-        if (errorString.includes('refresh token') || errorString.includes('token')) {
+        if (
+          errorString.includes('refresh token') ||
+          errorString.includes('token')
+        ) {
           console.log('Token-related error detected, clearing auth state');
         }
         await clearAuthState();
@@ -97,13 +104,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth();
 
-    // Listen for auth changes
+    // Ouça as alterações de autenticação
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.id);
-      
-      // Handle token refresh errors
+
+      // Lidar com erros de atualização de token
       if (event === 'TOKEN_REFRESHED' && !session) {
         console.log('Token refresh failed, clearing auth state');
         await clearAuthState();
@@ -118,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null);
         setLoading(false);
-        // Only redirect to home if we're not already there
+        // Redirecionar para a página inicial somente se ainda não estivermos lá
         if (router.canGoBack()) {
           router.replace('/');
         }
@@ -128,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Navigate user after profile is loaded
+  // Navegar pelo usuário após o perfil ser carregado
   useEffect(() => {
     if (!loading && profile) {
       if (profile.user_type === 'client') {
@@ -194,7 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (data.user) {
-      // Create profile
+      // Criar perfil
       const { error: profileError } = await supabase.from('profiles').insert({
         id: data.user.id,
         email: data.user.email!,

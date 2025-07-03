@@ -13,7 +13,7 @@ type UserType = 'client' | 'professional';
 export default function AuthScreen() {
   const { userType } = useLocalSearchParams<{ userType: UserType }>();
   const { signIn, signUp, loading } = useAuth();
-  
+
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,7 +33,7 @@ export default function AuthScreen() {
     }
 
     setIsLoading(true);
-    
+
     try {
       if (isLogin) {
         await signIn(email, password);
@@ -44,9 +44,9 @@ export default function AuthScreen() {
           phone,
         });
       }
-      
-      // Navigation will be handled by the auth state change in AuthContext
-      // No need to manually navigate here
+
+      // A navegação será controlada pela mudança de estado de autenticação no AuthContext
+      // Não há necessidade de navegar manualmente aqui
     } catch (error: any) {
       console.error('Auth error:', error);
       Alert.alert('Erro', error.message || 'Erro ao realizar autenticação');
@@ -143,7 +143,9 @@ export default function AuthScreen() {
                 style={styles.toggleButton}
                 disabled={isLoading || loading}
               >
-                {isLogin ? 'Não tem conta? Criar conta' : 'Já tem conta? Entrar'}
+                {isLogin
+                  ? 'Não tem conta? Criar conta'
+                  : 'Já tem conta? Entrar'}
               </Button>
             </Card.Content>
           </Card>

@@ -65,7 +65,7 @@ export default function ProfessionalHomeScreen() {
 
     setLoading(true);
     try {
-      // Load bookings for analytics
+      // Carregar reservas para análise
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
         .select(
@@ -84,7 +84,7 @@ export default function ProfessionalHomeScreen() {
         console.error('Error loading bookings:', bookingsError);
       }
 
-      // Load reviews for rating calculation
+      // Carregar avaliações para cálculo de classificação
       const { data: reviews, error: reviewsError } = await supabase
         .from('reviews')
         .select('rating')
@@ -94,12 +94,12 @@ export default function ProfessionalHomeScreen() {
         console.error('Error loading reviews:', reviewsError);
       }
 
-      // Calculate stats
+      // Calcular estatísticas
       const totalBookings = bookings?.length || 0;
       const pendingBookings =
         bookings?.filter((b) => b.status === 'pending').length || 0;
 
-      // Calculate monthly revenue (current month)
+      // Calcular a receita mensal (mês atual)
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
       const completedBookings =
@@ -115,7 +115,7 @@ export default function ProfessionalHomeScreen() {
           })
           .reduce((sum, b) => sum + b.total_price, 0) || 0;
 
-      // Calculate average rating from reviews
+      // Calcular a classificação média das avaliações
       const totalReviews = reviews?.length || 0;
       const averageRating =
         totalReviews > 0
@@ -227,7 +227,7 @@ export default function ProfessionalHomeScreen() {
           </Text>
         </View>
 
-        {/* Stats Cards */}
+        {/* Cartões de estatísticas */}
         <View style={styles.statsContainer}>
           <View style={styles.statsRow}>
             <Card style={styles.statCard}>
@@ -290,7 +290,7 @@ export default function ProfessionalHomeScreen() {
           </View>
         </View>
 
-        {/* Pending Bookings */}
+        {/* Reservas pendentes */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text variant="titleLarge" style={styles.sectionTitle}>
@@ -329,7 +329,7 @@ export default function ProfessionalHomeScreen() {
           )}
         </View>
 
-        {/* Quick Actions */}
+        {/* Ações rápidas */}
         <View style={styles.section}>
           <Text variant="titleLarge" style={styles.sectionTitle}>
             Ações Rápidas

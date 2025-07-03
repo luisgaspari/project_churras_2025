@@ -314,7 +314,7 @@ export default function CreateServiceScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Basic Information */}
+        {/* Informações básicas */}
         <Card style={styles.section}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -355,7 +355,7 @@ export default function CreateServiceScreen() {
           </Card.Content>
         </Card>
 
-        {/* Pricing */}
+        {/* Preços */}
         <Card style={styles.section}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -390,7 +390,7 @@ export default function CreateServiceScreen() {
           </Card.Content>
         </Card>
 
-        {/* Service Details */}
+        {/* Detalhes do serviço */}
         <Card style={styles.section}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -479,7 +479,7 @@ export default function CreateServiceScreen() {
           </Card.Content>
         </Card>
 
-        {/* Create Button */}
+        {/* Botão Criar */}
         <View style={styles.buttonContainer}>
           <Button
             mode="contained"

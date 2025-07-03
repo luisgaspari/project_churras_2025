@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { MapPin, Star, Clock, Users, Filter, X } from 'lucide-react-native';
+import { MapPin, Star, Clock, Filter, X } from 'lucide-react-native';
 
 interface Service {
   id: string;
@@ -102,7 +102,7 @@ export default function SearchScreen() {
       if (error) {
         console.error('Error loading services:', error);
       } else {
-        // Load ratings for each service
+        // Carrega as classificações para cada serviço
         const servicesWithRatings = await Promise.all(
           (data || []).map(async (service) => {
             const { data: reviews, error: reviewsError } = await supabase
@@ -150,7 +150,7 @@ export default function SearchScreen() {
   const applyFilters = () => {
     let filtered = [...allServices];
 
-    // Text search
+    // Pesquisa de texto
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -162,7 +162,7 @@ export default function SearchScreen() {
       );
     }
 
-    // Category filter
+    // Filtro de categoria
     if (selectedCategory !== 'all') {
       filtered = filtered.filter((service) => {
         const title = service.title.toLowerCase();
@@ -193,7 +193,7 @@ export default function SearchScreen() {
       });
     }
 
-    // Price range filter
+    // Filtro de faixa de preço
     if (filters.priceRange !== 'all') {
       const range = priceRanges.find((r) => r.key === filters.priceRange);
       if (range && 'min' in range) {
@@ -205,7 +205,7 @@ export default function SearchScreen() {
       }
     }
 
-    // Guest count filter
+    // Filtro de contagem de convidados
     if (filters.guestCount !== 'all') {
       const guestRange = guestCounts.find((g) => g.key === filters.guestCount);
       if (guestRange && 'max' in guestRange) {
@@ -227,7 +227,7 @@ export default function SearchScreen() {
       }
     }
 
-    // Duration filter
+    // Filtro de duração
     if (filters.duration !== 'all') {
       const durationRange = durations.find((d) => d.key === filters.duration);
       if (durationRange && 'max' in durationRange) {
@@ -250,7 +250,7 @@ export default function SearchScreen() {
       }
     }
 
-    // Rating filter
+    // Filtro de classificação
     if (filters.rating === 'high') {
       filtered = filtered.filter(
         (service) =>
@@ -259,19 +259,19 @@ export default function SearchScreen() {
       );
     }
 
-    // Sort by rating and reviews
+    // Classificar por classificação e comentários
     filtered.sort((a, b) => {
       const aRating = a.average_rating || 0;
       const bRating = b.average_rating || 0;
       const aReviews = a.total_reviews || 0;
       const bReviews = b.total_reviews || 0;
 
-      // First sort by rating
+      // Primeira classificação por classificação
       if (bRating !== aRating) {
         return bRating - aRating;
       }
 
-      // Then by number of reviews
+      // Então, pelo número de avaliações
       return bReviews - aReviews;
     });
 
@@ -358,7 +358,7 @@ export default function SearchScreen() {
       onPress={() => handleServicePress(item.id)}
     >
       <View style={{ overflow: 'hidden', borderRadius: spacing.md }}>
-        {/* Service Image */}
+        {/* Imagem de serviço */}
         <Image
           source={{
             uri:
@@ -446,7 +446,7 @@ export default function SearchScreen() {
           </Text>
         </View>
 
-        {/* Search */}
+        {/* Procurar */}
         <View style={styles.searchContainer}>
           <Searchbar
             placeholder="Buscar churrasqueiros..."
@@ -473,7 +473,7 @@ export default function SearchScreen() {
           </Button>
         </View>
 
-        {/* Active Filters Indicator */}
+        {/* Indicador de filtros ativos */}
         {hasActiveFilters() && (
           <View style={styles.activeFiltersContainer}>
             <Text variant="bodySmall" style={styles.activeFiltersText}>
@@ -492,7 +492,7 @@ export default function SearchScreen() {
           </View>
         )}
 
-        {/* Categories */}
+        {/* Categorias */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -510,7 +510,7 @@ export default function SearchScreen() {
           ))}
         </ScrollView>
 
-        {/* Advanced Filters */}
+        {/* Filtros avançados */}
         {showFilters && (
           <View style={styles.filtersContainer}>
             <Text variant="titleMedium" style={styles.filtersTitle}>
@@ -550,7 +550,7 @@ export default function SearchScreen() {
           </View>
         )}
 
-        {/* Results Section */}
+        {/* Seção de Resultados */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text variant="titleLarge" style={styles.sectionTitle}>

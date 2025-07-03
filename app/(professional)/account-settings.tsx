@@ -23,7 +23,16 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import { ArrowLeft, Trash2, CreditCard, Calendar, Crown, X, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Trash2,
+  CreditCard,
+  Calendar,
+  Crown,
+  X,
+  TriangleAlert as AlertTriangle,
+  CircleCheck as CheckCircle,
+} from 'lucide-react-native';
 
 interface Subscription {
   id: string;
@@ -48,13 +57,13 @@ const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     type: 'monthly',
     name: 'Mensal',
-    price: 30.00,
+    price: 30.0,
     duration: '1 mês',
   },
   {
     type: 'semestral',
     name: 'Semestral',
-    price: 170.00,
+    price: 170.0,
     duration: '6 meses',
     savings: 'Economize R$ 10',
     popular: true,
@@ -62,7 +71,7 @@ const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     type: 'annual',
     name: 'Anual',
-    price: 340.00,
+    price: 340.0,
     duration: '12 meses',
     savings: 'Economize R$ 20',
   },
@@ -70,16 +79,19 @@ const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 
 export default function AccountSettingsScreen() {
   const { profile, signOut } = useAuth();
-  const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
+  const [currentSubscription, setCurrentSubscription] =
+    useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
+    null
+  );
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
 
-  // Payment form state
+  // Estado do formulário de pagamento
   const [paymentForm, setPaymentForm] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -98,8 +110,9 @@ export default function AccountSettingsScreen() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .rpc('get_current_subscription', { professional_uuid: profile.id });
+      const { data, error } = await supabase.rpc('get_current_subscription', {
+        professional_uuid: profile.id,
+      });
 
       if (error) {
         console.error('Error loading subscription:', error);
@@ -118,7 +131,7 @@ export default function AccountSettingsScreen() {
 
     setDeletingAccount(true);
     try {
-      // Delete user account (this will cascade delete all related data)
+      // Excluir conta de usuário (isso excluirá em cascata todos os dados relacionados)
       const { error } = await supabase.auth.admin.deleteUser(profile.id);
 
       if (error) {
@@ -155,10 +168,10 @@ export default function AccountSettingsScreen() {
 
     setProcessingPayment(true);
     try {
-      // Calculate end date based on plan type
+      // Calcular a data final com base no tipo de plano
       const startDate = new Date();
       const endDate = new Date(startDate);
-      
+
       switch (selectedPlan.type) {
         case 'monthly':
           endDate.setMonth(endDate.getMonth() + 1);
@@ -171,7 +184,7 @@ export default function AccountSettingsScreen() {
           break;
       }
 
-      // Cancel any existing active subscription
+      // Cancelar qualquer assinatura ativa existente
       if (currentSubscription) {
         await supabase
           .from('subscriptions')
@@ -179,7 +192,7 @@ export default function AccountSettingsScreen() {
           .eq('id', currentSubscription.id);
       }
 
-      // Create new subscription
+      // Criar nova assinatura
       const { error } = await supabase.from('subscriptions').insert({
         professional_id: profile.id,
         plan_type: selectedPlan.type,
@@ -212,7 +225,8 @@ export default function AccountSettingsScreen() {
       console.error('Error creating subscription:', error);
       Alert.alert(
         'Erro no Pagamento',
-        error.message || 'Não foi possível processar o pagamento. Tente novamente.'
+        error.message ||
+          'Não foi possível processar o pagamento. Tente novamente.'
       );
     } finally {
       setProcessingPayment(false);
@@ -222,7 +236,7 @@ export default function AccountSettingsScreen() {
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
 
     for (let i = 0, len = match.length; i < len; i += 4) {
@@ -293,8 +307,12 @@ export default function AccountSettingsScreen() {
               <Text variant="titleLarge" style={styles.noSubscriptionTitle}>
                 Nenhuma Assinatura Ativa
               </Text>
-              <Text variant="bodyMedium" style={styles.noSubscriptionDescription}>
-                Assine um de nossos planos para ter acesso completo à plataforma e aumentar sua visibilidade.
+              <Text
+                variant="bodyMedium"
+                style={styles.noSubscriptionDescription}
+              >
+                Assine um de nossos planos para ter acesso completo à plataforma
+                e aumentar sua visibilidade.
               </Text>
               <Button
                 mode="contained"
@@ -320,7 +338,11 @@ export default function AccountSettingsScreen() {
             <Chip
               style={[
                 styles.statusChip,
-                { backgroundColor: `${getStatusColor(currentSubscription.status)}20` },
+                {
+                  backgroundColor: `${getStatusColor(
+                    currentSubscription.status
+                  )}20`,
+                },
               ]}
               textStyle={{ color: getStatusColor(currentSubscription.status) }}
             >
@@ -329,9 +351,14 @@ export default function AccountSettingsScreen() {
           </View>
 
           <View style={styles.subscriptionDetails}>
-            <View style={styles.planInfo}>
+            <View style={styles.planInfoRow}>
               <Text variant="headlineSmall" style={styles.planName}>
-                Plano {SUBSCRIPTION_PLANS.find(p => p.type === currentSubscription.plan_type)?.name}
+                Plano{' '}
+                {
+                  SUBSCRIPTION_PLANS.find(
+                    (p) => p.type === currentSubscription.plan_type
+                  )?.name
+                }
               </Text>
               <Text variant="titleMedium" style={styles.planPrice}>
                 R$ {currentSubscription.amount}
@@ -342,10 +369,13 @@ export default function AccountSettingsScreen() {
               <View style={styles.dateItem}>
                 <Calendar size={16} color={theme.colors.onSurfaceVariant} />
                 <Text variant="bodyMedium" style={styles.dateText}>
-                  Válida até: {new Date(currentSubscription.end_date).toLocaleDateString('pt-BR')}
+                  Válida até:{' '}
+                  {new Date(currentSubscription.end_date).toLocaleDateString(
+                    'pt-BR'
+                  )}
                 </Text>
               </View>
-              
+
               {currentSubscription.status === 'active' && (
                 <View style={styles.dateItem}>
                   <CheckCircle size={16} color={theme.colors.tertiary} />
@@ -406,11 +436,13 @@ export default function AccountSettingsScreen() {
                     <Text style={styles.popularBadgeText}>MAIS POPULAR</Text>
                   </View>
                 )}
-                
+
                 <View style={styles.planHeader}>
                   <RadioButton
                     value={plan.type}
-                    status={selectedPlan?.type === plan.type ? 'checked' : 'unchecked'}
+                    status={
+                      selectedPlan?.type === plan.type ? 'checked' : 'unchecked'
+                    }
                     onPress={() => setSelectedPlan(plan)}
                   />
                   <View style={styles.planInfo}>
@@ -500,7 +532,7 @@ export default function AccountSettingsScreen() {
               label="Nome no Cartão"
               value={paymentForm.cardholderName}
               onChangeText={(value) =>
-                setPaymentForm(prev => ({ ...prev, cardholderName: value }))
+                setPaymentForm((prev) => ({ ...prev, cardholderName: value }))
               }
               style={styles.paymentInput}
               mode="outlined"
@@ -510,7 +542,10 @@ export default function AccountSettingsScreen() {
               label="Número do Cartão"
               value={paymentForm.cardNumber}
               onChangeText={(value) =>
-                setPaymentForm(prev => ({ ...prev, cardNumber: formatCardNumber(value) }))
+                setPaymentForm((prev) => ({
+                  ...prev,
+                  cardNumber: formatCardNumber(value),
+                }))
               }
               style={styles.paymentInput}
               mode="outlined"
@@ -523,7 +558,10 @@ export default function AccountSettingsScreen() {
                 label="MM/AA"
                 value={paymentForm.expiryDate}
                 onChangeText={(value) =>
-                  setPaymentForm(prev => ({ ...prev, expiryDate: formatExpiryDate(value) }))
+                  setPaymentForm((prev) => ({
+                    ...prev,
+                    expiryDate: formatExpiryDate(value),
+                  }))
                 }
                 style={[styles.paymentInput, styles.halfInput]}
                 mode="outlined"
@@ -535,7 +573,10 @@ export default function AccountSettingsScreen() {
                 label="CVV"
                 value={paymentForm.cvv}
                 onChangeText={(value) =>
-                  setPaymentForm(prev => ({ ...prev, cvv: value.replace(/[^0-9]/g, '') }))
+                  setPaymentForm((prev) => ({
+                    ...prev,
+                    cvv: value.replace(/[^0-9]/g, ''),
+                  }))
                 }
                 style={[styles.paymentInput, styles.halfInput]}
                 mode="outlined"
@@ -595,11 +636,19 @@ export default function AccountSettingsScreen() {
           </Text>
 
           <View style={styles.deleteModalList}>
-            <Text style={styles.deleteModalListItem}>• Perfil e informações pessoais</Text>
-            <Text style={styles.deleteModalListItem}>• Serviços cadastrados</Text>
-            <Text style={styles.deleteModalListItem}>• Histórico de agendamentos</Text>
+            <Text style={styles.deleteModalListItem}>
+              • Perfil e informações pessoais
+            </Text>
+            <Text style={styles.deleteModalListItem}>
+              • Serviços cadastrados
+            </Text>
+            <Text style={styles.deleteModalListItem}>
+              • Histórico de agendamentos
+            </Text>
             <Text style={styles.deleteModalListItem}>• Fotos e portfólio</Text>
-            <Text style={styles.deleteModalListItem}>• Avaliações recebidas</Text>
+            <Text style={styles.deleteModalListItem}>
+              • Avaliações recebidas
+            </Text>
           </View>
 
           <Text variant="bodyMedium" style={styles.deleteModalWarning}>
@@ -645,10 +694,10 @@ export default function AccountSettingsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Subscription Status */}
+        {/* Status da assinatura */}
         {renderSubscriptionStatus()}
 
-        {/* Account Actions */}
+        {/* Ações da conta */}
         <Card style={styles.actionsCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -678,14 +727,15 @@ export default function AccountSettingsScreen() {
           </Card.Content>
         </Card>
 
-        {/* Help Section */}
+        {/* Seção de Ajuda */}
         <Card style={styles.helpCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
               Precisa de Ajuda?
             </Text>
             <Text variant="bodyMedium" style={styles.helpText}>
-              Se você tem dúvidas sobre assinatura, cobrança ou exclusão de conta, entre em contato conosco.
+              Se você tem dúvidas sobre assinatura, cobrança ou exclusão de
+              conta, entre em contato conosco.
             </Text>
             <Button
               mode="outlined"
@@ -783,7 +833,7 @@ const styles = StyleSheet.create({
   subscriptionDetails: {
     gap: spacing.md,
   },
-  planInfo: {
+  planInfoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

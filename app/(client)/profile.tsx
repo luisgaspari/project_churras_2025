@@ -1,19 +1,6 @@
 import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
-import {
-  Text,
-  Card,
-  Button,
-  List,
-  Avatar,
-  ActivityIndicator,
-} from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Text, Card, Button, List, Avatar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,15 +8,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import {
-  User,
   Phone,
   Mail,
   MapPin,
   Settings,
   LogOut,
-  CreditCard,
-  CircleHelp as HelpCircle,
-  Camera,
   CreditCard as Edit,
 } from 'lucide-react-native';
 
@@ -118,7 +101,6 @@ export default function ClientProfileScreen() {
         throw uploadError;
       }
 
-      // We need to wait a bit for the CDN to update
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const { data: publicUrlData } = supabase.storage
@@ -153,27 +135,6 @@ export default function ClientProfileScreen() {
     }
   };
 
-  const handleAvatarPress = () => {
-    Alert.alert(
-      'Alterar foto do perfil',
-      'Escolha uma opção para alterar seu avatar:',
-      [
-        {
-          text: 'Tirar foto',
-          onPress: () => handleUpdateAvatar('camera'),
-        },
-        {
-          text: 'Escolher da Galeria',
-          onPress: () => handleUpdateAvatar('gallery'),
-        },
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-      ]
-    );
-  };
-
   const handleSignOut = async () => {
     Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
       { text: 'Cancelar', style: 'cancel' },
@@ -183,7 +144,8 @@ export default function ClientProfileScreen() {
         onPress: async () => {
           try {
             await signOut();
-            // Navigate to the welcome screen where user can choose user type
+            // Navegue até a tela de boas-vindas onde o usuário
+            // pode escolher o tipo de usuário
             router.replace('../');
           } catch (error) {
             Alert.alert('Erro', 'Não foi possível sair da conta');
@@ -203,13 +165,9 @@ export default function ClientProfileScreen() {
           </Text>
         </View>
 
-        {/* Profile Info */}
+        {/* Informações do perfil */}
         <Card style={styles.profileCard}>
           <Card.Content style={styles.profileContent}>
-            {/* <TouchableOpacity
-              onPress={handleAvatarPress}
-              disabled={uploadingAvatar}
-            > */}
             {profile?.avatar_url ? (
               <Avatar.Image
                 size={80}
@@ -223,18 +181,7 @@ export default function ClientProfileScreen() {
                 style={styles.avatar}
               />
             )}
-            {/* <View style={styles.avatarEditContainer}>
-                {uploadingAvatar ? (
-                  <ActivityIndicator color={theme.colors.onPrimary} />
-                ) : (
-                  <Camera
-                    size={16}
-                    color={theme.colors.onPrimary}
-                    style={styles.avatarEditIcon}
-                  />
-                )}
-              </View> */}
-            {/* </TouchableOpacity> */}
+
             <View style={styles.profileInfo}>
               <Text variant="headlineSmall" style={styles.userName}>
                 {profile?.full_name || 'Usuário'}
@@ -246,7 +193,7 @@ export default function ClientProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Personal Information */}
+        {/* Informações pessoais */}
         <Card style={styles.infoCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -304,7 +251,7 @@ export default function ClientProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Menu Options */}
+        {/* Opções de menu */}
         <Card style={styles.menuCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -313,16 +260,17 @@ export default function ClientProfileScreen() {
 
             <List.Item
               title="Configurações da conta"
-              description="Privacidade, notificações e preferências"
+              description="Excluir conta"
               left={(props) => (
                 <Settings {...props} color={theme.colors.onSurface} />
               )}
               right={(props) => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => {}}
+              onPress={() => router.push('/(client)/account-settings')}
               style={styles.menuItem}
             />
 
-            <List.Item
+            {/* Futuro - Método de Pagamento */}
+            {/* <List.Item
               title="Métodos de pagamento"
               description="Gerenciar cartões e formas de pagamento"
               left={(props) => (
@@ -331,9 +279,10 @@ export default function ClientProfileScreen() {
               right={(props) => <List.Icon {...props} icon="chevron-right" />}
               onPress={() => {}}
               style={styles.menuItem}
-            />
+            /> */}
 
-            <List.Item
+            {/* Futuro - Ajuda e Suporte */}
+            {/* <List.Item
               title="Ajuda e suporte"
               description="Central de ajuda, FAQ e contato"
               left={(props) => (
@@ -342,7 +291,7 @@ export default function ClientProfileScreen() {
               right={(props) => <List.Icon {...props} icon="chevron-right" />}
               onPress={() => {}}
               style={styles.menuItem}
-            />
+            /> */}
 
             <List.Item
               title="Sair da conta"
@@ -388,17 +337,6 @@ const styles = StyleSheet.create({
   avatar: {
     backgroundColor: theme.colors.primary,
   },
-  avatarEditContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: spacing.xs,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarEditIcon: {},
   profileInfo: {
     marginLeft: spacing.lg,
     flex: 1,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Card, Button } from 'react-native-paper';
+import { Text, Card } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -55,7 +55,7 @@ export default function AnalyticsScreen() {
 
     setLoading(true);
     try {
-      // Load bookings for analytics
+      // Carregar reservas para análise
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
         .select(
@@ -72,7 +72,7 @@ export default function AnalyticsScreen() {
         console.error('Error loading bookings:', bookingsError);
       }
 
-      // Load reviews for rating calculation
+      // Carregar avaliações para cálculo de classificação
       const { data: reviews, error: reviewsError } = await supabase
         .from('reviews')
         .select('rating')
@@ -83,7 +83,7 @@ export default function AnalyticsScreen() {
       }
 
       if (bookings) {
-        // Calculate analytics
+        // Calcular análises
         const totalBookings = bookings.length;
         const completedBookings = bookings.filter(
           (b) => b.status === 'completed'
@@ -97,7 +97,7 @@ export default function AnalyticsScreen() {
             ? (completedBookings.length / totalBookings) * 100
             : 0;
 
-        // Calculate average rating from reviews
+        // Calcular a classificação média das avaliações
         const totalReviews = reviews?.length || 0;
         const averageRating =
           totalReviews > 0
@@ -105,7 +105,7 @@ export default function AnalyticsScreen() {
               totalReviews
             : 0;
 
-        // Calculate monthly revenue for chart (last 6 months)
+        // Calcular a receita mensal do gráfico (últimos 6 meses)
         const monthlyRevenue = Array(6).fill(0);
         const currentDate = new Date();
 
@@ -120,7 +120,7 @@ export default function AnalyticsScreen() {
           }
         });
 
-        // Calculate top services
+        // Calcular os principais serviços
         const serviceStats: {
           [key: string]: { bookings: number; revenue: number };
         } = {};
@@ -193,7 +193,7 @@ export default function AnalyticsScreen() {
           </Text>
         </View>
 
-        {/* Future - Period Selector */}
+        {/* Futuro - Seletor de Período */}
         {/* <View style={styles.periodSelector}>
           <Button
             mode={selectedPeriod === 'month' ? 'contained' : 'outlined'}
@@ -218,7 +218,7 @@ export default function AnalyticsScreen() {
           </Button>
         </View> */}
 
-        {/* Key Metrics */}
+        {/* Métricas-chave */}
         <View style={styles.metricsContainer}>
           <View style={styles.metricsRow}>
             <Card style={styles.metricCard}>
@@ -295,7 +295,7 @@ export default function AnalyticsScreen() {
           </View>
         </View>
 
-        {/* Revenue Chart */}
+        {/* Gráfico de Receita */}
         <Card style={styles.chartCard}>
           <Card.Content>
             <View style={styles.chartHeader}>
@@ -337,7 +337,7 @@ export default function AnalyticsScreen() {
           </Card.Content>
         </Card>
 
-        {/* Top Services */}
+        {/* Principais serviços */}
         <Card style={styles.servicesCard}>
           <Card.Content>
             <View style={styles.servicesHeader}>

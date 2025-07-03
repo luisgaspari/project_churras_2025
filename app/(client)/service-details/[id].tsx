@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   Dimensions,
   Linking,
-  Platform,
 } from 'react-native';
 import {
   Text,
@@ -17,7 +16,6 @@ import {
   Button,
   IconButton,
   Avatar,
-  Chip,
   TextInput,
   ActivityIndicator,
 } from 'react-native-paper';
@@ -34,9 +32,7 @@ import {
   Users,
   Star,
   Phone,
-  Mail,
   Calendar,
-  DollarSign,
   X,
   ChevronLeft,
   ChevronRight,
@@ -138,13 +134,14 @@ export default function ServiceDetailsScreen() {
       }
 
       setService(data);
-      // Pre-fill location with service location
+
+      // Pré-preencher o local com o local do serviço
       setBookingForm((prev) => ({
         ...prev,
         location: data.location,
       }));
 
-      // Load professional photos and reviews
+      // Carregar fotos e avaliações profissionais
       if (data.professional_id) {
         loadProfessionalPhotos(data.professional_id);
         loadProfessionalRating(data.professional_id);
@@ -211,11 +208,11 @@ export default function ServiceDetailsScreen() {
   };
 
   const handleGoBack = () => {
-    // Check if we can go back in the navigation stack
+    // Verifique se podemos voltar na pilha de navegação
     if (router.canGoBack()) {
       router.back();
     } else {
-      // If no navigation history, go to client home
+      // Se não houver histórico de navegação, vá para a página inicial do cliente
       router.replace('../(client)');
     }
   };
@@ -312,7 +309,7 @@ export default function ServiceDetailsScreen() {
         if (supported) {
           return Linking.openURL(whatsappUrl);
         } else {
-          // Fallback to WhatsApp Web
+          // Retorno ao WhatsApp Web
           return Linking.openURL(whatsappWebUrl);
         }
       })
@@ -418,7 +415,7 @@ export default function ServiceDetailsScreen() {
       return false;
     }
 
-    // Check if date is in the future
+    // Verifique se a data está no futuro
     const eventDateTime = new Date(bookingForm.event_date);
     eventDateTime.setHours(
       bookingForm.event_time.getHours(),
@@ -437,10 +434,10 @@ export default function ServiceDetailsScreen() {
     if (!service) return 0;
 
     const guestsCount = parseInt(bookingForm.guests_count) || 0;
-    // Simple calculation: base price + additional cost per guest above minimum
+    // Cálculo simples: preço base + custo adicional por convidado acima do mínimo
     const basePrice = service.price_from;
-    const additionalGuests = Math.max(0, guestsCount - 10); // Assume base price covers 10 guests
-    const additionalCost = additionalGuests * 20; // R$ 20 per additional guest
+    const additionalGuests = Math.max(0, guestsCount - 10); // O preço base cobre 10 convidados
+    const additionalCost = additionalGuests * 20; // R$ 20 por convidado adicional
 
     return basePrice + additionalCost;
   };
@@ -501,33 +498,6 @@ export default function ServiceDetailsScreen() {
     } finally {
       setBookingLoading(false);
     }
-  };
-
-  const renderServiceImages = () => {
-    if (!service?.images || service.images.length <= 1) return null;
-
-    return (
-      <Card style={styles.galleryCard}>
-        <Card.Content>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Fotos do Serviço
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.gallery}
-          >
-            {service.images.map((image, index) => (
-              <Image
-                key={index}
-                source={{ uri: image }}
-                style={styles.galleryImage}
-              />
-            ))}
-          </ScrollView>
-        </Card.Content>
-      </Card>
-    );
   };
 
   const renderProfessionalPhotos = () => {
@@ -631,7 +601,7 @@ export default function ServiceDetailsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Hero Image */}
+        {/* Imagem Temporária */}
         {service.images && service.images.length > 0 && (
           <Image
             source={{
@@ -643,7 +613,7 @@ export default function ServiceDetailsScreen() {
           />
         )}
 
-        {/* Service Info */}
+        {/* Informações de serviço */}
         <Card style={styles.infoCard}>
           <Card.Content>
             <Text variant="headlineSmall" style={styles.serviceTitle}>
@@ -695,7 +665,7 @@ export default function ServiceDetailsScreen() {
           </Card.Content>
         </Card>
 
-        {/* Professional Info */}
+        {/* Informações do profissional */}
         <Card style={styles.professionalCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -750,9 +720,7 @@ export default function ServiceDetailsScreen() {
               )}
               <Button
                 mode="outlined"
-                icon={() => (
-                  <Send size={16} color={theme.colors.primary} />
-                )}
+                icon={() => <Send size={16} color={theme.colors.primary} />}
                 style={styles.contactButton}
                 onPress={showContactOptions}
               >
@@ -762,10 +730,7 @@ export default function ServiceDetailsScreen() {
           </Card.Content>
         </Card>
 
-        {/* Professional Gallery */}
-        {renderProfessionalPhotos()}
-
-        {/* Reviews Section */}
+        {/* Seção de avaliações */}
         <Card style={styles.reviewsCard}>
           <Card.Content>
             <ReviewsList
@@ -778,7 +743,7 @@ export default function ServiceDetailsScreen() {
                 mode="text"
                 style={styles.viewAllReviewsButton}
                 onPress={() => {
-                  // Navigate to full reviews screen
+                  // Navegar para a tela de avaliações completas
                   // router.push(`/reviews/${service.professional_id}`);
                 }}
               >
@@ -788,10 +753,10 @@ export default function ServiceDetailsScreen() {
           </Card.Content>
         </Card>
 
-        {/* Service Image Gallery */}
-        {renderServiceImages()}
+        {/* Galeria do Profissional */}
+        {renderProfessionalPhotos()}
 
-        {/* Booking Form */}
+        {/* Formulário de reserva */}
         {showBookingForm && (
           <Card style={styles.bookingCard}>
             <Card.Content>
@@ -917,7 +882,7 @@ export default function ServiceDetailsScreen() {
           </Card>
         )}
 
-        {/* Action Buttons */}
+        {/* Botões de ação */}
         {!showBookingForm && (
           <View style={styles.actionButtons}>
             <Button
@@ -932,7 +897,7 @@ export default function ServiceDetailsScreen() {
         )}
       </ScrollView>
 
-      {/* Gallery Modal */}
+      {/* Galeria Modal */}
       <Modal
         visible={showGalleryModal}
         transparent={true}

@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
-import { Search, Calendar, User, PhoneIncoming as HomeIcon } from 'lucide-react-native';
+import { Search, Calendar, User, HomeIcon } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 export default function ClientTabLayout() {
@@ -59,13 +59,19 @@ export default function ClientTabLayout() {
         <Tabs.Screen
           name="service-details"
           options={{
-            href: null, // This hides the tab from the tab bar
+            href: null, // Isso oculta a guia da barra de guias
           }}
         />
         <Tabs.Screen
           name="edit-profile"
           options={{
-            href: null, // This hides the tab from the tab bar
+            href: null, // Isso oculta a guia da barra de guias
+          }}
+        />
+        <Tabs.Screen
+          name="account-settings"
+          options={{
+            href: null, // Isso oculta a guia da barra de guias
           }}
         />
       </Tabs>
