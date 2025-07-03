@@ -7,9 +7,14 @@ import {
   HomeIcon,
   MessageCircle,
 } from 'lucide-react-native';
+import { View } from 'react-native';
 import { theme } from '@/constants/theme';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
+import TabBarBadge from '@/components/TabBarBadge';
 
 export default function ClientTabLayout() {
+  const { unreadCount } = useUnreadMessages();
+
   return (
     <>
       <Stack.Screen
@@ -61,7 +66,10 @@ export default function ClientTabLayout() {
           options={{
             title: 'Chat',
             tabBarIcon: ({ size, color }) => (
-              <MessageCircle size={size} color={color} />
+              <View style={{ position: 'relative' }}>
+                <MessageCircle size={size} color={color} />
+                <TabBarBadge count={unreadCount} />
+              </View>
             ),
           }}
         />

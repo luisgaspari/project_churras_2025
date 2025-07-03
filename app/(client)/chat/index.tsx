@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Text, Card, Avatar, Badge } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import { MessageCircle } from 'lucide-react-native';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 interface Conversation {
   id: string;
@@ -26,6 +27,7 @@ interface Conversation {
 
 export default function ChatListScreen() {
   const { profile } = useAuth();
+  const { refreshUnreadCount } = useUnreadMessages();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +37,7 @@ export default function ChatListScreen() {
 
       // Subscribe to real-time updates
       const subscription = supabase
-        .channel('conversations')
+        .channel('conversations_list')
         .on(
           'postgres_changes',
           {
@@ -57,6 +59,7 @@ export default function ChatListScreen() {
           },
           () => {
             loadConversations();
+            refreshUnreadCount();
           }
         )
         .subscribe();
@@ -65,7 +68,17 @@ export default function ChatListScreen() {
         subscription.unsubscribe();
       };
     }
-  }, [profile]);
+  }, [profile, refreshUnreadCount]);
+
+  // Atualizar quando a tela ganha foco
+  useFocusEffect(
+    React.useCallback(() => {
+      if (profile) {
+        loadConversations();
+        refreshUnreadCount();
+      }
+    }, [profile, refreshUnreadCount])
+  );
 
   const loadConversations = async () => {
     if (!profile) return;

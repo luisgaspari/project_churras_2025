@@ -13,13 +13,14 @@ import {
   ActivityIndicator,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import { ArrowLeft } from 'lucide-react-native';
 import ChatBubble from '@/components/ChatBubble';
 import ChatInput from '@/components/ChatInput';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 interface Message {
   id: string;
@@ -43,6 +44,7 @@ interface ConversationDetails {
 export default function ProfessionalChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useAuth();
+  const { refreshUnreadCount } = useUnreadMessages();
   const [conversation, setConversation] = useState<ConversationDetails | null>(
     null
   );
@@ -70,17 +72,25 @@ export default function ProfessionalChatScreen() {
           },
           (payload) => {
             const newMessage = payload.new as Message;
-            setMessages((prev) => [...prev, newMessage]);
+            setMessages((prev) => {
+              // Evitar duplicatas
+              const exists = prev.some(msg => msg.id === newMessage.id);
+              if (exists) return prev;
+              
+              const updated = [...prev, newMessage];
+              
+              // Scroll to bottom após adicionar nova mensagem
+              setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+              }, 100);
+              
+              return updated;
+            });
 
             // Mark as read if not sent by current user
             if (newMessage.sender_id !== profile.id) {
               markMessagesAsRead();
             }
-
-            // Scroll to bottom
-            setTimeout(() => {
-              flatListRef.current?.scrollToEnd({ animated: true });
-            }, 100);
           }
         )
         .on(
@@ -107,6 +117,16 @@ export default function ProfessionalChatScreen() {
       };
     }
   }, [id, profile]);
+
+  // Marcar mensagens como lidas quando a tela ganha foco
+  useFocusEffect(
+    React.useCallback(() => {
+      if (id && profile) {
+        markMessagesAsRead();
+        refreshUnreadCount();
+      }
+    }, [id, profile, refreshUnreadCount])
+  );
 
   const loadConversation = async () => {
     if (!id) return;
@@ -179,6 +199,9 @@ export default function ProfessionalChatScreen() {
         conversation_uuid: id,
         user_uuid: profile.id,
       });
+      
+      // Atualizar contador de mensagens não lidas
+      refreshUnreadCount();
     } catch (error) {
       console.error('Error marking messages as read:', error);
     }
@@ -198,6 +221,9 @@ export default function ProfessionalChatScreen() {
       if (error) {
         throw error;
       }
+
+      // Atualizar contador após enviar mensagem
+      refreshUnreadCount();
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
@@ -277,6 +303,9 @@ export default function ProfessionalChatScreen() {
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({ animated: true })
+          }
+          onLayout={() =>
+            flatListRef.current?.scrollToEnd({ animated: false })
           }
         />
 
