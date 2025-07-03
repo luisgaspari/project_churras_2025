@@ -36,19 +36,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const clearAuthState = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      // Ignore signOut errors as we're clearing state anyway
+      console.log('SignOut error (ignored):', error);
+    }
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setLoading(false);
+  };
+
   useEffect(() => {
     // Get initial session with proper error handling for invalid refresh tokens
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        // If there's an error or no user, clear any stale tokens
-        if (error || !session?.user) {
-          await supabase.auth.signOut();
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
+        // Check for specific refresh token errors
+        if (error) {
+          const errorMessage = error.message?.toLowerCase() || '';
+          const isRefreshTokenError = 
+            errorMessage.includes('refresh token not found') ||
+            errorMessage.includes('invalid refresh token') ||
+            error.message?.includes('refresh_token_not_found');
+
+          if (isRefreshTokenError) {
+            console.log('Invalid refresh token detected, clearing auth state');
+            await clearAuthState();
+            return;
+          }
+          
+          // For other errors, still clear state but log the error
+          console.error('Auth initialization error:', error);
+          await clearAuthState();
+          return;
+        }
+
+        // If there's no session or user, clear any stale tokens
+        if (!session?.user) {
+          await clearAuthState();
           return;
         }
 
@@ -57,12 +86,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await loadProfile(session.user.id);
       } catch (error) {
         console.error('Error initializing auth:', error);
-        // Clear any stale authentication state
-        await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
+        // Check if the error is related to refresh tokens
+        const errorString = String(error).toLowerCase();
+        if (errorString.includes('refresh token') || errorString.includes('token')) {
+          console.log('Token-related error detected, clearing auth state');
+        }
+        await clearAuthState();
       }
     };
 
@@ -74,6 +103,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.id);
       
+      // Handle token refresh errors
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        console.log('Token refresh failed, clearing auth state');
+        await clearAuthState();
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
 
