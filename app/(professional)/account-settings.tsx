@@ -23,16 +23,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
-import {
-  ArrowLeft,
-  Trash2,
-  CreditCard,
-  Calendar,
-  Crown,
-  X,
-  AlertTriangle,
-  CheckCircle,
-} from 'lucide-react-native';
+import { ArrowLeft, Trash2, CreditCard, Calendar, Crown, X, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react-native';
 
 interface Subscription {
   id: string;
