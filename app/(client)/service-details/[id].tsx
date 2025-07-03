@@ -41,7 +41,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
-  MessageCircle,
   Send,
 } from 'lucide-react-native';
 import ReviewsList from '@/components/ReviewsList';
@@ -349,57 +348,8 @@ export default function ServiceDetailsScreen() {
       });
   };
 
-  const handleChatMessage = async () => {
-    if (!service || !profile) {
-      Alert.alert('Erro', 'Informações não disponíveis.');
-      return;
-    }
-
-    try {
-      // Check if conversation already exists
-      const { data: existingConversation, error: searchError } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('client_id', profile.id)
-        .eq('professional_id', service.professional_id)
-        .single();
-
-      let conversationId = existingConversation?.id;
-
-      if (!conversationId) {
-        // Create new conversation
-        const { data: newConversation, error: createError } = await supabase
-          .from('conversations')
-          .insert({
-            client_id: profile.id,
-            professional_id: service.professional_id,
-          })
-          .select('id')
-          .single();
-
-        if (createError) {
-          throw createError;
-        }
-
-        conversationId = newConversation.id;
-      }
-
-      // Navigate to chat
-      router.push(`/(client)/chat/${conversationId}`);
-    } catch (error: any) {
-      console.error('Error creating/finding conversation:', error);
-      Alert.alert('Erro', 'Não foi possível iniciar a conversa.');
-    }
-  };
-
   const showContactOptions = () => {
     const options = [
-      {
-        title: 'Chat',
-        description: 'Conversar pelo app',
-        onPress: handleChatMessage,
-        available: true,
-      },
       {
         title: 'WhatsApp',
         description: 'Conversar pelo WhatsApp',
@@ -801,7 +751,7 @@ export default function ServiceDetailsScreen() {
               <Button
                 mode="outlined"
                 icon={() => (
-                  <MessageCircle size={16} color={theme.colors.primary} />
+                  <Send size={16} color={theme.colors.primary} />
                 )}
                 style={styles.contactButton}
                 onPress={showContactOptions}

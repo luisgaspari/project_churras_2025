@@ -20,7 +20,7 @@ import {
   User,
   Star,
   Phone,
-  MessageCircle,
+  Mail,
 } from 'lucide-react-native';
 import ReviewModal from '@/components/ReviewModal';
 
@@ -235,14 +235,6 @@ export default function BookingsScreen() {
 
     const options: AlertButton[] = [];
 
-    // Chat option (if phone is available)
-    if (professional.phone) {
-      options.push({
-        text: 'WhatChat',
-        onPress: () => handleChatMessage(booking),
-      });
-    }
-
     // WhatsApp option (if phone is available)
     if (professional.phone) {
       options.push({
@@ -281,49 +273,6 @@ export default function BookingsScreen() {
       `Como você gostaria de entrar em contato com ${professional.full_name}?`,
       options
     );
-  };
-
-  const handleChatMessage = async (booking: Booking) => {
-    if (!booking || !profile) {
-      Alert.alert('Erro', 'Informações não disponíveis.');
-      return;
-    }
-
-    try {
-      // Check if conversation already exists
-      const { data: existingConversation, error: searchError } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('client_id', profile.id)
-        .eq('professional_id', booking.professional_id)
-        .single();
-
-      let conversationId = existingConversation?.id;
-
-      if (!conversationId) {
-        // Create new conversation
-        const { data: newConversation, error: createError } = await supabase
-          .from('conversations')
-          .insert({
-            client_id: profile.id,
-            professional_id: booking.professional_id,
-          })
-          .select('id')
-          .single();
-
-        if (createError) {
-          throw createError;
-        }
-
-        conversationId = newConversation.id;
-      }
-
-      // Navigate to chat
-      router.push(`/(client)/chat/${conversationId}`);
-    } catch (error: any) {
-      console.error('Error creating/finding conversation:', error);
-      Alert.alert('Erro', 'Não foi possível iniciar a conversa.');
-    }
   };
 
   const openWhatsApp = (booking: Booking) => {
@@ -580,7 +529,7 @@ export default function BookingsScreen() {
                   style={styles.actionButton}
                   onPress={() => handleContactProfessional(item)}
                   icon={() => (
-                    <MessageCircle size={16} color={theme.colors.onPrimary} />
+                    <Phone size={16} color={theme.colors.onPrimary} />
                   )}
                 >
                   Contatar

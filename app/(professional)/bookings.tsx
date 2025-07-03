@@ -19,7 +19,6 @@ import {
   User,
   Phone,
   Plus,
-  MessageCircle,
   Mail,
 } from 'lucide-react-native';
 
@@ -447,7 +446,7 @@ export default function ProfessionalBookingsScreen() {
               style={styles.actionButton}
               onPress={() => handleContactClient(item)}
               icon={() => (
-                <MessageCircle size={16} color={theme.colors.primary} />
+                <Phone size={16} color={theme.colors.primary} />
               )}
             >
               Contatar
