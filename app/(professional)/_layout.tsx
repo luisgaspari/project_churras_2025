@@ -4,6 +4,7 @@ import { Calendar, ChartBar as BarChart3, User, PhoneIncoming as HomeIcon, Star,
 import { theme } from '@/constants/theme';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import TabBarBadge from '@/components/TabBarBadge';
+import { View } from 'react-native';
 
 export default function ProfessionalTabLayout() {
   const { unreadCount } = useUnreadMessages();
@@ -47,10 +48,10 @@ export default function ProfessionalTabLayout() {
           options={{
             title: 'Chat',
             tabBarIcon: ({ size, color, focused }) => (
-              <div style={{ position: 'relative' }}>
+              <View style={{ position: 'relative' }}>
                 <MessageCircle size={size} color={color} />
                 {unreadCount > 0 && <TabBarBadge count={unreadCount} />}
-              </div>
+              </View>
             ),
           }}
         />
