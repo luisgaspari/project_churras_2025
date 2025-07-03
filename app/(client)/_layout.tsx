@@ -2,13 +2,8 @@ import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
 import { Search, Calendar, User, PhoneIncoming as HomeIcon, MessageCircle } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
-import { useUnreadMessages } from '@/hooks/useUnreadMessages';
-import TabBarBadge from '@/components/TabBarBadge';
-import { View } from 'react-native';
 
 export default function ClientTabLayout() {
-  const { unreadCount } = useUnreadMessages();
-
   return (
     <>
       <Stack.Screen
@@ -59,11 +54,8 @@ export default function ClientTabLayout() {
           name="chat"
           options={{
             title: 'Chat',
-            tabBarIcon: ({ size, color, focused }) => (
-              <View style={{ position: 'relative' }}>
-                <MessageCircle size={size} color={color} />
-                {unreadCount > 0 && <TabBarBadge count={unreadCount} />}
-              </View>
+            tabBarIcon: ({ size, color }) => (
+              <MessageCircle size={size} color={color} />
             ),
           }}
         />

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { Text, Card, Avatar, Badge } from 'react-native-paper';
+import { Text, Card, Avatar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import { MessageCircle } from 'lucide-react-native';
-import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 interface Conversation {
   id: string;
@@ -18,7 +17,6 @@ interface Conversation {
     full_name: string;
     avatar_url?: string;
   };
-  unread_count: number;
   last_message?: {
     content: string;
     sender_id: string;
@@ -27,17 +25,8 @@ interface Conversation {
 
 export default function ProfessionalChatListScreen() {
   const { profile } = useAuth();
-  const { refreshUnreadCount } = useUnreadMessages();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Refresh unread count when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      refreshUnreadCount();
-      loadConversations();
-    }, [refreshUnreadCount])
-  );
 
   useEffect(() => {
     if (profile) {
@@ -56,7 +45,6 @@ export default function ProfessionalChatListScreen() {
           },
           () => {
             loadConversations();
-            refreshUnreadCount();
           }
         )
         .on(
@@ -68,7 +56,6 @@ export default function ProfessionalChatListScreen() {
           },
           () => {
             loadConversations();
-            refreshUnreadCount();
           }
         )
         .subscribe();
@@ -77,7 +64,7 @@ export default function ProfessionalChatListScreen() {
         subscription.unsubscribe();
       };
     }
-  }, [profile, refreshUnreadCount]);
+  }, [profile]);
 
   const loadConversations = async () => {
     if (!profile) return;
@@ -102,7 +89,7 @@ export default function ProfessionalChatListScreen() {
         throw error;
       }
 
-      // Load last message and unread count for each conversation
+      // Load last message for each conversation
       const conversationsWithDetails = await Promise.all(
         (data || []).map(async (conversation) => {
           // Get last message
@@ -113,18 +100,9 @@ export default function ProfessionalChatListScreen() {
             .order('created_at', { ascending: false })
             .limit(1);
 
-          // Get unread count
-          const { count: unreadCount } = await supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('conversation_id', conversation.id)
-            .eq('is_read', false)
-            .neq('sender_id', profile.id);
-
           return {
             ...conversation,
             last_message: lastMessage?.[0],
-            unread_count: unreadCount || 0,
           };
         })
       );
@@ -159,20 +137,13 @@ export default function ProfessionalChatListScreen() {
 
   const handleConversationPress = (conversationId: string) => {
     router.push(`/(professional)/chat/${conversationId}`);
-    // Refresh unread count after navigation
-    setTimeout(() => {
-      refreshUnreadCount();
-    }, 500);
   };
 
   const renderConversationItem = ({ item }: { item: Conversation }) => (
     <TouchableOpacity
       onPress={() => handleConversationPress(item.id)}
     >
-      <Card style={[
-        styles.conversationCard,
-        item.unread_count > 0 && styles.unreadConversationCard
-      ]}>
+      <Card style={styles.conversationCard}>
         <Card.Content style={styles.conversationContent}>
           <View style={styles.avatarContainer}>
             {item.client_profile?.avatar_url ? (
@@ -186,22 +157,11 @@ export default function ProfessionalChatListScreen() {
                 label={item.client_profile?.full_name?.charAt(0).toUpperCase() || 'C'}
               />
             )}
-            {item.unread_count > 0 && (
-              <Badge
-                style={styles.unreadBadge}
-                size={20}
-              >
-                {item.unread_count > 99 ? '99+' : item.unread_count}
-              </Badge>
-            )}
           </View>
 
           <View style={styles.conversationInfo}>
             <View style={styles.conversationHeader}>
-              <Text variant="titleMedium" style={[
-                styles.clientName,
-                item.unread_count > 0 && styles.unreadText
-              ]}>
+              <Text variant="titleMedium" style={styles.clientName}>
                 {item.client_profile?.full_name}
               </Text>
               <Text variant="bodySmall" style={styles.timestamp}>
@@ -211,10 +171,7 @@ export default function ProfessionalChatListScreen() {
 
             <Text
               variant="bodyMedium"
-              style={[
-                styles.lastMessage,
-                item.unread_count > 0 && styles.unreadMessage,
-              ]}
+              style={styles.lastMessage}
               numberOfLines={1}
             >
               {item.last_message?.content || 'Conversa iniciada'}
@@ -231,11 +188,6 @@ export default function ProfessionalChatListScreen() {
         <Text variant="headlineMedium" style={styles.title}>
           Conversas
         </Text>
-        {conversations.filter(c => c.unread_count > 0).length > 0 && (
-          <Badge style={styles.headerBadge}>
-            {conversations.reduce((sum, c) => sum + c.unread_count, 0)}
-          </Badge>
-        )}
       </View>
 
       <View style={styles.content}>
@@ -280,9 +232,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.onBackground,
   },
-  headerBadge: {
-    backgroundColor: theme.colors.error,
-  },
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
@@ -291,25 +240,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     elevation: 1,
   },
-  unreadConversationCard: {
-    elevation: 3,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
-  },
   conversationContent: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
   },
   avatarContainer: {
-    position: 'relative',
     marginRight: spacing.md,
-  },
-  unreadBadge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: theme.colors.error,
   },
   conversationInfo: {
     flex: 1,
@@ -325,18 +262,11 @@ const styles = StyleSheet.create({
     color: theme.colors.onSurface,
     flex: 1,
   },
-  unreadText: {
-    color: theme.colors.primary,
-  },
   timestamp: {
     color: theme.colors.onSurfaceVariant,
   },
   lastMessage: {
     color: theme.colors.onSurfaceVariant,
-  },
-  unreadMessage: {
-    fontWeight: 'bold',
-    color: theme.colors.onSurface,
   },
   emptyState: {
     flex: 1,

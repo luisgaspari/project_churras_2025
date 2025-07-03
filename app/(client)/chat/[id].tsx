@@ -2,14 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, IconButton, Avatar, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
 import { ArrowLeft } from 'lucide-react-native';
 import ChatBubble from '@/components/ChatBubble';
 import ChatInput from '@/components/ChatInput';
-import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 interface Message {
   id: string;
@@ -33,30 +32,11 @@ interface ConversationDetails {
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useAuth();
-  const { refreshUnreadCount } = useUnreadMessages();
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const hasMarkedAsReadRef = useRef(false);
-
-  // Mark messages as read when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      if (id && profile) {
-        markMessagesAsRead();
-      }
-    }, [id, profile])
-  );
-
-  // Mark messages as read when messages are loaded or updated
-  useEffect(() => {
-    if (id && profile && messages.length > 0 && !hasMarkedAsReadRef.current) {
-      markMessagesAsRead();
-      hasMarkedAsReadRef.current = true;
-    }
-  }, [id, profile, messages.length]);
 
   useEffect(() => {
     if (id && profile) {
@@ -77,13 +57,6 @@ export default function ChatScreen() {
           (payload) => {
             const newMessage = payload.new as Message;
             setMessages((prev) => [...prev, newMessage]);
-            
-            // Mark as read if not sent by current user
-            if (newMessage.sender_id !== profile.id) {
-              setTimeout(() => {
-                markMessagesAsRead();
-              }, 200);
-            }
             
             // Scroll to bottom
             setTimeout(() => {
@@ -106,10 +79,6 @@ export default function ChatScreen() {
                 msg.id === updatedMessage.id ? updatedMessage : msg
               )
             );
-            // Refresh unread count when messages are updated
-            setTimeout(() => {
-              refreshUnreadCount();
-            }, 100);
           }
         )
         .subscribe();
@@ -118,7 +87,7 @@ export default function ChatScreen() {
         subscription.unsubscribe();
       };
     }
-  }, [id, profile, refreshUnreadCount]);
+  }, [id, profile]);
 
   const loadConversation = async () => {
     if (!id) return;
@@ -173,33 +142,6 @@ export default function ChatScreen() {
       console.error('Error loading messages:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const markMessagesAsRead = async () => {
-    if (!id || !profile) return;
-
-    try {
-      console.log('Marking messages as read for conversation:', id);
-      
-      const { error } = await supabase.rpc('mark_messages_as_read', {
-        conversation_uuid: id,
-        user_uuid: profile.id,
-      });
-
-      if (error) {
-        console.error('Error marking messages as read:', error);
-        return;
-      }
-
-      console.log('Messages marked as read successfully');
-      
-      // Force refresh unread count after marking messages as read
-      setTimeout(() => {
-        refreshUnreadCount();
-      }, 300);
-    } catch (error) {
-      console.error('Error marking messages as read:', error);
     }
   };
 
