@@ -40,21 +40,26 @@ export default function ProfessionalChatScreen() {
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  // Refresh unread count when screen comes into focus
+  // Mark messages as read when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       if (id && profile) {
         markMessagesAsRead();
-        refreshUnreadCount();
       }
-    }, [id, profile, refreshUnreadCount])
+    }, [id, profile])
   );
+
+  // Mark messages as read when component mounts or when new messages arrive
+  useEffect(() => {
+    if (id && profile && messages.length > 0) {
+      markMessagesAsRead();
+    }
+  }, [id, profile, messages.length]);
 
   useEffect(() => {
     if (id && profile) {
       loadConversation();
       loadMessages();
-      markMessagesAsRead();
 
       // Subscribe to real-time message updates
       const subscription = supabase
@@ -73,11 +78,10 @@ export default function ProfessionalChatScreen() {
             
             // Mark as read if not sent by current user
             if (newMessage.sender_id !== profile.id) {
-              markMessagesAsRead();
+              setTimeout(() => {
+                markMessagesAsRead();
+              }, 100);
             }
-            
-            // Refresh unread count
-            refreshUnreadCount();
             
             // Scroll to bottom
             setTimeout(() => {
@@ -100,6 +104,7 @@ export default function ProfessionalChatScreen() {
                 msg.id === updatedMessage.id ? updatedMessage : msg
               )
             );
+            // Refresh unread count when messages are updated
             refreshUnreadCount();
           }
         )
@@ -175,6 +180,8 @@ export default function ProfessionalChatScreen() {
         conversation_uuid: id,
         user_uuid: profile.id,
       });
+      
+      // Refresh unread count after marking messages as read
       refreshUnreadCount();
     } catch (error) {
       console.error('Error marking messages as read:', error);
