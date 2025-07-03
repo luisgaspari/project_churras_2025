@@ -39,6 +39,7 @@ export default function ChatScreen() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const hasMarkedAsReadRef = useRef(false);
 
   // Mark messages as read when screen comes into focus
   useFocusEffect(
@@ -49,10 +50,11 @@ export default function ChatScreen() {
     }, [id, profile])
   );
 
-  // Mark messages as read when component mounts or when new messages arrive
+  // Mark messages as read when messages are loaded or updated
   useEffect(() => {
-    if (id && profile && messages.length > 0) {
+    if (id && profile && messages.length > 0 && !hasMarkedAsReadRef.current) {
       markMessagesAsRead();
+      hasMarkedAsReadRef.current = true;
     }
   }, [id, profile, messages.length]);
 
@@ -80,7 +82,7 @@ export default function ChatScreen() {
             if (newMessage.sender_id !== profile.id) {
               setTimeout(() => {
                 markMessagesAsRead();
-              }, 100);
+              }, 200);
             }
             
             // Scroll to bottom
@@ -105,7 +107,9 @@ export default function ChatScreen() {
               )
             );
             // Refresh unread count when messages are updated
-            refreshUnreadCount();
+            setTimeout(() => {
+              refreshUnreadCount();
+            }, 100);
           }
         )
         .subscribe();
@@ -176,13 +180,24 @@ export default function ChatScreen() {
     if (!id || !profile) return;
 
     try {
-      await supabase.rpc('mark_messages_as_read', {
+      console.log('Marking messages as read for conversation:', id);
+      
+      const { error } = await supabase.rpc('mark_messages_as_read', {
         conversation_uuid: id,
         user_uuid: profile.id,
       });
+
+      if (error) {
+        console.error('Error marking messages as read:', error);
+        return;
+      }
+
+      console.log('Messages marked as read successfully');
       
-      // Refresh unread count after marking messages as read
-      refreshUnreadCount();
+      // Force refresh unread count after marking messages as read
+      setTimeout(() => {
+        refreshUnreadCount();
+      }, 300);
     } catch (error) {
       console.error('Error marking messages as read:', error);
     }

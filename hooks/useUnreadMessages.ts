@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 export function useUnreadMessages() {
   const { profile } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const subscriptionRef = useRef<any>(null);
 
   const loadUnreadCount = useCallback(async () => {
     if (!profile) {
@@ -45,7 +46,9 @@ export function useUnreadMessages() {
         return;
       }
 
-      setUnreadCount(count || 0);
+      const newCount = count || 0;
+      console.log('Unread messages count updated:', newCount);
+      setUnreadCount(newCount);
     } catch (error) {
       console.error('Error loading unread count:', error);
     }
@@ -60,37 +63,69 @@ export function useUnreadMessages() {
     // Load initial unread count
     loadUnreadCount();
 
+    // Clean up existing subscription
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe();
+    }
+
     // Subscribe to real-time updates for messages
-    const messagesSubscription = supabase
-      .channel('unread_messages_updates')
+    subscriptionRef.current = supabase
+      .channel(`unread_messages_${profile.id}`)
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'messages',
         },
         (payload) => {
-          // Refresh count when messages are inserted, updated, or deleted
-          loadUnreadCount();
+          console.log('New message received:', payload);
+          // Only refresh if the message is not from the current user
+          if (payload.new.sender_id !== profile.id) {
+            setTimeout(() => {
+              loadUnreadCount();
+            }, 100);
+          }
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          console.log('Message updated:', payload);
+          // Refresh count when messages are marked as read
+          setTimeout(() => {
+            loadUnreadCount();
+          }, 100);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
           schema: 'public',
           table: 'conversations',
         },
         (payload) => {
-          // Refresh count when conversations are created or updated
-          loadUnreadCount();
+          console.log('New conversation created:', payload);
+          // Refresh count when new conversations are created
+          setTimeout(() => {
+            loadUnreadCount();
+          }, 100);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
-      messagesSubscription.unsubscribe();
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
     };
   }, [profile, loadUnreadCount]);
 

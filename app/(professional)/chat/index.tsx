@@ -35,6 +35,7 @@ export default function ProfessionalChatListScreen() {
   useFocusEffect(
     React.useCallback(() => {
       refreshUnreadCount();
+      loadConversations();
     }, [refreshUnreadCount])
   );
 
