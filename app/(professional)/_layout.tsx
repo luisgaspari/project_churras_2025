@@ -1,12 +1,6 @@
 import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
-import {
-  Calendar,
-  ChartBar as BarChart3,
-  User,
-  HomeIcon,
-  Star,
-} from 'lucide-react-native';
+import { Calendar, ChartBar as BarChart3, User, PhoneIncoming as HomeIcon, Star } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 export default function ProfessionalTabLayout() {
