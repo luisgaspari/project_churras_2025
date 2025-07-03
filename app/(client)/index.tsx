@@ -284,7 +284,6 @@ export default function ClientHomeScreen() {
                 </Text>
               </Card.Content>
             </Card>
-
             <Card
               style={styles.categoryCard}
               onPress={() => router.push('/(client)/search')}
@@ -298,7 +297,8 @@ export default function ClientHomeScreen() {
                 </Text>
               </Card.Content>
             </Card>
-
+          </View>
+          <View style={styles.categoriesGrid}>
             <Card
               style={styles.categoryCard}
               onPress={() => router.push('/(client)/search')}
@@ -312,7 +312,6 @@ export default function ClientHomeScreen() {
                 </Text>
               </Card.Content>
             </Card>
-
             <Card
               style={styles.categoryCard}
               onPress={() => router.push('/(client)/search')}
@@ -471,7 +470,8 @@ const styles = StyleSheet.create({
   categoriesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   categoryCard: {
     flex: 1,

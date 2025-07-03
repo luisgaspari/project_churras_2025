@@ -91,7 +91,7 @@ export default function ProfessionalProfileScreen() {
       const totalReviews = data.length;
       const totalRating = data.reduce((sum, review) => sum + review.rating, 0);
       const averageRating = totalRating / totalReviews;
-      
+
       setReviewsStats({
         totalReviews,
         averageRating,
@@ -533,18 +533,23 @@ export default function ProfessionalProfileScreen() {
               <View style={styles.ratingContainer}>
                 <Star size={16} color={theme.colors.tertiary} />
                 <Text variant="bodyMedium" style={styles.rating}>
-                  {reviewsStats.totalReviews > 0 
-                    ? `${reviewsStats.averageRating.toFixed(1)} • ${reviewsStats.totalReviews} ${reviewsStats.totalReviews === 1 ? 'avaliação' : 'avaliações'}`
-                    : 'Nenhuma avaliação ainda'
-                  }
+                  {reviewsStats.totalReviews > 0
+                    ? `${reviewsStats.averageRating.toFixed(1)} • ${
+                        reviewsStats.totalReviews
+                      } ${
+                        reviewsStats.totalReviews === 1
+                          ? 'avaliação'
+                          : 'avaliações'
+                      }`
+                    : 'Nenhuma avaliação ainda'}
                 </Text>
               </View>
             </View>
           </Card.Content>
         </Card>
 
-        {/* Quick Stats */}
-        <View style={styles.statsContainer}>
+        {/* Future - Quick Stats */}
+        {/* <View style={styles.statsContainer}>
           <Card style={styles.statCard}>
             <Card.Content style={styles.statContent}>
               <Text variant="bodySmall" style={styles.statLabel}>
@@ -586,7 +591,7 @@ export default function ProfessionalProfileScreen() {
               </Text>
             </Card.Content>
           </Card>
-        </View>
+        </View> */}
 
         {/* Reviews Card */}
         <Card style={styles.reviewsCard}>
@@ -615,13 +620,24 @@ export default function ProfessionalProfileScreen() {
                       <Star
                         key={star}
                         size={20}
-                        color={star <= Math.round(reviewsStats.averageRating) ? theme.colors.tertiary : theme.colors.onSurfaceVariant}
-                        fill={star <= Math.round(reviewsStats.averageRating) ? theme.colors.tertiary : 'transparent'}
+                        color={
+                          star <= Math.round(reviewsStats.averageRating)
+                            ? theme.colors.tertiary
+                            : theme.colors.onSurfaceVariant
+                        }
+                        fill={
+                          star <= Math.round(reviewsStats.averageRating)
+                            ? theme.colors.tertiary
+                            : 'transparent'
+                        }
                       />
                     ))}
                   </View>
                   <Text variant="bodyMedium" style={styles.reviewsCount}>
-                    {reviewsStats.totalReviews} {reviewsStats.totalReviews === 1 ? 'avaliação' : 'avaliações'}
+                    {reviewsStats.totalReviews}{' '}
+                    {reviewsStats.totalReviews === 1
+                      ? 'avaliação'
+                      : 'avaliações'}
                   </Text>
                 </View>
                 <Button
@@ -639,7 +655,8 @@ export default function ProfessionalProfileScreen() {
                   Você ainda não tem avaliações.
                 </Text>
                 <Text variant="bodySmall" style={styles.noReviewsSubtext}>
-                  Complete seus primeiros churrascos para receber feedback dos clientes!
+                  Complete seus primeiros churrascos para receber feedback dos
+                  clientes!
                 </Text>
               </View>
             )}

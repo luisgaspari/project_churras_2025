@@ -24,6 +24,7 @@ export const theme = {
     onError: '#FFFFFF',
     errorContainer: '#FFEBEE',
     onErrorContainer: '#C62828',
+    completed: '#76c576',
   },
 };
 

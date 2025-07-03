@@ -61,7 +61,11 @@ export default function ChatBubble({
               variant="bodySmall"
               style={[
                 styles.readStatus,
-                { color: isRead ? theme.colors.tertiary : theme.colors.onSurfaceVariant },
+                {
+                  color: isRead
+                    ? theme.colors.tertiary
+                    : theme.colors.onSurfaceVariant,
+                },
               ]}
             >
               {isRead ? '✓✓' : '✓'}

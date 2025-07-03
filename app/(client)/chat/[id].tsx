@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
-import { Text, IconButton, Avatar, ActivityIndicator } from 'react-native-paper';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import {
+  Text,
+  IconButton,
+  Avatar,
+  ActivityIndicator,
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,7 +43,9 @@ interface ConversationDetails {
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useAuth();
-  const [conversation, setConversation] = useState<ConversationDetails | null>(null);
+  const [conversation, setConversation] = useState<ConversationDetails | null>(
+    null
+  );
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -42,6 +55,7 @@ export default function ChatScreen() {
     if (id && profile) {
       loadConversation();
       loadMessages();
+      markMessagesAsRead();
 
       // Subscribe to real-time message updates
       const subscription = supabase
@@ -57,7 +71,12 @@ export default function ChatScreen() {
           (payload) => {
             const newMessage = payload.new as Message;
             setMessages((prev) => [...prev, newMessage]);
-            
+
+            // Mark as read if not sent by current user
+            if (newMessage.sender_id !== profile.id) {
+              markMessagesAsRead();
+            }
+
             // Scroll to bottom
             setTimeout(() => {
               flatListRef.current?.scrollToEnd({ animated: true });
@@ -95,7 +114,8 @@ export default function ChatScreen() {
     try {
       const { data, error } = await supabase
         .from('conversations')
-        .select(`
+        .select(
+          `
           id,
           client_id,
           professional_id,
@@ -103,7 +123,8 @@ export default function ChatScreen() {
             full_name,
             avatar_url
           )
-        `)
+        `
+        )
         .eq('id', id)
         .single();
 
@@ -133,7 +154,7 @@ export default function ChatScreen() {
       }
 
       setMessages(data || []);
-      
+
       // Scroll to bottom after loading
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false });
@@ -142,6 +163,19 @@ export default function ChatScreen() {
       console.error('Error loading messages:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const markMessagesAsRead = async () => {
+    if (!id || !profile) return;
+
+    try {
+      await supabase.rpc('mark_messages_as_read', {
+        conversation_uuid: id,
+        user_uuid: profile.id,
+      });
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
     }
   };
 
@@ -190,8 +224,8 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
+      <KeyboardAvoidingView
+        style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
@@ -200,7 +234,7 @@ export default function ChatScreen() {
             icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
             onPress={() => router.back()}
           />
-          
+
           <View style={styles.headerInfo}>
             {conversation?.professional_profile?.avatar_url ? (
               <Avatar.Image
@@ -210,7 +244,11 @@ export default function ChatScreen() {
             ) : (
               <Avatar.Text
                 size={40}
-                label={conversation?.professional_profile?.full_name?.charAt(0).toUpperCase() || 'P'}
+                label={
+                  conversation?.professional_profile?.full_name
+                    ?.charAt(0)
+                    .toUpperCase() || 'P'
+                }
               />
             )}
             <View style={styles.headerText}>
@@ -232,7 +270,9 @@ export default function ChatScreen() {
           keyExtractor={(item) => item.id}
           style={styles.messagesList}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onContentSizeChange={() =>
+            flatListRef.current?.scrollToEnd({ animated: true })
+          }
         />
 
         {/* Input */}

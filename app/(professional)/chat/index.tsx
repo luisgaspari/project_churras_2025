@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { Text, Card, Avatar } from 'react-native-paper';
+import { Text, Card, Avatar, Badge } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +17,7 @@ interface Conversation {
     full_name: string;
     avatar_url?: string;
   };
+  unread_count: number;
   last_message?: {
     content: string;
     sender_id: string;
@@ -31,7 +32,7 @@ export default function ProfessionalChatListScreen() {
   useEffect(() => {
     if (profile) {
       loadConversations();
-      
+
       // Subscribe to real-time updates
       const subscription = supabase
         .channel('conversations')
@@ -72,7 +73,8 @@ export default function ProfessionalChatListScreen() {
     try {
       const { data, error } = await supabase
         .from('conversations')
-        .select(`
+        .select(
+          `
           id,
           client_id,
           professional_id,
@@ -81,7 +83,8 @@ export default function ProfessionalChatListScreen() {
             full_name,
             avatar_url
           )
-        `)
+        `
+        )
         .eq('professional_id', profile.id)
         .order('last_message_at', { ascending: false });
 
@@ -89,7 +92,7 @@ export default function ProfessionalChatListScreen() {
         throw error;
       }
 
-      // Load last message for each conversation
+      // Load last message and unread count for each conversation
       const conversationsWithDetails = await Promise.all(
         (data || []).map(async (conversation) => {
           // Get last message
@@ -100,9 +103,18 @@ export default function ProfessionalChatListScreen() {
             .order('created_at', { ascending: false })
             .limit(1);
 
+          // Get unread count
+          const { count: unreadCount } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('conversation_id', conversation.id)
+            .eq('is_read', false)
+            .neq('sender_id', profile.id);
+
           return {
             ...conversation,
             last_message: lastMessage?.[0],
+            unread_count: unreadCount || 0,
           };
         })
       );
@@ -125,7 +137,8 @@ export default function ProfessionalChatListScreen() {
         hour: '2-digit',
         minute: '2-digit',
       });
-    } else if (diffInHours < 168) { // 7 days
+    } else if (diffInHours < 168) {
+      // 7 days
       return date.toLocaleDateString('pt-BR', { weekday: 'short' });
     } else {
       return date.toLocaleDateString('pt-BR', {
@@ -135,13 +148,9 @@ export default function ProfessionalChatListScreen() {
     }
   };
 
-  const handleConversationPress = (conversationId: string) => {
-    router.push(`/(professional)/chat/${conversationId}`);
-  };
-
   const renderConversationItem = ({ item }: { item: Conversation }) => (
     <TouchableOpacity
-      onPress={() => handleConversationPress(item.id)}
+      onPress={() => router.push(`/(professional)/chat/${item.id}`)}
     >
       <Card style={styles.conversationCard}>
         <Card.Content style={styles.conversationContent}>
@@ -154,8 +163,15 @@ export default function ProfessionalChatListScreen() {
             ) : (
               <Avatar.Text
                 size={50}
-                label={item.client_profile?.full_name?.charAt(0).toUpperCase() || 'C'}
+                label={
+                  item.client_profile?.full_name?.charAt(0).toUpperCase() || 'C'
+                }
               />
+            )}
+            {item.unread_count > 0 && (
+              <Badge style={styles.unreadBadge} size={20}>
+                {item.unread_count > 99 ? '99+' : item.unread_count}
+              </Badge>
             )}
           </View>
 
@@ -171,7 +187,10 @@ export default function ProfessionalChatListScreen() {
 
             <Text
               variant="bodyMedium"
-              style={styles.lastMessage}
+              style={[
+                styles.lastMessage,
+                item.unread_count > 0 && styles.unreadMessage,
+              ]}
               numberOfLines={1}
             >
               {item.last_message?.content || 'Conversa iniciada'}
@@ -198,7 +217,8 @@ export default function ProfessionalChatListScreen() {
               Nenhuma conversa ainda
             </Text>
             <Text variant="bodyMedium" style={styles.emptyDescription}>
-              Quando clientes entrarem em contato com você, as conversas aparecerão aqui.
+              Quando clientes entrarem em contato com você, as conversas
+              aparecerão aqui.
             </Text>
           </View>
         ) : (
@@ -222,9 +242,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: spacing.lg,
     paddingBottom: spacing.md,
   },
@@ -246,7 +263,14 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   avatarContainer: {
+    position: 'relative',
     marginRight: spacing.md,
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: theme.colors.primary,
   },
   conversationInfo: {
     flex: 1,
@@ -267,6 +291,10 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     color: theme.colors.onSurfaceVariant,
+  },
+  unreadMessage: {
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
   },
   emptyState: {
     flex: 1,

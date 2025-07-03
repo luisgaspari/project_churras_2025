@@ -1,6 +1,13 @@
 import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
-import { Calendar, ChartBar as BarChart3, User, PhoneIncoming as HomeIcon, Star, MessageCircle } from 'lucide-react-native';
+import {
+  Calendar,
+  ChartBar as BarChart3,
+  User,
+  HomeIcon,
+  Star,
+  MessageCircle,
+} from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 export default function ProfessionalTabLayout() {
@@ -51,9 +58,7 @@ export default function ProfessionalTabLayout() {
           name="reviews"
           options={{
             title: 'Avaliações',
-            tabBarIcon: ({ size, color }) => (
-              <Star size={size} color={color} />
-            ),
+            tabBarIcon: ({ size, color }) => <Star size={size} color={color} />,
           }}
         />
         <Tabs.Screen

@@ -1,6 +1,12 @@
 import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
-import { Search, Calendar, User, PhoneIncoming as HomeIcon, MessageCircle } from 'lucide-react-native';
+import {
+  Search,
+  Calendar,
+  User,
+  HomeIcon,
+  MessageCircle,
+} from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 export default function ClientTabLayout() {

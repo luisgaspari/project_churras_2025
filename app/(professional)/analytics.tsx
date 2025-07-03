@@ -193,8 +193,8 @@ export default function AnalyticsScreen() {
           </Text>
         </View>
 
-        {/* Period Selector */}
-        <View style={styles.periodSelector}>
+        {/* Future - Period Selector */}
+        {/* <View style={styles.periodSelector}>
           <Button
             mode={selectedPeriod === 'month' ? 'contained' : 'outlined'}
             onPress={() => setSelectedPeriod('month')}
@@ -216,7 +216,7 @@ export default function AnalyticsScreen() {
           >
             Ano
           </Button>
-        </View>
+        </View> */}
 
         {/* Key Metrics */}
         <View style={styles.metricsContainer}>

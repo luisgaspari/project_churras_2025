@@ -201,12 +201,14 @@ export default function ProfessionalHomeScreen() {
           <Text variant="bodyMedium" style={styles.bookingDate}>
             {formatDate(item.event_date)} • {formatTime(item.event_time)}
           </Text>
-          <Text variant="bodySmall" style={styles.bookingLocation}>
-            {item.location}
-          </Text>
-          <Text variant="titleSmall" style={styles.bookingPrice}>
-            R$ {item.total_price}
-          </Text>
+          <View style={styles.bookingFooter}>
+            <Text variant="bodySmall" style={styles.bookingLocation}>
+              {item.location}
+            </Text>
+            <Text variant="titleSmall" style={styles.bookingPrice}>
+              R$ {item.total_price}
+            </Text>
+          </View>
         </Card.Content>
       </View>
     </Card>
@@ -443,6 +445,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   clientName: {
+    marginTop: spacing.xs,
     fontWeight: 'bold',
     color: theme.colors.onSurface,
   },
@@ -455,12 +458,19 @@ const styles = StyleSheet.create({
     color: theme.colors.onSurface,
     marginBottom: spacing.xs,
   },
+  bookingFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
   bookingLocation: {
     color: theme.colors.onSurfaceVariant,
     marginBottom: spacing.sm,
   },
   bookingPrice: {
     fontWeight: 'bold',
+    fontSize: 16,
     color: theme.colors.primary,
   },
   emptyCard: {

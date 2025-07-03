@@ -285,7 +285,7 @@ export default function ProfessionalBookingsScreen() {
       case 'cancelled':
         return theme.colors.error;
       case 'completed':
-        return theme.colors.primary;
+        return theme.colors.completed;
       default:
         return theme.colors.onSurfaceVariant;
     }
