@@ -113,6 +113,11 @@ export default function ChatListScreen() {
 
           return {
             ...conversation,
+            professional_profile: Array.isArray(
+              conversation.professional_profile
+            )
+              ? conversation.professional_profile[0]
+              : conversation.professional_profile,
             last_message: lastMessage?.[0],
             unread_count: unreadCount || 0,
           };

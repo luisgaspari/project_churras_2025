@@ -469,9 +469,12 @@ export default function ProfessionalProfileScreen() {
           try {
             await signOut();
             // Navigate to the welcome screen where user can choose user type
-            router.replace('/');
-          } catch (error) {
-            Alert.alert('Erro', 'Não foi possível sair da conta');
+            router.replace('../');
+          } catch (error: any) {
+            Alert.alert(
+              'Erro',
+              error.message || 'Não foi possível sair da conta'
+            );
           }
         },
       },

@@ -132,7 +132,12 @@ export default function ProfessionalChatScreen() {
         throw error;
       }
 
-      setConversation(data);
+      setConversation({
+        ...data,
+        client_profile: Array.isArray(data.client_profile)
+          ? data.client_profile[0]
+          : data.client_profile,
+      });
     } catch (error) {
       console.error('Error loading conversation:', error);
       router.back();
