@@ -36,6 +36,7 @@ import {
   Trash2,
   CreditCard as Edit,
   Eye,
+  Crown,
 } from 'lucide-react-native';
 
 interface Photo {
@@ -49,10 +50,19 @@ interface Service {
   title: string;
 }
 
+interface Subscription {
+  id: string;
+  plan_type: 'monthly' | 'semestral' | 'annual';
+  status: 'active' | 'expired' | 'cancelled';
+  end_date: string;
+  days_remaining: number;
+}
+
 export default function ProfessionalProfileScreen() {
   const { profile, signOut, session, refreshProfile } = useAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [reviewsStats, setReviewsStats] = useState({
@@ -104,19 +114,40 @@ export default function ProfessionalProfileScreen() {
     }
   }, [profile?.id]);
 
+  const fetchSubscription = useCallback(async () => {
+    if (!profile?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .rpc('get_current_subscription', { professional_uuid: profile.id });
+
+      if (error) {
+        console.error('Error loading subscription:', error);
+      } else if (data && data.length > 0) {
+        setSubscription(data[0]);
+      } else {
+        setSubscription(null);
+      }
+    } catch (error) {
+      console.error('Error loading subscription:', error);
+    }
+  }, [profile?.id]);
+
   useEffect(() => {
     if (profile?.id) {
       fetchPhotos();
       fetchServices();
       fetchReviewsStats();
+      fetchSubscription();
     }
-  }, [profile?.id, fetchServices, fetchReviewsStats]);
+  }, [profile?.id, fetchServices, fetchReviewsStats, fetchSubscription]);
 
   useFocusEffect(
     useCallback(() => {
       fetchServices();
       fetchReviewsStats();
-    }, [fetchServices, fetchReviewsStats])
+      fetchSubscription();
+    }, [fetchServices, fetchReviewsStats, fetchSubscription])
   );
 
   const fetchPhotos = async () => {
@@ -481,6 +512,45 @@ export default function ProfessionalProfileScreen() {
     ]);
   };
 
+  const getSubscriptionStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return theme.colors.tertiary;
+      case 'expired':
+        return theme.colors.error;
+      case 'cancelled':
+        return theme.colors.onSurfaceVariant;
+      default:
+        return theme.colors.onSurfaceVariant;
+    }
+  };
+
+  const getSubscriptionStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Ativa';
+      case 'expired':
+        return 'Expirada';
+      case 'cancelled':
+        return 'Cancelada';
+      default:
+        return status;
+    }
+  };
+
+  const getPlanName = (planType: string) => {
+    switch (planType) {
+      case 'monthly':
+        return 'Mensal';
+      case 'semestral':
+        return 'Semestral';
+      case 'annual':
+        return 'Anual';
+      default:
+        return planType;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content}>
@@ -551,50 +621,72 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Future - Quick Stats */}
-        {/* <View style={styles.statsContainer}>
-          <Card style={styles.statCard}>
-            <Card.Content style={styles.statContent}>
-              <Text variant="bodySmall" style={styles.statLabel}>
-                {' '}
+        {/* Subscription Status */}
+        <Card style={styles.subscriptionCard}>
+          <Card.Content>
+            <View style={styles.sectionHeader}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Status da Assinatura
               </Text>
-              <Text variant="headlineMedium" style={styles.statNumber}>
-                87
-              </Text>
-              <Text variant="bodySmall" style={styles.statLabel}>
-                Churrascos
-              </Text>
-            </Card.Content>
-          </Card>
+              <Crown size={20} color={theme.colors.primary} />
+            </View>
 
-          <Card style={styles.statCard}>
-            <Card.Content style={styles.statContent}>
-              <Text variant="bodySmall" style={styles.statLabel}>
-                R$
-              </Text>
-              <Text variant="headlineMedium" style={styles.statNumber}>
-                12.5k
-              </Text>
-              <Text variant="bodySmall" style={styles.statLabel}>
-                Faturamento
-              </Text>
-            </Card.Content>
-          </Card>
+            {subscription ? (
+              <View style={styles.subscriptionInfo}>
+                <View style={styles.subscriptionRow}>
+                  <Text variant="bodyMedium" style={styles.subscriptionLabel}>
+                    Plano:
+                  </Text>
+                  <Text variant="titleSmall" style={styles.subscriptionValue}>
+                    {getPlanName(subscription.plan_type)}
+                  </Text>
+                </View>
+                
+                <View style={styles.subscriptionRow}>
+                  <Text variant="bodyMedium" style={styles.subscriptionLabel}>
+                    Status:
+                  </Text>
+                  <Chip
+                    style={[
+                      styles.statusChip,
+                      { backgroundColor: `${getSubscriptionStatusColor(subscription.status)}20` },
+                    ]}
+                    textStyle={{ color: getSubscriptionStatusColor(subscription.status) }}
+                  >
+                    {getSubscriptionStatusLabel(subscription.status)}
+                  </Chip>
+                </View>
 
-          <Card style={styles.statCard}>
-            <Card.Content style={styles.statContent}>
-              <Text variant="bodySmall" style={styles.statLabel}>
-                {' '}
-              </Text>
-              <Text variant="headlineMedium" style={styles.statNumber}>
-                98%
-              </Text>
-              <Text variant="bodySmall" style={styles.statLabel}>
-                Satisfação
-              </Text>
-            </Card.Content>
-          </Card>
-        </View> */}
+                {subscription.status === 'active' && (
+                  <View style={styles.subscriptionRow}>
+                    <Text variant="bodyMedium" style={styles.subscriptionLabel}>
+                      Válida até:
+                    </Text>
+                    <Text variant="bodyMedium" style={styles.subscriptionValue}>
+                      {new Date(subscription.end_date).toLocaleDateString('pt-BR')} 
+                      ({subscription.days_remaining} dias)
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.noSubscriptionInfo}>
+                <Text variant="bodyMedium" style={styles.noSubscriptionText}>
+                  Nenhuma assinatura ativa
+                </Text>
+              </View>
+            )}
+
+            <Button
+              mode="contained"
+              style={styles.manageSubscriptionButton}
+              onPress={() => router.push('/(professional)/account-settings')}
+              icon={() => <Crown size={16} color={theme.colors.onPrimary} />}
+            >
+              {subscription ? 'Gerenciar Assinatura' : 'Assinar Agora'}
+            </Button>
+          </Card.Content>
+        </Card>
 
         {/* Reviews Card */}
         <Card style={styles.reviewsCard}>
@@ -841,12 +933,12 @@ export default function ProfessionalProfileScreen() {
 
             <List.Item
               title="Configurações da conta"
-              description="Privacidade, notificações e preferências"
+              description="Assinatura, exclusão de conta e preferências"
               left={(props) => (
                 <Settings {...props} color={theme.colors.onSurface} />
               )}
               right={(props) => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => {}}
+              onPress={() => router.push('/(professional)/account-settings')}
               style={styles.menuItem}
             />
 
@@ -931,6 +1023,41 @@ const styles = StyleSheet.create({
   rating: {
     marginLeft: spacing.xs,
     color: theme.colors.onSurfaceVariant,
+  },
+  subscriptionCard: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    elevation: 2,
+  },
+  subscriptionInfo: {
+    marginBottom: spacing.md,
+  },
+  subscriptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  subscriptionLabel: {
+    color: theme.colors.onSurfaceVariant,
+  },
+  subscriptionValue: {
+    color: theme.colors.onSurface,
+    fontWeight: '500',
+  },
+  statusChip: {
+    marginLeft: spacing.sm,
+  },
+  noSubscriptionInfo: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  noSubscriptionText: {
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.md,
+  },
+  manageSubscriptionButton: {
+    marginTop: spacing.sm,
   },
   statsContainer: {
     flexDirection: 'row',

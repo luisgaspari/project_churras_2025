@@ -8,6 +8,7 @@ export default function ProfessionalTabLayout() {
     <>
       <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Stack.Screen name="reviews" options={{ headerShown: false }} />
+      <Stack.Screen name="account-settings" options={{ headerShown: false }} />
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -68,6 +69,12 @@ export default function ProfessionalTabLayout() {
         />
         <Tabs.Screen
           name="edit-profile"
+          options={{
+            href: null, // This hides the tab from the tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="account-settings"
           options={{
             href: null, // This hides the tab from the tab bar
           }}

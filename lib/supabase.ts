@@ -186,6 +186,44 @@ export type Database = {
           updated_at?: string;
         };
       };
+      subscriptions: {
+        Row: {
+          id: string;
+          professional_id: string;
+          plan_type: 'monthly' | 'semestral' | 'annual';
+          status: 'active' | 'expired' | 'cancelled';
+          start_date: string;
+          end_date: string;
+          amount: number;
+          payment_method?: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          professional_id: string;
+          plan_type: 'monthly' | 'semestral' | 'annual';
+          status?: 'active' | 'expired' | 'cancelled';
+          start_date?: string;
+          end_date: string;
+          amount: number;
+          payment_method?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          professional_id?: string;
+          plan_type?: 'monthly' | 'semestral' | 'annual';
+          status?: 'active' | 'expired' | 'cancelled';
+          start_date?: string;
+          end_date?: string;
+          amount?: number;
+          payment_method?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 };
