@@ -10,30 +10,14 @@ import {
   ArrowLeft,
   Trash2,
   TriangleAlert as AlertTriangle,
+  Key,
 } from 'lucide-react-native';
-
-interface Subscription {
-  id: string;
-  plan_type: 'monthly' | 'semestral' | 'annual';
-  status: 'active' | 'expired' | 'cancelled';
-  start_date: string;
-  end_date: string;
-  amount: number;
-  days_remaining: number;
-}
-
-interface SubscriptionPlan {
-  type: 'monthly' | 'semestral' | 'annual';
-  name: string;
-  price: number;
-  duration: string;
-  savings?: string;
-  popular?: boolean;
-}
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 
 export default function AccountSettingsScreen() {
   const { profile, signOut } = useAuth();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   const handleDeleteAccount = async () => {
@@ -73,17 +57,20 @@ export default function AccountSettingsScreen() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return theme.colors.tertiary;
-      case 'expired':
-        return theme.colors.error;
-      case 'cancelled':
-        return theme.colors.onSurfaceVariant;
-      default:
-        return theme.colors.onSurfaceVariant;
-    }
+  const handlePasswordChanged = () => {
+    Alert.alert(
+      'Senha Alterada',
+      'Sua senha foi alterada com sucesso. Por segurança, você será redirecionado para fazer login novamente.',
+      [
+        {
+          text: 'OK',
+          onPress: async () => {
+            await signOut();
+            router.replace('/');
+          },
+        },
+      ]
+    );
   };
 
   const renderDeleteModal = () => (
@@ -115,14 +102,10 @@ export default function AccountSettingsScreen() {
               • Perfil e informações pessoais
             </Text>
             <Text style={styles.deleteModalListItem}>
-              • Serviços cadastrados
-            </Text>
-            <Text style={styles.deleteModalListItem}>
               • Histórico de agendamentos
             </Text>
-            <Text style={styles.deleteModalListItem}>• Fotos e portfólio</Text>
             <Text style={styles.deleteModalListItem}>
-              • Avaliações recebidas
+              • Avaliações feitas
             </Text>
           </View>
 
@@ -169,6 +152,24 @@ export default function AccountSettingsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Segurança */}
+        <Card style={styles.securityCard}>
+          <Card.Content>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Segurança
+            </Text>
+
+            <List.Item
+              title="Alterar senha"
+              description="Altere sua senha de acesso"
+              left={(props) => <Key {...props} color={theme.colors.primary} />}
+              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => setShowChangePasswordModal(true)}
+              style={styles.actionItem}
+            />
+          </Card.Content>
+        </Card>
+
         {/* Ações da conta */}
         <Card style={styles.actionsCard}>
           <Card.Content>
@@ -195,8 +196,7 @@ export default function AccountSettingsScreen() {
               Precisa de Ajuda?
             </Text>
             <Text variant="bodyMedium" style={styles.helpText}>
-              Se você tem dúvidas sobre assinatura, cobrança ou exclusão de
-              conta, entre em contato conosco.
+              Se você tem dúvidas sobre sua conta ou exclusão de dados, entre em contato conosco.
             </Text>
             <Button
               mode="outlined"
@@ -211,6 +211,12 @@ export default function AccountSettingsScreen() {
 
       {/* Modals */}
       {renderDeleteModal()}
+      
+      <ChangePasswordModal
+        visible={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+        onPasswordChanged={handlePasswordChanged}
+      />
     </SafeAreaView>
   );
 }
@@ -240,6 +246,11 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
+  },
+  securityCard: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+    elevation: 2,
   },
   actionsCard: {
     marginBottom: spacing.lg,
@@ -271,34 +282,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: spacing.lg,
-    width: '90%',
-    maxHeight: '80%',
-    maxWidth: 500,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surfaceVariant,
-  },
-  modalTitle: {
-    fontWeight: 'bold',
-    color: theme.colors.onSurface,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.surfaceVariant,
   },
   // Delete modal styles
   deleteModalContent: {

@@ -32,7 +32,9 @@ import {
   X,
   TriangleAlert as AlertTriangle,
   CircleCheck as CheckCircle,
+  Key,
 } from 'lucide-react-native';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 
 interface Subscription {
   id: string;
@@ -84,6 +86,7 @@ export default function AccountSettingsScreen() {
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
     null
   );
@@ -161,6 +164,22 @@ export default function AccountSettingsScreen() {
       setDeletingAccount(false);
       setShowDeleteModal(false);
     }
+  };
+
+  const handlePasswordChanged = () => {
+    Alert.alert(
+      'Senha Alterada',
+      'Sua senha foi alterada com sucesso. Por segurança, você será redirecionado para fazer login novamente.',
+      [
+        {
+          text: 'OK',
+          onPress: async () => {
+            await signOut();
+            router.replace('/');
+          },
+        },
+      ]
+    );
   };
 
   const handlePurchaseSubscription = async () => {
@@ -697,6 +716,24 @@ export default function AccountSettingsScreen() {
         {/* Status da assinatura */}
         {renderSubscriptionStatus()}
 
+        {/* Segurança */}
+        <Card style={styles.securityCard}>
+          <Card.Content>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Segurança
+            </Text>
+
+            <List.Item
+              title="Alterar senha"
+              description="Altere sua senha de acesso"
+              left={(props) => <Key {...props} color={theme.colors.primary} />}
+              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => setShowChangePasswordModal(true)}
+              style={styles.actionItem}
+            />
+          </Card.Content>
+        </Card>
+
         {/* Ações da conta */}
         <Card style={styles.actionsCard}>
           <Card.Content>
@@ -752,6 +789,12 @@ export default function AccountSettingsScreen() {
       {renderSubscriptionModal()}
       {renderPaymentModal()}
       {renderDeleteModal()}
+      
+      <ChangePasswordModal
+        visible={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+        onPasswordChanged={handlePasswordChanged}
+      />
     </SafeAreaView>
   );
 }
@@ -859,6 +902,10 @@ const styles = StyleSheet.create({
   },
   renewButton: {
     marginTop: spacing.md,
+  },
+  securityCard: {
+    marginBottom: spacing.lg,
+    elevation: 2,
   },
   actionsCard: {
     marginBottom: spacing.lg,

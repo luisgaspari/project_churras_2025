@@ -6,7 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { spacing, theme } from '@/constants/theme';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
+import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 
 type UserType = 'client' | 'professional';
 
@@ -20,6 +21,8 @@ export default function AuthScreen() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -113,7 +116,19 @@ export default function AuthScreen() {
                 onChangeText={setPassword}
                 style={styles.input}
                 mode="outlined"
-                secureTextEntry
+                secureTextEntry={!showPassword}
+                right={
+                  <TextInput.Icon
+                    icon={() =>
+                      showPassword ? (
+                        <EyeOff size={20} color={theme.colors.onSurfaceVariant} />
+                      ) : (
+                        <Eye size={20} color={theme.colors.onSurfaceVariant} />
+                      )
+                    }
+                    onPress={() => setShowPassword(!showPassword)}
+                  />
+                }
               />
 
               {!isLogin && (
@@ -137,6 +152,17 @@ export default function AuthScreen() {
                 {isLogin ? 'Entrar' : 'Criar conta'}
               </Button>
 
+              {isLogin && (
+                <Button
+                  mode="text"
+                  onPress={() => setShowForgotPasswordModal(true)}
+                  style={styles.forgotPasswordButton}
+                  disabled={isLoading || loading}
+                >
+                  Esqueci minha senha
+                </Button>
+              )}
+
               <Button
                 mode="text"
                 onPress={() => setIsLogin(!isLogin)}
@@ -151,6 +177,11 @@ export default function AuthScreen() {
           </Card>
         </View>
       </SafeAreaView>
+
+      <ForgotPasswordModal
+        visible={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)}
+      />
     </LinearGradient>
   );
 }
@@ -200,6 +231,9 @@ const styles = StyleSheet.create({
   authButton: {
     marginTop: spacing.lg,
     marginBottom: spacing.md,
+  },
+  forgotPasswordButton: {
+    marginBottom: spacing.sm,
   },
   toggleButton: {
     marginTop: spacing.sm,
