@@ -269,7 +269,7 @@ export default function ProfessionalReviewsScreen() {
           <View style={styles.commentSection}>
             <MessageSquare size={16} color={theme.colors.onSurfaceVariant} />
             <Text variant="bodyMedium" style={styles.comment}>
-              "{review.comment}"
+              {review.comment}
             </Text>
           </View>
         )}
@@ -292,16 +292,16 @@ export default function ProfessionalReviewsScreen() {
           Dicas para receber boas avaliações:
         </Text>
         <Text variant="bodyMedium" style={styles.tipItem}>
-          • Seja pontual e profissional.
+          • Seja pontual e profissional
         </Text>
         <Text variant="bodyMedium" style={styles.tipItem}>
-          • Mantenha a qualidade da comida.
+          • Mantenha a qualidade da comida
         </Text>
         <Text variant="bodyMedium" style={styles.tipItem}>
-          • Comunique-se bem com os clientes.
+          • Comunique-se bem com os clientes
         </Text>
         <Text variant="bodyMedium" style={styles.tipItem}>
-          • Mantenha o ambiente limpo e organizado.
+          • Mantenha o ambiente limpo e organizado
         </Text>
       </View>
     </View>

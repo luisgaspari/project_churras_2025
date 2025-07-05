@@ -8,7 +8,15 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import { Text, Card, Button, List, Avatar, Chip } from 'react-native-paper';
+import {
+  Text,
+  Card,
+  Button,
+  List,
+  Avatar,
+  Chip,
+  ActivityIndicator,
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -307,12 +315,12 @@ export default function ProfessionalProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Excluir do armazenamento
+              // Delete from storage
               const photoPath = photo.url
                 .split('/professional_photos/')[1]
                 .split('?')[0];
 
-              // Excluir do armazenamento
+              // Delete from storage
               const { error: storageError } = await supabase.storage
                 .from('professional_photos')
                 .remove([photoPath]);
@@ -321,7 +329,7 @@ export default function ProfessionalProfileScreen() {
                 throw storageError;
               }
 
-              // Excluir do banco de dados
+              // Delete from database
               const { error: dbError } = await supabase
                 .from('professional_photos')
                 .delete()
@@ -427,7 +435,7 @@ export default function ProfessionalProfileScreen() {
         throw uploadError;
       }
 
-      // Precisamos esperar um pouco para que o CDN atualize
+      // We need to wait a bit for the CDN to update
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const { data: publicUrlData } = supabase.storage
@@ -462,6 +470,27 @@ export default function ProfessionalProfileScreen() {
     }
   };
 
+  const handleAvatarPress = () => {
+    Alert.alert(
+      'Alterar foto do perfil',
+      'Escolha uma opção para alterar seu avatar:',
+      [
+        {
+          text: 'Tirar foto',
+          onPress: () => handleUpdateAvatar('camera'),
+        },
+        {
+          text: 'Escolher da Galeria',
+          onPress: () => handleUpdateAvatar('gallery'),
+        },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
+
   const handleSignOut = async () => {
     Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
       { text: 'Cancelar', style: 'cancel' },
@@ -471,7 +500,8 @@ export default function ProfessionalProfileScreen() {
         onPress: async () => {
           try {
             await signOut();
-            // Navegue até a tela de boas-vindas onde o usuário pode escolher o tipo de usuário
+            // Navegue até a tela de boas-vindas onde o usuário
+            // pode escolher o tipo de usuário
             router.replace('../');
           } catch (error: any) {
             Alert.alert(
@@ -533,9 +563,13 @@ export default function ProfessionalProfileScreen() {
           </Text>
         </View>
 
-        {/* Informações do perfil */}
+        {/* Profile Info */}
         <Card style={styles.profileCard}>
           <Card.Content style={styles.profileContent}>
+            {/* <TouchableOpacity
+              onPress={handleAvatarPress}
+              disabled={uploadingAvatar}
+            > */}
             {profile?.avatar_url ? (
               <Avatar.Image
                 size={80}
@@ -549,6 +583,18 @@ export default function ProfessionalProfileScreen() {
                 style={styles.avatar}
               />
             )}
+            {/* <View style={styles.avatarEditContainer}>
+                {uploadingAvatar ? (
+                  <ActivityIndicator color={theme.colors.onPrimary} />
+                ) : (
+                  <Camera
+                    size={16}
+                    color={theme.colors.onPrimary}
+                    style={styles.avatarEditIcon}
+                  />
+                )}
+              </View> */}
+            {/* </TouchableOpacity> */}
             <View style={styles.profileInfo}>
               <Text variant="headlineSmall" style={styles.userName}>
                 {profile?.full_name || 'Churrasqueiro'}
@@ -577,7 +623,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Status da assinatura */}
+        {/* Subscription Status */}
         <Card style={styles.subscriptionCard}>
           <Card.Content>
             <View style={styles.sectionHeader}>
@@ -652,7 +698,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Cartão de avaliações */}
+        {/* Reviews Card */}
         <Card style={styles.reviewsCard}>
           <Card.Content>
             <View style={styles.sectionHeader}>
@@ -722,7 +768,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Fotos */}
+        {/* Photos */}
         <Card style={styles.photosCard}>
           <Card.Content>
             <View style={styles.sectionHeader}>
@@ -776,7 +822,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Serviços */}
+        {/* Services */}
         <Card style={styles.servicesCard}>
           <Card.Content>
             <View style={styles.sectionHeader}>
@@ -818,7 +864,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Informações pessoais */}
+        {/* Personal Information */}
         <Card style={styles.infoCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -888,7 +934,7 @@ export default function ProfessionalProfileScreen() {
           </Card.Content>
         </Card>
 
-        {/* Opções de menu */}
+        {/* Menu Options */}
         <Card style={styles.menuCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -950,6 +996,17 @@ const styles = StyleSheet.create({
   avatar: {
     backgroundColor: theme.colors.primary,
   },
+  avatarEditContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    padding: spacing.xs,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarEditIcon: {},
   profileInfo: {
     marginLeft: spacing.lg,
     flex: 1,
@@ -1012,9 +1069,28 @@ const styles = StyleSheet.create({
   manageSubscriptionButton: {
     marginTop: spacing.sm,
   },
+  statsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
+  },
   statCard: {
     flex: 1,
     elevation: 2,
+  },
+  statContent: {
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  statNumber: {
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: spacing.xs,
+  },
+  statLabel: {
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
   },
   reviewsCard: {
     marginHorizontal: spacing.lg,

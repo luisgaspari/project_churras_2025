@@ -13,6 +13,7 @@ import {
   Key,
 } from 'lucide-react-native';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
+import FutureImplementationAlert from '@/components/FutureImplementationAlert';
 
 export default function AccountSettingsScreen() {
   const { profile, signOut } = useAuth();
@@ -104,9 +105,7 @@ export default function AccountSettingsScreen() {
             <Text style={styles.deleteModalListItem}>
               • Histórico de agendamentos
             </Text>
-            <Text style={styles.deleteModalListItem}>
-              • Avaliações feitas
-            </Text>
+            <Text style={styles.deleteModalListItem}>• Avaliações feitas</Text>
           </View>
 
           <Text variant="bodyMedium" style={styles.deleteModalWarning}>
@@ -190,28 +189,30 @@ export default function AccountSettingsScreen() {
         </Card>
 
         {/* Futuro - Seção de Ajuda */}
-        {/* <Card style={styles.helpCard}>
+        <Card style={styles.helpCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
               Precisa de Ajuda?
             </Text>
             <Text variant="bodyMedium" style={styles.helpText}>
-              Se você tem dúvidas sobre sua conta ou exclusão de dados, entre em contato conosco.
+              Se você tem dúvidas sobre sua conta ou exclusão de dados, entre em
+              contato conosco.
             </Text>
             <Button
               mode="outlined"
               style={styles.helpButton}
-              onPress={() => {}}
+              // onPress={() => {}}
+              onPress={() => FutureImplementationAlert()}
             >
               Falar com Suporte
             </Button>
           </Card.Content>
-        </Card> */}
+        </Card>
       </ScrollView>
 
       {/* Modals */}
       {renderDeleteModal()}
-      
+
       <ChangePasswordModal
         visible={showChangePasswordModal}
         onClose={() => setShowChangePasswordModal(false)}

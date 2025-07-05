@@ -14,7 +14,10 @@ import {
   Settings,
   LogOut,
   CreditCard as Edit,
+  HelpCircle,
+  CreditCard,
 } from 'lucide-react-native';
+import FutureImplementationAlert from '@/components/FutureImplementationAlert';
 
 export default function ClientProfileScreen() {
   const { profile, signOut, session, refreshProfile } = useAuth();
@@ -269,29 +272,18 @@ export default function ClientProfileScreen() {
               style={styles.menuItem}
             />
 
-            {/* Futuro - Método de Pagamento */}
-            {/* <List.Item
-              title="Métodos de pagamento"
-              description="Gerenciar cartões e formas de pagamento"
-              left={(props) => (
-                <CreditCard {...props} color={theme.colors.onSurface} />
-              )}
-              right={(props) => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => {}}
-              style={styles.menuItem}
-            /> */}
-
             {/* Futuro - Ajuda e Suporte */}
-            {/* <List.Item
+            <List.Item
               title="Ajuda e suporte"
               description="Central de ajuda, FAQ e contato"
               left={(props) => (
                 <HelpCircle {...props} color={theme.colors.onSurface} />
               )}
               right={(props) => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => {}}
+              // onPress={() => {}}
+              onPress={() => FutureImplementationAlert()}
               style={styles.menuItem}
-            /> */}
+            />
 
             <List.Item
               title="Sair da conta"

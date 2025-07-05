@@ -47,6 +47,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setProfile(null);
     setLoading(false);
+    // Navigate to the welcome screen where user can choose user type
+    router.replace('/');
   };
 
   useEffect(() => {

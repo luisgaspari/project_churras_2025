@@ -26,6 +26,7 @@ import {
   Menu as MenuIcon,
 } from 'lucide-react-native';
 import { useFocusEffect } from 'expo-router';
+import FutureImplementationAlert from '@/components/FutureImplementationAlert';
 
 interface Service {
   id: string;
@@ -177,15 +178,16 @@ export default function ServicesManagementScreen() {
               )}
             />
             {/* Futuro: Implementar detalhes do serviço de visualização */}
-            {/* <Menu.Item
-              onPress={() => {
-                setMenuVisible(null);
-              }}
+            <Menu.Item
+              // onPress={() => {
+              //   setMenuVisible(null);
+              // }}
+              onPress={() => FutureImplementationAlert()}
               title="Visualizar"
               leadingIcon={() => (
                 <Eye size={20} color={theme.colors.onSurface} />
               )}
-            /> */}
+            />
             <Divider />
             <Menu.Item
               onPress={() => {

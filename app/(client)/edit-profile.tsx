@@ -6,6 +6,7 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {
   Text,
@@ -326,104 +327,121 @@ export default function EditClientProfileScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Seção Avatar */}
         <Card style={styles.avatarCard}>
-          <Card.Content style={styles.avatarContent}>
-            <TouchableOpacity
-              onPress={handleAvatarPress}
-              disabled={uploadingAvatar}
-              style={styles.avatarContainer}
-            >
-              {profile?.avatar_url ? (
-                <Avatar.Image
-                  size={100}
-                  source={{ uri: profile.avatar_url }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <Avatar.Text
-                  size={100}
-                  label={profile?.full_name?.charAt(0).toUpperCase() || 'C'}
-                  style={styles.avatar}
-                />
-              )}
-              <View style={styles.avatarEditContainer}>
-                {uploadingAvatar ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={theme.colors.onPrimary}
+          <View style={{ overflow: 'hidden', borderRadius: theme.roundness }}>
+            <Card.Content style={styles.avatarContent}>
+              <TouchableOpacity
+                onPress={handleAvatarPress}
+                disabled={uploadingAvatar}
+                style={styles.avatarContainer}
+              >
+                {profile?.avatar_url ? (
+                  <Avatar.Image
+                    size={100}
+                    source={{ uri: profile.avatar_url }}
+                    style={styles.avatar}
                   />
                 ) : (
-                  <Camera size={20} color={theme.colors.onPrimary} />
+                  <Avatar.Text
+                    size={100}
+                    label={profile?.full_name?.charAt(0).toUpperCase() || 'C'}
+                    style={styles.avatar}
+                  />
                 )}
-              </View>
-            </TouchableOpacity>
-            <Text variant="bodyMedium" style={styles.avatarHint}>
-              Toque para alterar a foto
-            </Text>
-          </Card.Content>
+                <View style={styles.avatarEditContainer}>
+                  {uploadingAvatar ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.onPrimary}
+                    />
+                  ) : (
+                    <Camera size={20} color={theme.colors.onPrimary} />
+                  )}
+                </View>
+              </TouchableOpacity>
+              <Text variant="bodyMedium" style={styles.avatarHint}>
+                Toque para alterar a foto
+              </Text>
+            </Card.Content>
+          </View>
         </Card>
 
         {/* Informações pessoais */}
         <Card style={styles.formCard}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Informações Pessoais
-            </Text>
+          <View style={{ overflow: 'hidden', borderRadius: theme.roundness }}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Informações Pessoais
+              </Text>
 
-            <View style={styles.inputContainer}>
-              <User size={20} color={theme.colors.onSurfaceVariant} />
-              <TextInput
-                label="Nome completo *"
-                value={form.full_name}
-                onChangeText={(value) => handleInputChange('full_name', value)}
-                style={[styles.input, styles.inputWithIcon]}
-                mode="outlined"
-                placeholder="Seu nome completo"
-              />
-            </View>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 100}
+              >
+                <View style={styles.inputContainer}>
+                  <User size={20} color={theme.colors.onSurfaceVariant} />
+                  <TextInput
+                    label="Nome completo *"
+                    value={form.full_name}
+                    onChangeText={(value) =>
+                      handleInputChange('full_name', value)
+                    }
+                    style={[styles.input, styles.inputWithIcon]}
+                    mode="outlined"
+                    placeholder="Seu nome completo"
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Mail size={20} color={theme.colors.onSurfaceVariant} />
-              <TextInput
-                label="E-mail *"
-                value={form.email}
-                onChangeText={(value) => handleInputChange('email', value)}
-                style={[styles.input, styles.inputWithIcon]}
-                mode="outlined"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholder="seu@email.com"
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <Mail size={20} color={theme.colors.onSurfaceVariant} />
+                  <TextInput
+                    label="E-mail *"
+                    value={form.email}
+                    onChangeText={(value) => handleInputChange('email', value)}
+                    style={[styles.input, styles.inputWithIcon]}
+                    mode="outlined"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholder="seu@email.com"
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Phone size={20} color={theme.colors.onSurfaceVariant} />
-              <TextInput
-                label="Telefone"
-                value={form.phone}
-                onChangeText={(value) => handleInputChange('phone', value)}
-                style={[styles.input, styles.inputWithIcon]}
-                mode="outlined"
-                keyboardType="phone-pad"
-                placeholder="(11) 99999-9999"
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <Phone size={20} color={theme.colors.onSurfaceVariant} />
+                  <TextInput
+                    label="Telefone"
+                    value={form.phone}
+                    onChangeText={(value) => handleInputChange('phone', value)}
+                    style={[styles.input, styles.inputWithIcon]}
+                    mode="outlined"
+                    keyboardType="phone-pad"
+                    placeholder="(11) 99999-9999"
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <MapPin size={20} color={theme.colors.onSurfaceVariant} />
-              <TextInput
-                label="Localização"
-                value={form.location}
-                onChangeText={(value) => handleInputChange('location', value)}
-                style={[styles.input, styles.inputWithIcon]}
-                mode="outlined"
-                placeholder="Cidade, Estado"
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <MapPin size={20} color={theme.colors.onSurfaceVariant} />
+                  <TextInput
+                    label="Localização"
+                    value={form.location}
+                    onChangeText={(value) =>
+                      handleInputChange('location', value)
+                    }
+                    style={[styles.input, styles.inputWithIcon]}
+                    mode="outlined"
+                    placeholder="Cidade, Estado"
+                  />
+                </View>
 
-            <Text variant="bodySmall" style={styles.requiredNote}>
-              * Campos obrigatórios
-            </Text>
-          </Card.Content>
+                <Text variant="bodySmall" style={styles.requiredNote}>
+                  * Campos obrigatórios
+                </Text>
+
+                <Text variant="bodySmall" style={styles.clientNote}>
+                  💡 Mantenha suas informações atualizadas.
+                </Text>
+              </KeyboardAvoidingView>
+            </Card.Content>
+          </View>
         </Card>
 
         {/* Botão Salvar */}
@@ -456,6 +474,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.surfaceVariant,
+    zIndex: 1,
+    backgroundColor: theme.colors.background,
   },
   title: {
     fontWeight: 'bold',
@@ -525,6 +545,14 @@ const styles = StyleSheet.create({
     color: theme.colors.onSurfaceVariant,
     marginTop: spacing.sm,
     fontStyle: 'italic',
+  },
+  clientNote: {
+    color: theme.colors.onSurfaceVariant,
+    marginTop: spacing.md,
+    lineHeight: 18,
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: spacing.md,
+    borderRadius: spacing.sm,
   },
   buttonContainer: {
     paddingVertical: spacing.xl,

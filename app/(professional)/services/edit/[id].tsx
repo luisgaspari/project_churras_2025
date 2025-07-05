@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -57,7 +57,7 @@ interface Service {
 
 export default function EditServiceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { profile, session } = useAuth();
+  const { session } = useAuth();
   const [service, setService] = useState<Service | null>(null);
   const [form, setForm] = useState<ServiceForm>({
     title: '',
@@ -73,13 +73,7 @@ export default function EditServiceScreen() {
   const [loadingService, setLoadingService] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      loadService();
-    }
-  }, [id]);
-
-  const loadService = async () => {
+  const loadService = useCallback(async () => {
     if (!id) return;
 
     setLoadingService(true);
@@ -122,7 +116,11 @@ export default function EditServiceScreen() {
     } finally {
       setLoadingService(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    loadService();
+  }, [loadService]);
 
   const handleInputChange = (field: keyof ServiceForm, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -152,7 +150,7 @@ export default function EditServiceScreen() {
   const pickImage = async (source: 'camera' | 'gallery') => {
     let result;
     const options: ImagePicker.ImagePickerOptions = {
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images',
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Card } from 'react-native-paper';
+import { Text, Card, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +13,7 @@ import {
   Star,
   Users,
 } from 'lucide-react-native';
+import FutureImplementationAlert from '@/components/FutureImplementationAlert';
 
 interface AnalyticsData {
   totalRevenue: number;
@@ -194,29 +195,32 @@ export default function AnalyticsScreen() {
         </View>
 
         {/* Futuro - Seletor de Período */}
-        {/* <View style={styles.periodSelector}>
+        <View style={styles.periodSelector}>
           <Button
             mode={selectedPeriod === 'month' ? 'contained' : 'outlined'}
-            onPress={() => setSelectedPeriod('month')}
+            // onPress={() => setSelectedPeriod('month')}
+            onPress={() => FutureImplementationAlert()}
             style={styles.periodButton}
           >
             Mês
           </Button>
           <Button
             mode={selectedPeriod === 'quarter' ? 'contained' : 'outlined'}
-            onPress={() => setSelectedPeriod('quarter')}
+            // onPress={() => setSelectedPeriod('quarter')}
+            onPress={() => FutureImplementationAlert()}
             style={styles.periodButton}
           >
             Trimestre
           </Button>
           <Button
             mode={selectedPeriod === 'year' ? 'contained' : 'outlined'}
-            onPress={() => setSelectedPeriod('year')}
+            // onPress={() => setSelectedPeriod('year')}
+            onPress={() => FutureImplementationAlert()}
             style={styles.periodButton}
           >
             Ano
           </Button>
-        </View> */}
+        </View>
 
         {/* Métricas-chave */}
         <View style={styles.metricsContainer}>

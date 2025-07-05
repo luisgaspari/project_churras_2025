@@ -33,8 +33,19 @@ import {
   TriangleAlert as AlertTriangle,
   CircleCheck as CheckCircle,
   Key,
+  Signature,
+  Subscript,
+  SubscriptIcon,
+  LucideSubscript,
+  Edit,
+  Edit2Icon,
+  Edit3,
+  Edit3Icon,
+  Edit2,
+  LucideEdit3,
 } from 'lucide-react-native';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
+import FutureImplementationAlert from '@/components/FutureImplementationAlert';
 
 interface Subscription {
   id: string;
@@ -745,10 +756,23 @@ export default function AccountSettingsScreen() {
               title="Gerenciar Assinatura"
               description="Alterar plano ou renovar assinatura"
               left={(props) => (
-                <CreditCard {...props} color={theme.colors.primary} />
+                <LucideEdit3 {...props} color={theme.colors.onSurface} />
               )}
               right={(props) => <List.Icon {...props} icon="chevron-right" />}
               onPress={() => setShowSubscriptionModal(true)}
+              style={styles.actionItem}
+            />
+
+            {/* Futuro - Método de Pagamento */}
+            <List.Item
+              title="Métodos de pagamento"
+              description="Gerenciar cartões e formas de pagamento"
+              left={(props) => (
+                <CreditCard {...props} color={theme.colors.onSurface} />
+              )}
+              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              // onPress={() => {}}
+              onPress={() => FutureImplementationAlert()}
               style={styles.actionItem}
             />
 
@@ -789,7 +813,7 @@ export default function AccountSettingsScreen() {
       {renderSubscriptionModal()}
       {renderPaymentModal()}
       {renderDeleteModal()}
-      
+
       <ChangePasswordModal
         visible={showChangePasswordModal}
         onClose={() => setShowChangePasswordModal(false)}
