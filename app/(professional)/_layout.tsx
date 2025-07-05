@@ -8,10 +8,12 @@ import {
   Star,
 } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
+import { StatusBar } from 'expo-status-bar';
 
 export default function ProfessionalTabLayout() {
   return (
     <>
+      <StatusBar style="dark" />
       <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Stack.Screen name="reviews" options={{ headerShown: false }} />
       <Stack.Screen name="account-settings" options={{ headerShown: false }} />

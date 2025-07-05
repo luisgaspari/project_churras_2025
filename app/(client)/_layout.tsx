@@ -2,10 +2,12 @@ import { Stack } from 'expo-router';
 import { Tabs } from 'expo-router';
 import { Search, Calendar, User, HomeIcon } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
+import { StatusBar } from 'expo-status-bar';
 
 export default function ClientTabLayout() {
   return (
     <>
+      <StatusBar style="dark" />
       <Stack.Screen
         name="service-details/[id]"
         options={{ headerShown: false }}
