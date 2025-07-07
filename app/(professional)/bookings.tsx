@@ -543,11 +543,11 @@ export default function ProfessionalBookingsScreen() {
         )}
       </View>
 
-      <FAB
+      {/* <FAB
         icon={() => <Plus size={24} color="white" />}
         style={styles.fab}
         onPress={() => {}}
-      />
+      /> */}
     </SafeAreaView>
   );
 }

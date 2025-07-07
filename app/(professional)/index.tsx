@@ -354,11 +354,11 @@ export default function ProfessionalHomeScreen() {
         </View>
       </ScrollView>
 
-      <FAB
+      {/* <FAB
         icon={() => <Plus size={24} color="white" />}
         style={styles.fab}
         onPress={() => router.push('/(professional)/services/create')}
-      />
+      /> */}
     </SafeAreaView>
   );
 }
