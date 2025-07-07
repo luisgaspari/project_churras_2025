@@ -289,7 +289,7 @@ export default function EditProfessionalProfileScreen() {
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!', [
         {
           text: 'OK',
-          onPress: () => router.back(),
+          onPress: () => router.push('/profile'),
         },
       ]);
     } catch (error: any) {
