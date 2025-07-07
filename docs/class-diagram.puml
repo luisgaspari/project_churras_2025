@@ -1,0 +1,166 @@
+@startuml
+' skinparam
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+hide empty members
+
+' Enums
+enum UserType {
+  client
+  professional
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+enum SubscriptionPlan {
+  monthly
+  semestral
+  annual
+}
+
+enum SubscriptionStatus {
+  active
+  expired
+  cancelled
+}
+
+' Data Models (from supabase.ts)
+class Profile {
+  +id: string
+  +user_type: UserType
+  +full_name: string
+  +email: string
+  +phone: string
+  +avatar_url: string
+  +location: string
+}
+
+class Service {
+  +id: string
+  +professional_id: string
+  +title: string
+  +description: string
+  +price_from: number
+  +price_to: number
+  +duration_hours: number
+  +max_guests: number
+  +location: string
+  +images: string[]
+}
+
+class Booking {
+  +id: string
+  +client_id: string
+  +professional_id: string
+  +service_id: string
+  +event_date: string
+  +event_time: string
+  +guests_count: number
+  +location: string
+  +status: BookingStatus
+  +total_price: number
+  +notes: string
+}
+
+class Review {
+  +id: string
+  +booking_id: string
+  +client_id: string
+  +professional_id: string
+  +rating: number
+  +comment: string
+}
+
+class ProfessionalPhoto {
+  +id: string
+  +professional_id: string
+  +photo_url: string
+}
+
+class Subscription {
+  +id: string
+  +professional_id: string
+  +plan_type: SubscriptionPlan
+  +status: SubscriptionStatus
+  +start_date: string
+  +end_date: string
+  +amount: number
+}
+
+' Supabase Client
+class SupabaseClient {
+  +auth: SupabaseAuthClient
+  +storage: SupabaseStorageClient
+  +from(table: string): SupabaseQueryBuilder
+}
+
+' Auth Context
+class AuthContext {
+  +session: Session
+  +user: User
+  +profile: Profile
+  +loading: boolean
+  +signIn(email, password)
+  +signUp(email, password, userData)
+  +signOut()
+  +refreshProfile()
+}
+
+' Screens (as classes representing their state and behavior)
+class ServiceDetailsScreen {
+  -service: Service
+  -professionalPhotos: ProfessionalPhoto[]
+  -bookingForm: BookingForm
+  +loadService()
+  +handleCreateBooking()
+  +showContactOptions()
+}
+
+class CreateServiceScreen {
+  -form: ServiceForm
+  -images: string[]
+  +handleCreateService()
+  +uploadImage(uri)
+}
+
+class ReviewsList {
+  -reviews: Review[]
+  -averageRating: number
+  +loadReviews()
+}
+
+' Relationships
+Profile "1" -- "0..*" Service : "offers"
+Profile "1" -- "0..*" Booking : "is client for"
+Profile "1" -- "0..*" Booking : "is professional for"
+Profile "1" -- "0..*" Review : "writes (as client)"
+Profile "1" -- "0..*" Review : "receives (as professional)"
+Profile "1" -- "0..*" ProfessionalPhoto : "has"
+Profile "1" -- "0..*" Subscription : "has"
+
+Service "1" -- "0..*" Booking : "is booked in"
+Booking "1" -- "1" Review : "is reviewed in"
+
+AuthContext ..> SupabaseClient : "uses"
+AuthContext ..> Profile : "manages"
+
+ServiceDetailsScreen ..> SupabaseClient : "uses"
+ServiceDetailsScreen ..> AuthContext : "uses"
+ServiceDetailsScreen ..> ReviewsList : "displays"
+ServiceDetailsScreen ..> Service : "displays"
+ServiceDetailsScreen ..> ProfessionalPhoto : "displays"
+
+CreateServiceScreen ..> SupabaseClient : "uses"
+CreateServiceScreen ..> AuthContext : "uses"
+CreateServiceScreen ..> Service : "creates"
+
+ReviewsList ..> SupabaseClient : "uses"
+ReviewsList ..> Review : "displays"
+ReviewsList ..> Profile : "displays client"
+
+@enduml

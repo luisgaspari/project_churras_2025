@@ -1,0 +1,56 @@
+@startuml
+left to right direction
+
+actor Cliente
+actor Churrasqueiro
+
+rectangle "Sistema ChurrasJa" {
+  usecase "Gerenciar Conta" as UC_MANAGE_ACCOUNT
+  usecase "Gerenciar Perfil" as UC_MANAGE_PROFILE
+  usecase "Buscar Serviços" as UC_SEARCH_SERVICES
+  usecase "Gerenciar Agendamentos (Cliente)" as UC_MANAGE_BOOKINGS_CLIENT
+  usecase "Avaliar Serviço" as UC_REVIEW_SERVICE
+  usecase "Contatar Profissional" as UC_CONTACT_PRO
+
+  usecase "Gerenciar Serviços" as UC_MANAGE_SERVICES
+  usecase "Gerenciar Portfólio" as UC_MANAGE_PORTFOLIO
+  usecase "Gerenciar Agendamentos (Profissional)" as UC_MANAGE_BOOKINGS_PRO
+  usecase "Ver Avaliações" as UC_VIEW_REVIEWS
+  usecase "Ver Analytics" as UC_VIEW_ANALYTICS
+  usecase "Gerenciar Assinatura" as UC_MANAGE_SUBSCRIPTION
+
+  Cliente -- UC_MANAGE_ACCOUNT
+  Cliente -- UC_MANAGE_PROFILE
+  Cliente -- UC_SEARCH_SERVICES
+  Cliente -- UC_MANAGE_BOOKINGS_CLIENT
+  Cliente -- UC_REVIEW_SERVICE
+  Cliente -- UC_CONTACT_PRO
+
+  Churrasqueiro -- UC_MANAGE_ACCOUNT
+  Churrasqueiro -- UC_MANAGE_PROFILE
+  Churrasqueiro -- UC_MANAGE_SERVICES
+  Churrasqueiro -- UC_MANAGE_PORTFOLIO
+  Churrasqueiro -- UC_MANAGE_BOOKINGS_PRO
+  Churrasqueiro -- UC_VIEW_REVIEWS
+  Churrasqueiro -- UC_VIEW_ANALYTICS
+  Churrasqueiro -- UC_MANAGE_SUBSCRIPTION
+}
+
+rectangle "Sistemas Externos" {
+    usecase "Autenticação" as UC_AUTH
+    usecase "Pagamento" as UC_PAYMENT
+    usecase "Storage de Imagens" as UC_STORAGE
+    usecase "Comunicação Externa" as UC_COMMUNICATION
+}
+
+UC_MANAGE_ACCOUNT ..> UC_AUTH : <<include>>
+UC_MANAGE_SUBSCRIPTION ..> UC_PAYMENT : <<include>>
+UC_MANAGE_PROFILE ..> UC_STORAGE : <<include>>
+UC_MANAGE_SERVICES ..> UC_STORAGE : <<include>>
+UC_MANAGE_PORTFOLIO ..> UC_STORAGE : <<include>>
+UC_CONTACT_PRO ..> UC_COMMUNICATION : <<include>>
+
+UC_MANAGE_BOOKINGS_CLIENT ..> UC_MANAGE_BOOKINGS_PRO : <<communicates with>>
+UC_REVIEW_SERVICE ..> UC_VIEW_REVIEWS : <<communicates with>>
+
+@enduml
