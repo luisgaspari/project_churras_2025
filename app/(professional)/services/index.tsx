@@ -137,108 +137,111 @@ export default function ServicesManagementScreen() {
 
   const renderServiceCard = (item: Service) => (
     <Card key={item.id} style={styles.serviceCard}>
-      {item.images && item.images.length > 0 && (
-        <Image
-          source={{
-            uri:
-              item.images[0] ||
-              'https://images.pexels.com/photos/1482803/pexels-photo-1482803.jpeg?auto=compress&cs=tinysrgb&w=400',
-          }}
-          style={styles.serviceImage}
-        />
-      )}
-      <Card.Content style={styles.serviceContent}>
-        <View style={styles.serviceHeader}>
-          <Text variant="titleMedium" style={styles.serviceTitle}>
-            {item.title}
-          </Text>
-          <Menu
-            visible={menuVisible === item.id}
-            onDismiss={() => setMenuVisible(null)}
-            anchor={
-              <IconButton
-                icon={() => (
-                  <MenuIcon size={20} color={theme.colors.onSurface} />
+      <View style={{ overflow: 'hidden', borderRadius: spacing.md }}>
+        {/* Imagem de serviço */}
+        {item.images && item.images.length > 0 && (
+          <Image
+            source={{
+              uri:
+                item.images[0] ||
+                'https://images.pexels.com/photos/1482803/pexels-photo-1482803.jpeg?auto=compress&cs=tinysrgb&w=400',
+            }}
+            style={styles.serviceImage}
+          />
+        )}
+        <Card.Content style={styles.serviceContent}>
+          <View style={styles.serviceHeader}>
+            <Text variant="titleMedium" style={styles.serviceTitle}>
+              {item.title}
+            </Text>
+            <Menu
+              visible={menuVisible === item.id}
+              onDismiss={() => setMenuVisible(null)}
+              anchor={
+                <IconButton
+                  icon={() => (
+                    <MenuIcon size={20} color={theme.colors.onSurface} />
+                  )}
+                  onPress={() => setMenuVisible(item.id)}
+                />
+              }
+            >
+              <Menu.Item
+                onPress={() => {
+                  setMenuVisible(null);
+                  router.push({
+                    pathname: '/(professional)/services/edit/[id]',
+                    params: { id: item.id },
+                  });
+                }}
+                title="Editar"
+                leadingIcon={() => (
+                  <Edit size={20} color={theme.colors.onSurface} />
                 )}
-                onPress={() => setMenuVisible(item.id)}
               />
-            }
-          >
-            <Menu.Item
-              onPress={() => {
-                setMenuVisible(null);
-                router.push({
-                  pathname: '/(professional)/services/edit/[id]',
-                  params: { id: item.id },
-                });
-              }}
-              title="Editar"
-              leadingIcon={() => (
-                <Edit size={20} color={theme.colors.onSurface} />
-              )}
-            />
-            {/* Futuro: Implementar detalhes do serviço de visualização */}
-            <Menu.Item
-              // onPress={() => {
-              //   setMenuVisible(null);
-              // }}
-              onPress={() => FutureImplementationAlert()}
-              title="Visualizar"
-              leadingIcon={() => (
-                <Eye size={20} color={theme.colors.onSurface} />
-              )}
-            />
-            <Divider />
-            <Menu.Item
-              onPress={() => {
-                setMenuVisible(null);
-                handleDeleteService(item.id);
-              }}
-              title="Excluir"
-              leadingIcon={() => (
-                <Trash2 size={20} color={theme.colors.error} />
-              )}
-              titleStyle={{ color: theme.colors.error }}
-            />
-          </Menu>
-        </View>
-
-        <Text variant="bodyMedium" style={styles.serviceDescription}>
-          {item.description}
-        </Text>
-
-        <View style={styles.serviceInfo}>
-          <View style={styles.infoRow}>
-            <MapPin size={16} color={theme.colors.onSurfaceVariant} />
-            <Text variant="bodySmall" style={styles.infoText}>
-              {item.location}
-            </Text>
+              {/* Futuro: Implementar detalhes do serviço de visualização */}
+              <Menu.Item
+                // onPress={() => {
+                //   setMenuVisible(null);
+                // }}
+                onPress={() => FutureImplementationAlert()}
+                title="Visualizar"
+                leadingIcon={() => (
+                  <Eye size={20} color={theme.colors.onSurface} />
+                )}
+              />
+              <Divider />
+              <Menu.Item
+                onPress={() => {
+                  setMenuVisible(null);
+                  handleDeleteService(item.id);
+                }}
+                title="Excluir"
+                leadingIcon={() => (
+                  <Trash2 size={20} color={theme.colors.error} />
+                )}
+                titleStyle={{ color: theme.colors.error }}
+              />
+            </Menu>
           </View>
 
-          <View style={styles.infoRow}>
-            <Clock size={16} color={theme.colors.onSurfaceVariant} />
-            <Text variant="bodySmall" style={styles.infoText}>
-              {item.duration_hours}h de duração
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Users size={16} color={theme.colors.onSurfaceVariant} />
-            <Text variant="bodySmall" style={styles.infoText}>
-              Até {item.max_guests} pessoas
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.serviceFooter}>
-          <Text variant="titleMedium" style={styles.servicePrice}>
-            {formatPrice(item.price_from, item.price_to)}
+          <Text variant="bodyMedium" style={styles.serviceDescription}>
+            {item.description}
           </Text>
-          <Text variant="bodySmall" style={styles.serviceDate}>
-            Criado em {formatDate(item.created_at)}
-          </Text>
-        </View>
-      </Card.Content>
+
+          <View style={styles.serviceInfo}>
+            <View style={styles.infoRow}>
+              <MapPin size={16} color={theme.colors.onSurfaceVariant} />
+              <Text variant="bodySmall" style={styles.infoText}>
+                {item.location}
+              </Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Clock size={16} color={theme.colors.onSurfaceVariant} />
+              <Text variant="bodySmall" style={styles.infoText}>
+                {item.duration_hours}h de duração
+              </Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Users size={16} color={theme.colors.onSurfaceVariant} />
+              <Text variant="bodySmall" style={styles.infoText}>
+                Até {item.max_guests} pessoas
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.serviceFooter}>
+            <Text variant="titleMedium" style={styles.servicePrice}>
+              {formatPrice(item.price_from, item.price_to)}
+            </Text>
+            <Text variant="bodySmall" style={styles.serviceDate}>
+              Criado em {formatDate(item.created_at)}
+            </Text>
+          </View>
+        </Card.Content>
+      </View>
     </Card>
   );
 
@@ -327,6 +330,7 @@ const styles = StyleSheet.create({
   serviceImage: {
     width: '100%',
     height: 200,
+    backgroundColor: theme.colors.surfaceVariant,
   },
   serviceContent: {
     padding: spacing.md,
