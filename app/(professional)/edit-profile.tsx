@@ -395,7 +395,7 @@ export default function EditProfessionalProfileScreen() {
 
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 100}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 500}
               >
                 <View style={styles.inputContainer}>
                   <User size={20} color={theme.colors.onSurfaceVariant} />

@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { Button, Text, TextInput, Card } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -46,10 +53,15 @@ export default function AuthScreen() {
           full_name: fullName,
           phone,
         });
-      }
 
-      // A navegação será controlada pela mudança de estado de autenticação no AuthContext
-      // Não há necessidade de navegar manualmente aqui
+        await signIn(email, password);
+        // Redirecionar após login
+        if (userType === 'professional') {
+          router.replace('/(professional)');
+        } else if (userType === 'client') {
+          router.replace('/(client)');
+        }
+      }
     } catch (error: any) {
       console.error('Auth error:', error);
       Alert.alert('Erro', error.message || 'Erro ao realizar autenticação');
@@ -68,114 +80,129 @@ export default function AuthScreen() {
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <Button
-            mode="text"
-            onPress={() => router.back()}
-            style={styles.backButton}
-            labelStyle={styles.backButtonLabel}
-            icon={({ size, color }) => <ArrowLeft size={size} color={color} />}
-          >
-            Voltar
-          </Button>
-
-          <View style={styles.header}>
-            <Text variant="headlineMedium" style={styles.title}>
-              {isLogin ? 'Entrar' : 'Criar conta'}
-            </Text>
-            <Text variant="titleMedium" style={styles.subtitle}>
-              {getUserTypeTitle()}
-            </Text>
-          </View>
-
-          <Card style={styles.formCard}>
-            <Card.Content style={styles.formContent}>
-              {!isLogin && (
-                <TextInput
-                  label="Nome completo"
-                  value={fullName}
-                  onChangeText={setFullName}
-                  style={styles.input}
-                  mode="outlined"
-                />
+        <ScrollView>
+          <View style={styles.content}>
+            <Button
+              mode="text"
+              onPress={() => router.back()}
+              style={styles.backButton}
+              labelStyle={styles.backButtonLabel}
+              icon={({ size, color }) => (
+                <ArrowLeft size={size} color={color} />
               )}
+            >
+              Voltar
+            </Button>
 
-              <TextInput
-                label="E-mail"
-                value={email}
-                onChangeText={setEmail}
-                style={styles.input}
-                mode="outlined"
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-
-              <TextInput
-                label="Senha"
-                value={password}
-                onChangeText={setPassword}
-                style={styles.input}
-                mode="outlined"
-                secureTextEntry={!showPassword}
-                right={
-                  <TextInput.Icon
-                    icon={() =>
-                      showPassword ? (
-                        <EyeOff size={20} color={theme.colors.onSurfaceVariant} />
-                      ) : (
-                        <Eye size={20} color={theme.colors.onSurfaceVariant} />
-                      )
-                    }
-                    onPress={() => setShowPassword(!showPassword)}
-                  />
-                }
-              />
-
-              {!isLogin && (
-                <TextInput
-                  label="Telefone (opcional)"
-                  value={phone}
-                  onChangeText={setPhone}
-                  style={styles.input}
-                  mode="outlined"
-                  keyboardType="phone-pad"
-                />
-              )}
-
-              <Button
-                mode="contained"
-                onPress={handleAuth}
-                loading={isLoading || loading}
-                disabled={isLoading || loading}
-                style={styles.authButton}
-              >
+            <View style={styles.header}>
+              <Text variant="headlineMedium" style={styles.title}>
                 {isLogin ? 'Entrar' : 'Criar conta'}
-              </Button>
+              </Text>
+              <Text variant="titleMedium" style={styles.subtitle}>
+                {getUserTypeTitle()}
+              </Text>
+            </View>
 
-              {isLogin && (
-                <Button
-                  mode="text"
-                  onPress={() => setShowForgotPasswordModal(true)}
-                  style={styles.forgotPasswordButton}
-                  disabled={isLoading || loading}
+            <Card style={styles.formCard}>
+              <Card.Content style={styles.formContent}>
+                <KeyboardAvoidingView
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 100}
                 >
-                  Esqueci minha senha
-                </Button>
-              )}
+                  {!isLogin && (
+                    <TextInput
+                      label="Nome completo"
+                      value={fullName}
+                      onChangeText={setFullName}
+                      style={styles.input}
+                      mode="outlined"
+                    />
+                  )}
 
-              <Button
-                mode="text"
-                onPress={() => setIsLogin(!isLogin)}
-                style={styles.toggleButton}
-                disabled={isLoading || loading}
-              >
-                {isLogin
-                  ? 'Não tem conta? Criar conta'
-                  : 'Já tem conta? Entrar'}
-              </Button>
-            </Card.Content>
-          </Card>
-        </View>
+                  <TextInput
+                    label="E-mail"
+                    value={email}
+                    onChangeText={setEmail}
+                    style={styles.input}
+                    mode="outlined"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+
+                  <TextInput
+                    label="Senha"
+                    value={password}
+                    onChangeText={setPassword}
+                    style={styles.input}
+                    mode="outlined"
+                    secureTextEntry={!showPassword}
+                    right={
+                      <TextInput.Icon
+                        icon={() =>
+                          showPassword ? (
+                            <EyeOff
+                              size={20}
+                              color={theme.colors.onSurfaceVariant}
+                            />
+                          ) : (
+                            <Eye
+                              size={20}
+                              color={theme.colors.onSurfaceVariant}
+                            />
+                          )
+                        }
+                        onPress={() => setShowPassword(!showPassword)}
+                      />
+                    }
+                  />
+
+                  {!isLogin && (
+                    <TextInput
+                      label="Telefone (opcional)"
+                      value={phone}
+                      onChangeText={setPhone}
+                      style={styles.input}
+                      mode="outlined"
+                      keyboardType="phone-pad"
+                    />
+                  )}
+
+                  <Button
+                    mode="contained"
+                    onPress={handleAuth}
+                    loading={isLoading || loading}
+                    disabled={isLoading || loading}
+                    style={styles.authButton}
+                  >
+                    {isLogin ? 'Entrar' : 'Criar conta'}
+                  </Button>
+
+                  {isLogin && (
+                    <Button
+                      mode="text"
+                      onPress={() => setShowForgotPasswordModal(true)}
+                      style={styles.forgotPasswordButton}
+                      disabled={isLoading || loading}
+                    >
+                      Esqueci minha senha
+                    </Button>
+                  )}
+
+                  <Button
+                    mode="text"
+                    onPress={() => setIsLogin(!isLogin)}
+                    style={styles.toggleButton}
+                    disabled={isLoading || loading}
+                  >
+                    {isLogin
+                      ? 'Não tem conta? Criar conta'
+                      : 'Já tem conta? Entrar'}
+                  </Button>
+                </KeyboardAvoidingView>
+              </Card.Content>
+            </Card>
+          </View>
+        </ScrollView>
       </SafeAreaView>
 
       <ForgotPasswordModal

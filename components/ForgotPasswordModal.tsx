@@ -47,7 +47,7 @@ export default function ForgotPasswordModal({
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://your-app.com/reset-password', // URL para redirecionamento
+        redirectTo: 'https://localhost:8081/reset-password', // URL para redirecionamento
       });
 
       if (error) {

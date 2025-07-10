@@ -6,13 +6,9 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
-import {
-  Text,
-  TextInput,
-  Button,
-  IconButton,
-} from 'react-native-paper';
+import { Text, TextInput, Button, IconButton } from 'react-native-paper';
 import { X, Eye, EyeOff } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { spacing, theme } from '@/constants/theme';
@@ -90,25 +86,18 @@ export default function ChangePasswordModal({
         throw updateError;
       }
 
-      Alert.alert(
-        'Sucesso',
-        'Sua senha foi alterada com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              handleClose();
-              onPasswordChanged?.();
-            },
+      Alert.alert('Sucesso', 'Sua senha foi alterada com sucesso!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            handleClose();
+            onPasswordChanged?.();
           },
-        ]
-      );
+        },
+      ]);
     } catch (error: any) {
       console.error('Error changing password:', error);
-      Alert.alert(
-        'Erro',
-        error.message || 'Não foi possível alterar a senha.'
-      );
+      Alert.alert('Erro', error.message || 'Não foi possível alterar a senha.');
     } finally {
       setLoading(false);
     }

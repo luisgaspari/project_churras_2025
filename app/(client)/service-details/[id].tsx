@@ -627,7 +627,7 @@ export default function ServiceDetailsScreen() {
               <View style={styles.rating}>
                 <Star size={20} color={theme.colors.tertiary} />
                 <Text variant="titleMedium" style={styles.ratingText}>
-                  {totalReviews > 0 ? averageRating.toFixed(1) : '5.0'}
+                  {totalReviews > 0 ? averageRating.toFixed(1) : 'Novo'}
                 </Text>
                 <Text variant="bodyMedium" style={styles.reviewsText}>
                   ({totalReviews}{' '}
@@ -700,7 +700,7 @@ export default function ServiceDetailsScreen() {
                     variant="bodySmall"
                     style={styles.professionalRatingText}
                   >
-                    {totalReviews > 0 ? averageRating.toFixed(1) : '5.0'} •{' '}
+                    {totalReviews > 0 ? averageRating.toFixed(1) : 'Novo'} •{' '}
                     {totalReviews} churrascos realizados
                   </Text>
                 </View>

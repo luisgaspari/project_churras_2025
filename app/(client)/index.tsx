@@ -50,7 +50,7 @@ export default function ClientHomeScreen() {
         `
         )
         .order('created_at', { ascending: false })
-        .limit(6);
+        .limit(5);
 
       if (error) {
         console.error('Error loading services:', error);
@@ -91,7 +91,22 @@ export default function ClientHomeScreen() {
           })
         );
 
-        setFeaturedServices(servicesWithRatings);
+        // Classificar por classificação e comentários
+        let sorted = [...servicesWithRatings];
+        sorted.sort((a, b) => {
+          const ratingA = a.average_rating || 0;
+          const ratingB = b.average_rating || 0;
+          const reviewsA = a.total_reviews || 0;
+          const reviewsB = b.total_reviews || 0;
+          // Primeiro, classifica por classificação média (decrescente)
+          if (ratingB !== ratingA) {
+            return ratingB - ratingA;
+          }
+          // Se as classificações forem iguais, classifica por número de comentários (decrescente)
+          return reviewsB - reviewsA;
+        });
+
+        setFeaturedServices(sorted);
       }
     } catch (error) {
       console.error('Error loading services:', error);
@@ -109,7 +124,7 @@ export default function ClientHomeScreen() {
 
   const formatRating = (rating: number, totalReviews: number) => {
     if (totalReviews === 0) {
-      return '5.0';
+      return '0.0';
     }
     return rating.toFixed(1);
   };
